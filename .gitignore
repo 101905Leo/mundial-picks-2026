@@ -5,3 +5,7 @@ out
 .env.local
 .DS_Store
 *.log
+.vercel
+.env.development.local
+.env.test.local
+.env.production.local

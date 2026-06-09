@@ -25,7 +25,7 @@ Aplicacion web de quiniela para el Mundial 2026, sin apuestas con dinero real.
 - Ranking por liga.
 - Panel administrador para crear partidos, cargar resultados y recalcular puntos.
 - Importacion automatica del calendario de la Copa Mundial de la FIFA 2026™.
-- Cron automatico en Vercel para actualizar resultados reales y recalcular puntos.
+- Cron automatico diario en Vercel para actualizar resultados reales y recalcular puntos.
 - Notificaciones por WhatsApp para actualizaciones del administrador, si configuras WhatsApp Cloud API.
 - Inscripcion unica con Wompi por 50.000 COP.
 - Premio visible de 1.000.000 COP.
@@ -182,7 +182,7 @@ Entra como administrador y presiona **Cargar calendario Mundial 2026**. La app d
 
 ## Automatizar resultados y puntos
 
-El proyecto incluye `vercel.json` con un Cron Job que llama cada 30 minutos a:
+El proyecto incluye `vercel.json` con un Cron Job diario compatible con Vercel Hobby:
 
 ```txt
 GET /api/cron/update-results
@@ -200,6 +200,12 @@ CRON_SECRET="una-clave-larga-y-secreta"
 ```
 
 Tambien puedes seguir usando el boton manual **Actualizar resultados reales** desde el panel administrador.
+
+En el plan Hobby de Vercel, los Cron Jobs solo pueden ejecutarse una vez al dia. Si necesitas revisar resultados cada 30 minutos durante partidos, usa un servicio externo de cron apuntando a:
+
+```txt
+https://tu-dominio.com/api/cron/update-results?secret=TU_CRON_SECRET
+```
 
 Fuente de datos por defecto:
 
