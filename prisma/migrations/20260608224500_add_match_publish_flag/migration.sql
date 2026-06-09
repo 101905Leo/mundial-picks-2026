@@ -1,0 +1,1 @@
+ALTER TABLE "Match" ADD COLUMN "isPublished" BOOLEAN NOT NULL DEFAULT false;

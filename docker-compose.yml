@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: mundial-picks-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mundial_picks_2026
+    ports:
+      - "5432:5432"
+    volumes:
+      - mundial_picks_pgdata:/var/lib/postgresql/data
+
+volumes:
+  mundial_picks_pgdata:

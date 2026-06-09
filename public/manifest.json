@@ -1,0 +1,33 @@
+{
+  "name": "Copa Mundial de la FIFA 2026™",
+  "short_name": "Mundial 2026",
+  "description": "Picks, créditos, ligas y ranking de la Copa Mundial de la FIFA 2026™.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#101217",
+  "theme_color": "#0a0d12",
+  "categories": ["sports", "games"],
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

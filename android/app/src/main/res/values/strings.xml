@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Mundial 2026</string>
+    <string name="title_activity_main">Mundial 2026</string>
+    <string name="package_name">com.copamundial2026.picks</string>
+    <string name="custom_url_scheme">com.copamundial2026.picks</string>
+</resources>
