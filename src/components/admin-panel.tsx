@@ -306,6 +306,31 @@ export function AdminPanel({ matches, onChanged }: Props) {
     event.currentTarget.reset();
   }
 
+  async function changePassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setMessage("");
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+
+    const response = await fetch("/api/auth/change-password", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        currentPassword: String(formData.get("currentPassword")),
+        newPassword: String(formData.get("newPassword")),
+      }),
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      setMessage(data.error ?? "No se pudo cambiar la contrasena");
+      return;
+    }
+
+    setMessage("Contrasena actualizada. Usa la nueva clave en tu proximo ingreso.");
+    form.reset();
+  }
+
   async function publishAll(publish: boolean) {
     setMessage("");
     const confirmed = window.confirm(
@@ -620,6 +645,20 @@ export function AdminPanel({ matches, onChanged }: Props) {
               Cargar usuarios
             </button>
           ) : null}
+        </form>
+        <form className="form" onSubmit={changePassword}>
+          <h3>Cambiar mi contraseña</h3>
+          <div className="form-row">
+            <label htmlFor="currentPassword">Contraseña actual</label>
+            <input id="currentPassword" name="currentPassword" type="password" minLength={6} required />
+          </div>
+          <div className="form-row">
+            <label htmlFor="newPassword">Nueva contraseña</label>
+            <input id="newPassword" name="newPassword" type="password" minLength={8} required />
+          </div>
+          <button className="button primary" type="submit">
+            Guardar nueva contraseña
+          </button>
         </form>
       </div>
       {message ? <div className="notice">{message}</div> : null}

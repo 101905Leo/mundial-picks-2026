@@ -13,6 +13,11 @@ export const registerSchema = credentialsSchema.extend({
   name: z.string().min(2).max(80),
 });
 
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(6),
+  newPassword: z.string().min(8, "La nueva contrasena debe tener minimo 8 caracteres"),
+});
+
 export const matchSchema = z.object({
   homeTeam: z.string().min(2),
   awayTeam: z.string().min(2),
