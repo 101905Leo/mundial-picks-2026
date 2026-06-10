@@ -22,6 +22,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
   const [message, setMessage] = useState("");
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [usersLoaded, setUsersLoaded] = useState(false);
+  const [selectedStatusUserId, setSelectedStatusUserId] = useState("");
   const publishedMatches = matches.filter((match) => match.isPublished).length;
 
   async function loadUsers() {
@@ -246,13 +247,8 @@ export function AdminPanel({ matches, onChanged }: Props) {
     event.currentTarget.reset();
   }
 
-  async function updateUserStatus(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function updateUserStatus(userId: string, isActive: boolean) {
     setMessage("");
-    const formData = new FormData(event.currentTarget);
-    const userId = String(formData.get("statusUserId"));
-    const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
-    const isActive = submitter?.value === "true";
     const user = users.find((item) => item.id === userId);
 
     if (!user) {
@@ -274,7 +270,6 @@ export function AdminPanel({ matches, onChanged }: Props) {
 
     setMessage(`${data.user.name} ahora esta ${data.user.isActive ? "activo" : "desactivado"}`);
     await loadUsers();
-    event.currentTarget.reset();
   }
 
   async function deleteUser(event: FormEvent<HTMLFormElement>) {
@@ -564,11 +559,17 @@ export function AdminPanel({ matches, onChanged }: Props) {
             </button>
           ) : null}
         </form>
-        <form className="form" onSubmit={updateUserStatus}>
+        <section className="form">
           <h3>Activar / desactivar usuario</h3>
           <div className="form-row">
             <label htmlFor="statusUserId">Usuario</label>
-            <select id="statusUserId" name="statusUserId" onFocus={() => !usersLoaded && loadUsers()} required>
+            <select
+              id="statusUserId"
+              name="statusUserId"
+              onChange={(event) => setSelectedStatusUserId(event.target.value)}
+              onFocus={() => !usersLoaded && loadUsers()}
+              value={selectedStatusUserId}
+            >
               <option value="">Selecciona usuario</option>
               {users.map((user) => (
                 <option key={user.id} value={user.id}>
@@ -578,10 +579,20 @@ export function AdminPanel({ matches, onChanged }: Props) {
             </select>
           </div>
           <div className="inline-form">
-            <button className="button secondary" name="isActive" type="submit" value="true">
+            <button
+              className="button secondary"
+              disabled={!selectedStatusUserId}
+              onClick={() => updateUserStatus(selectedStatusUserId, true)}
+              type="button"
+            >
               Activar
             </button>
-            <button className="button danger" name="isActive" type="submit" value="false">
+            <button
+              className="button danger"
+              disabled={!selectedStatusUserId}
+              onClick={() => updateUserStatus(selectedStatusUserId, false)}
+              type="button"
+            >
               Desactivar
             </button>
           </div>
@@ -590,7 +601,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
               Cargar usuarios
             </button>
           ) : null}
-        </form>
+        </section>
         <form className="form" onSubmit={deletePick}>
           <h3>Eliminar pick</h3>
           <div className="form-row">

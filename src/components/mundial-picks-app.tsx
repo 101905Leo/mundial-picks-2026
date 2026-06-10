@@ -46,6 +46,24 @@ export function MundialPicksApp() {
     boot();
   }, []);
 
+  useEffect(() => {
+    async function refreshSessionStatus() {
+      if (document.visibilityState === "visible") {
+        await loadSession();
+      }
+    }
+
+    const interval = window.setInterval(refreshSessionStatus, 15000);
+    window.addEventListener("focus", refreshSessionStatus);
+    document.addEventListener("visibilitychange", refreshSessionStatus);
+
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refreshSessionStatus);
+      document.removeEventListener("visibilitychange", refreshSessionStatus);
+    };
+  }, []);
+
   async function refresh() {
     await loadSession();
     await loadData();
