@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { formidableFacts } from "@/lib/formidable-facts";
+import { useEffect, useMemo, useState } from "react";
+import { formidableFacts, type FormidableFactTeam } from "@/lib/formidable-facts";
 import { flagForTeam } from "@/lib/team-flags";
 
 type Props = {
@@ -9,6 +9,26 @@ type Props = {
 };
 
 const regions = ["Todas", "Sudamerica", "Concacaf", "Europa", "Africa", "Asia", "Oceania"];
+
+type RandomFact = {
+  id: string;
+  team: FormidableFactTeam;
+  fact: string;
+};
+
+function allRandomFacts() {
+  return formidableFacts.flatMap((team) =>
+    team.facts.map((fact, index) => ({
+      id: `${team.name}-${index}`,
+      team,
+      fact,
+    })),
+  );
+}
+
+function shuffledFacts(count: number) {
+  return [...allRandomFacts()].sort(() => Math.random() - 0.5).slice(0, count);
+}
 
 export function FormidableFacts({ compact = false }: Props) {
   const [query, setQuery] = useState("");
@@ -95,6 +115,59 @@ export function FormidableFacts({ compact = false }: Props) {
       </div>
 
       {!visibleTeams.length ? <div className="empty">No encontramos selecciones con ese filtro.</div> : null}
+    </section>
+  );
+}
+
+type RandomProps = {
+  count?: number;
+  title?: string;
+  compact?: boolean;
+};
+
+export function RandomFormidableFacts({
+  count = 3,
+  title = "Datos formidables al azar",
+  compact = false,
+}: RandomProps) {
+  const fallbackFacts = useMemo(() => allRandomFacts().slice(0, count), [count]);
+  const [facts, setFacts] = useState<RandomFact[]>(fallbackFacts);
+
+  function refreshFacts() {
+    setFacts(shuffledFacts(count));
+  }
+
+  useEffect(() => {
+    refreshFacts();
+  }, [count]);
+
+  return (
+    <section className={`random-facts ${compact ? "compact" : ""}`}>
+      <div className="section-title">
+        <div>
+          <span className="market-kicker">Datos formidables</span>
+          <h2>{title}</h2>
+        </div>
+        <button className="button secondary" onClick={refreshFacts} type="button">
+          Ver otros
+        </button>
+      </div>
+      <div className="random-facts-grid">
+        {facts.map((item) => (
+          <article className="random-fact-card" key={item.id}>
+            <header>
+              <span className="fact-flag">{flagForTeam(item.team.name)}</span>
+              <div>
+                <h3>{item.team.name}</h3>
+                <small>
+                  {item.team.group} - {item.team.region}
+                </small>
+              </div>
+            </header>
+            <p>{item.fact}</p>
+          </article>
+        ))}
+      </div>
     </section>
   );
 }

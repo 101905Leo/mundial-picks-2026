@@ -543,6 +543,78 @@ button {
   font-weight: 900;
 }
 
+.random-facts {
+  background:
+    linear-gradient(135deg, rgba(42, 117, 255, 0.14), rgba(244, 189, 79, 0.1)),
+    rgba(9, 13, 22, 0.94);
+  border: 1px solid rgba(244, 189, 79, 0.18);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.random-facts.compact {
+  border-left: 0;
+  border-right: 0;
+  border-radius: 0;
+  box-shadow: none;
+  margin: 0;
+  padding: 14px;
+}
+
+.random-facts .section-title {
+  margin-bottom: 0;
+}
+
+.random-facts .section-title h2 {
+  font-size: 1.08rem;
+}
+
+.random-facts-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.random-facts.compact .random-facts-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.random-fact-card {
+  background: rgba(5, 7, 13, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  min-height: 178px;
+  padding: 12px;
+}
+
+.random-fact-card header {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.random-fact-card h3 {
+  color: #fff;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.random-fact-card small {
+  color: var(--gold-soft);
+  font-weight: 800;
+}
+
+.random-fact-card p {
+  color: #dce5f8;
+  line-height: 1.45;
+  margin: 0;
+}
+
 .ranking-preview {
   display: grid;
   gap: 10px;
@@ -1492,12 +1564,14 @@ button {
   .score-rules,
   .facts-controls,
   .facts-grid,
+  .random-facts-grid,
   .live-list,
   .landing-match {
     grid-template-columns: 1fr;
   }
 
   .facts-board.compact .facts-grid,
+  .random-facts.compact .random-facts-grid,
   .facts-hero {
     grid-template-columns: 1fr;
   }

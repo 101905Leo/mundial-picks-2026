@@ -5,7 +5,7 @@ import { AdminPanel } from "@/components/admin-panel";
 import { AuthPanel } from "@/components/auth-panel";
 import { Countdown } from "@/components/countdown";
 import { EntryPanel } from "@/components/entry-panel";
-import { FormidableFacts } from "@/components/formidable-facts";
+import { FormidableFacts, RandomFormidableFacts } from "@/components/formidable-facts";
 import { LeaguePanel } from "@/components/league-panel";
 import { LivePanel } from "@/components/live-panel";
 import { MatchCard } from "@/components/match-card";
@@ -192,7 +192,7 @@ export function MundialPicksApp() {
                     </div>
                   </section>
 
-                  <FormidableFacts compact />
+                  <RandomFormidableFacts count={4} title="Datos formidables que no conocias" />
 
                   <section className="landing-card">
                     <div className="section-title">
@@ -345,6 +345,7 @@ export function MundialPicksApp() {
                       <span>{openMatches} abiertos</span>
                     </div>
                   </div>
+                  <RandomFormidableFacts compact count={2} title="Datos rápidos antes de tus picks" />
                   <div className="market-columns" aria-hidden="true">
                     <span>Partido y tu marcador</span>
                     <span>Resultado real</span>
