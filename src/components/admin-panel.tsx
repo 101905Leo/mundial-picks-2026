@@ -257,6 +257,12 @@ export function AdminPanel({ matches, onChanged }: Props) {
     setMessage("");
     const formData = new FormData(event.currentTarget);
     const userId = String(formData.get("deleteUserId"));
+    await deleteUserById(userId);
+    event.currentTarget.reset();
+  }
+
+  async function deleteUserById(userId: string) {
+    setMessage("");
     const user = users.find((item) => item.id === userId);
 
     if (!user) {
@@ -278,7 +284,6 @@ export function AdminPanel({ matches, onChanged }: Props) {
     setMessage(`Usuario eliminado: ${data.user.name}`);
     await loadUsers();
     onChanged();
-    event.currentTarget.reset();
   }
 
   async function changePassword(event: FormEvent<HTMLFormElement>) {
@@ -566,6 +571,9 @@ export function AdminPanel({ matches, onChanged }: Props) {
                       type="button"
                     >
                       Desactivar
+                    </button>
+                    <button className="button danger" onClick={() => deleteUserById(user.id)} type="button">
+                      Eliminar
                     </button>
                   </div>
                 </article>

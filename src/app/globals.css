@@ -2281,10 +2281,14 @@ button {
     grid-template-columns: 1fr;
   }
 
-  .publish-actions,
-  .admin-user-actions {
+  .publish-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
+  }
+
+  .admin-user-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
