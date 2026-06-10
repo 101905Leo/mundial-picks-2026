@@ -85,6 +85,14 @@ export async function updateWorldCupResultsFromApiFootball() {
   const matches = await prisma.match.findMany();
   let updated = 0;
   let checked = 0;
+  const updatedMatches: Array<{
+    id: string;
+    homeTeam: string;
+    awayTeam: string;
+    homeScore: number;
+    awayScore: number;
+    status: MatchStatus;
+  }> = [];
 
   for (const fixture of data.response) {
     const homeTeam = fixture.teams?.home?.name;
@@ -116,21 +124,40 @@ export async function updateWorldCupResultsFromApiFootball() {
 
     if (!needsUpdate) continue;
 
-    await prisma.match.update({
+    const updatedMatch = await prisma.match.update({
       where: { id: match.id },
       data: {
         homeScore,
         awayScore,
         status,
       },
+      select: {
+        id: true,
+        homeTeam: true,
+        awayTeam: true,
+        homeScore: true,
+        awayScore: true,
+        status: true,
+      },
     });
 
     updated += 1;
+    if (updatedMatch.homeScore !== null && updatedMatch.awayScore !== null) {
+      updatedMatches.push({
+        id: updatedMatch.id,
+        homeTeam: updatedMatch.homeTeam,
+        awayTeam: updatedMatch.awayTeam,
+        homeScore: updatedMatch.homeScore,
+        awayScore: updatedMatch.awayScore,
+        status: updatedMatch.status,
+      });
+    }
   }
 
   return {
     checked,
     updated,
+    updatedMatches,
     source: "API-Football",
   };
 }

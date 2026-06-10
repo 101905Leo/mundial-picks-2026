@@ -67,6 +67,7 @@ export async function notifyWhatsAppUsers(body: string) {
     ? [config.notifyOnlyPhone]
     : (
         await prisma.user.findMany({
+          where: { isActive: true },
           select: { phone: true },
         })
       ).map((user) => user.phone);

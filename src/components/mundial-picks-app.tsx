@@ -5,6 +5,7 @@ import { AdminPanel } from "@/components/admin-panel";
 import { AuthPanel } from "@/components/auth-panel";
 import { Countdown } from "@/components/countdown";
 import { EntryPanel } from "@/components/entry-panel";
+import { FormidableFacts } from "@/components/formidable-facts";
 import { LeaguePanel } from "@/components/league-panel";
 import { LivePanel } from "@/components/live-panel";
 import { MatchCard } from "@/components/match-card";
@@ -15,7 +16,7 @@ export function MundialPicksApp() {
   const [user, setUser] = useState<User | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
-  const [activeView, setActiveView] = useState<"picks" | "live" | "leagues" | "admin">("picks");
+  const [activeView, setActiveView] = useState<"picks" | "facts" | "live" | "leagues" | "admin">("picks");
   const [loading, setLoading] = useState(true);
 
   async function loadSession() {
@@ -191,6 +192,8 @@ export function MundialPicksApp() {
                     </div>
                   </section>
 
+                  <FormidableFacts compact />
+
                   <section className="landing-card">
                     <div className="section-title">
                       <h2>Sistema de puntos</h2>
@@ -270,6 +273,14 @@ export function MundialPicksApp() {
                   }}
                 >
                   Picks
+                </button>
+                <button
+                  className={`tab ${activeView === "facts" ? "active" : ""}`}
+                  onClick={() => {
+                    setActiveView("facts");
+                  }}
+                >
+                  Datos
                 </button>
                 <button
                   className={`tab ${activeView === "live" ? "active" : ""}`}
@@ -379,6 +390,8 @@ export function MundialPicksApp() {
             {user && activeView === "leagues" ? (
               <LeaguePanel signedIn={Boolean(user)} />
             ) : null}
+
+            {user && activeView === "facts" ? <FormidableFacts /> : null}
 
             {user && activeView === "live" ? (
               <LivePanel matches={matches} />
