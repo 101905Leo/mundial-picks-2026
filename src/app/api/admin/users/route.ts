@@ -15,8 +15,29 @@ export async function GET(request: NextRequest) {
       role: true,
       isActive: true,
       entryPaidAt: true,
+      predictions: {
+        select: {
+          points: true,
+        },
+      },
+      _count: {
+        select: {
+          predictions: true,
+        },
+      },
     },
   });
 
-  return Response.json({ users });
+  return Response.json({
+    users: users.map((user) => ({
+      id: user.id,
+      name: user.name,
+      phone: user.phone,
+      role: user.role,
+      isActive: user.isActive,
+      entryPaidAt: user.entryPaidAt,
+      picksCount: user._count.predictions,
+      points: user.predictions.reduce((sum, prediction) => sum + prediction.points, 0),
+    })),
+  });
 }

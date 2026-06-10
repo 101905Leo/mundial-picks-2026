@@ -11,6 +11,8 @@ type AdminUser = {
   role: "USER" | "ADMIN";
   isActive: boolean;
   entryPaidAt: string | null;
+  picksCount: number;
+  points: number;
 };
 
 type Props = {
@@ -518,8 +520,8 @@ export function AdminPanel({ matches, onChanged }: Props) {
         <section className="form users-admin-list">
           <div className="section-title">
             <div>
-              <h3>Usuarios</h3>
-              <p className="muted">Activar confirma que el usuario ya pagó la inscripción.</p>
+              <h3>Base de usuarios</h3>
+              <p className="muted">Consulta WhatsApp, picks guardados, puntos, pago y estado de cada usuario.</p>
             </div>
             <button className="button secondary" type="button" onClick={loadUsers}>
               {usersLoaded ? "Actualizar" : "Cargar usuarios"}
@@ -531,7 +533,17 @@ export function AdminPanel({ matches, onChanged }: Props) {
                 <article className={`admin-user-card ${user.isActive ? "active" : "inactive"}`} key={user.id}>
                   <div>
                     <strong>{user.name}</strong>
-                    <span>{user.phone}</span>
+                    <span>WhatsApp: {user.phone}</span>
+                  </div>
+                  <div className="admin-user-stats">
+                    <span>
+                      <strong>{user.picksCount}</strong>
+                      Picks
+                    </span>
+                    <span>
+                      <strong>{user.points}</strong>
+                      Puntos
+                    </span>
                   </div>
                   <div className="admin-user-badges">
                     <span>{user.entryPaidAt ? "Pagó inscripción" : "Pago pendiente"}</span>
