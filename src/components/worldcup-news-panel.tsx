@@ -107,7 +107,6 @@ export function WorldCupNewsTicker() {
         <div className="news-ticker-window">
           <div className="news-ticker-track">
             <article className="ticker-news">
-              <span>Actualidad</span>
               <strong>Cargando noticias relevantes del Mundial 2026...</strong>
             </article>
           </div>
@@ -126,7 +125,6 @@ export function WorldCupNewsTicker() {
         <div className="news-ticker-track">
           {repeatedItems.map((item, index) => (
             <a className="ticker-news" href={item.link} key={`${item.title}-${index}`} rel="noreferrer" target="_blank">
-              <span>{item.source}</span>
               <strong>{item.title}</strong>
             </a>
           ))}

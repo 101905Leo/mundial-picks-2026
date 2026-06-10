@@ -9,8 +9,9 @@ import { FormidableFacts } from "@/components/formidable-facts";
 import { LeaguePanel } from "@/components/league-panel";
 import { LivePanel } from "@/components/live-panel";
 import { MatchCard } from "@/components/match-card";
+import { OfficialRankingPanel } from "@/components/official-ranking-panel";
 import { RankingTable } from "@/components/ranking-table";
-import { WorldCupNewsPanel, WorldCupNewsTicker } from "@/components/worldcup-news-panel";
+import { WorldCupNewsTicker } from "@/components/worldcup-news-panel";
 import type { Match, RankingEntry, User } from "@/components/types";
 
 export function MundialPicksApp() {
@@ -261,7 +262,7 @@ export function MundialPicksApp() {
                     )}
                   </section>
                   <div className="insights-sidebar">
-                    <WorldCupNewsPanel compact />
+                    <OfficialRankingPanel />
                   </div>
                 </aside>
               </section>
@@ -388,7 +389,7 @@ export function MundialPicksApp() {
                   </div>
                   <RankingTable ranking={ranking} />
                   <div className="insights-sidebar">
-                    <WorldCupNewsPanel compact />
+                    <OfficialRankingPanel />
                   </div>
                 </aside>
               </div>
