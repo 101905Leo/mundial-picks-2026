@@ -7,6 +7,8 @@ function whatsappConfig() {
     apiVersion: process.env.WHATSAPP_GRAPH_API_VERSION || "v24.0",
     defaultCountryCode: process.env.WHATSAPP_DEFAULT_COUNTRY_CODE || "",
     notifyOnlyPhone: process.env.WHATSAPP_NOTIFY_ONLY_PHONE || "",
+    templateName: process.env.WHATSAPP_TEMPLATE_NAME || "mundial_picks_aviso",
+    templateLanguage: process.env.WHATSAPP_TEMPLATE_LANGUAGE || "es_CO",
   };
 }
 
@@ -24,6 +26,26 @@ function normalizePhone(phone: string) {
 }
 
 export async function sendWhatsAppMessage(to: string, body: string) {
+  return sendWhatsAppTemplate(to, "Mundial Picks", body);
+}
+
+export async function notifyWhatsAppUsers(body: string) {
+  const config = whatsappConfig();
+  const recipients = config.notifyOnlyPhone
+    ? [{ phone: config.notifyOnlyPhone, name: "Mundial Picks" }]
+    : (
+        await prisma.user.findMany({
+          where: { isActive: true },
+          select: { phone: true, name: true },
+        })
+      ).map((user) => ({ phone: user.phone, name: user.name }));
+
+  await Promise.allSettled(
+    recipients.map((recipient) => sendWhatsAppTemplate(recipient.phone, recipient.name, body)),
+  );
+}
+
+async function sendWhatsAppTemplate(to: string, name: string, body: string) {
   const config = whatsappConfig();
   const recipient = normalizePhone(to);
 
@@ -43,10 +65,27 @@ export async function sendWhatsAppMessage(to: string, body: string) {
         messaging_product: "whatsapp",
         recipient_type: "individual",
         to: recipient,
-        type: "text",
-        text: {
-          preview_url: false,
-          body,
+        type: "template",
+        template: {
+          name: config.templateName,
+          language: {
+            code: config.templateLanguage,
+          },
+          components: [
+            {
+              type: "body",
+              parameters: [
+                {
+                  type: "text",
+                  text: name || "Jugador",
+                },
+                {
+                  type: "text",
+                  text: body,
+                },
+              ],
+            },
+          ],
         },
       }),
     },
@@ -59,18 +98,4 @@ export async function sendWhatsAppMessage(to: string, body: string) {
   }
 
   return { skipped: false, ok: true };
-}
-
-export async function notifyWhatsAppUsers(body: string) {
-  const config = whatsappConfig();
-  const phones = config.notifyOnlyPhone
-    ? [config.notifyOnlyPhone]
-    : (
-        await prisma.user.findMany({
-          where: { isActive: true },
-          select: { phone: true },
-        })
-      ).map((user) => user.phone);
-
-  await Promise.allSettled(phones.map((phone) => sendWhatsAppMessage(phone, body)));
 }
