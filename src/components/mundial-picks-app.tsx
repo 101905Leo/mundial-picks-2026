@@ -5,12 +5,12 @@ import { AdminPanel } from "@/components/admin-panel";
 import { AuthPanel } from "@/components/auth-panel";
 import { Countdown } from "@/components/countdown";
 import { EntryPanel } from "@/components/entry-panel";
-import { FormidableFacts, FormidableFactsTicker } from "@/components/formidable-facts";
+import { FormidableFacts } from "@/components/formidable-facts";
 import { LeaguePanel } from "@/components/league-panel";
 import { LivePanel } from "@/components/live-panel";
 import { MatchCard } from "@/components/match-card";
 import { RankingTable } from "@/components/ranking-table";
-import { WorldCupNewsPanel } from "@/components/worldcup-news-panel";
+import { WorldCupNewsPanel, WorldCupNewsTicker } from "@/components/worldcup-news-panel";
 import type { Match, RankingEntry, User } from "@/components/types";
 
 export function MundialPicksApp() {
@@ -140,7 +140,7 @@ export function MundialPicksApp() {
         </div>
       </section>
 
-      <FormidableFactsTicker />
+      <WorldCupNewsTicker />
 
       <div className="container">
         {loading ? (
