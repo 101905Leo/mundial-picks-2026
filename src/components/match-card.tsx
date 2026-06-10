@@ -17,7 +17,7 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
   const prediction = match.predictions?.[0];
   const [message, setMessage] = useState("");
   const startsAt = new Date(match.startsAt);
-  const isClosed = isPickClosed(startsAt) || match.status === "FINISHED";
+  const isClosed = isPickClosed(startsAt) || match.status === "LIVE" || match.status === "FINISHED";
   const inputDisabled = isClosed || !canPredict;
 
   async function savePrediction(event: FormEvent<HTMLFormElement>) {
@@ -92,7 +92,9 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
             <button className="button primary" disabled={inputDisabled} type="submit">
               Guardar
             </button>
-            {isClosed ? <p className="pick-closed-message">Predicciones cerradas 5 minutos antes del inicio.</p> : null}
+            {isClosed ? (
+              <p className="pick-closed-message">Predicciones cerradas. No se pueden guardar picks al comenzar el partido.</p>
+            ) : null}
             {!canPredict && !isClosed ? (
               <p className="pick-payment-message">{disabledMessage}</p>
             ) : null}

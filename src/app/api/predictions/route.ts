@@ -20,7 +20,14 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Partido no encontrado" }, { status: 404 });
   }
 
-  if (isPickClosed(match.startsAt)) {
+  const now = new Date();
+  const matchStarted = match.startsAt <= now || match.status === "LIVE" || match.status === "FINISHED";
+
+  if (matchStarted) {
+    return Response.json({ error: "El partido ya comenzo. No puedes guardar picks." }, { status: 409 });
+  }
+
+  if (isPickClosed(match.startsAt, now)) {
     return Response.json({ error: "La prediccion se cierra 5 minutos antes del partido." }, { status: 409 });
   }
 
