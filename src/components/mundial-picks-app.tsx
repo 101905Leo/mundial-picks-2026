@@ -25,13 +25,19 @@ export function MundialPicksApp() {
     const response = await fetch("/api/auth/me");
     const data = await response.json();
     setUser(data.user);
+    return data.user as User | null;
   }
 
-  async function loadData() {
-    const [matchesResponse, rankingResponse] = await Promise.all([fetch("/api/matches"), fetch("/api/rankings")]);
-    const [matchesData, rankingData] = await Promise.all([matchesResponse.json(), rankingResponse.json()]);
+  async function loadData(viewer: User | null = user) {
+    const canViewGlobalRanking = Boolean(viewer && (viewer.role === "ADMIN" || viewer.entryPaidAt));
+    const [matchesResponse, rankingResponse] = await Promise.all([
+      fetch("/api/matches"),
+      canViewGlobalRanking ? fetch("/api/rankings") : Promise.resolve(null),
+    ]);
+    const matchesData = await matchesResponse.json();
+    const rankingData = rankingResponse ? await rankingResponse.json() : { ranking: [] };
     setMatches(matchesData.matches);
-    setRanking(rankingData.ranking);
+    setRanking(rankingData.ranking || []);
   }
 
   async function loadAdminMatches() {
@@ -42,8 +48,8 @@ export function MundialPicksApp() {
 
   useEffect(() => {
     async function boot() {
-      await loadSession();
-      await loadData();
+      const sessionUser = await loadSession();
+      await loadData(sessionUser);
       setLoading(false);
     }
     boot();
@@ -68,15 +74,15 @@ export function MundialPicksApp() {
   }, []);
 
   async function refresh() {
-    await loadSession();
-    await loadData();
+    const sessionUser = await loadSession();
+    await loadData(sessionUser);
   }
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
     setActiveView("picks");
-    await refresh();
+    await loadData(null);
   }
 
   const groupCounts = matches.reduce<Record<string, number>>((counts, match) => {
@@ -88,8 +94,8 @@ export function MundialPicksApp() {
   const lockedMatches = matches.filter((match) => new Date(match.startsAt) <= new Date() || match.status === "FINISHED");
   const openMatches = matches.length - lockedMatches.length;
   const upcomingMatches = matches.slice(0, 3);
-  const rankingPreview = ranking.slice(0, 5);
   const canPredict = Boolean(user && (user.role === "ADMIN" || user.entryPaidAt));
+  const canViewGlobalRanking = canPredict;
   const matchesByDate = matches.reduce<Array<{ key: string; label: string; matches: Match[] }>>((days, match) => {
     const startsAt = new Date(match.startsAt);
     const key = startsAt.toISOString().slice(0, 10);
@@ -240,27 +246,9 @@ export function MundialPicksApp() {
                   <AuthPanel
                     onAuth={async (sessionUser) => {
                       setUser(sessionUser);
-                      await refresh();
+                      await loadData(sessionUser);
                     }}
                   />
-                  <section className="landing-card ranking-preview-card">
-                    <div className="section-title">
-                      <h2>Ranking global</h2>
-                    </div>
-                    {rankingPreview.length ? (
-                      <ol className="ranking-preview">
-                        {rankingPreview.map((entry, index) => (
-                          <li key={entry.id}>
-                            <span>{index + 1}</span>
-                            <strong>{entry.name}</strong>
-                            <em>{entry.points} pts</em>
-                          </li>
-                        ))}
-                      </ol>
-                    ) : (
-                      <div className="empty">Todavía no hay puntos registrados.</div>
-                    )}
-                  </section>
                 </aside>
               </section>
             ) : null}
@@ -276,15 +264,17 @@ export function MundialPicksApp() {
                 >
                   Picks
                 </button>
-                <button
-                  className={`tab ${activeView === "ranking" ? "active" : ""}`}
-                  onClick={async () => {
-                    setActiveView("ranking");
-                    await loadData();
-                  }}
-                >
-                  Ranking
-                </button>
+                {canViewGlobalRanking ? (
+                  <button
+                    className={`tab ${activeView === "ranking" ? "active" : ""}`}
+                    onClick={async () => {
+                      setActiveView("ranking");
+                      await loadData(user);
+                    }}
+                  >
+                    Ranking
+                  </button>
+                ) : null}
                 <button
                   className={`tab ${activeView === "facts" ? "active" : ""}`}
                   onClick={() => {
@@ -393,12 +383,16 @@ export function MundialPicksApp() {
                   <div className="section-title">
                     <h2>Ranking global</h2>
                   </div>
-                  <RankingTable ranking={ranking} />
+                  {canViewGlobalRanking ? (
+                    <RankingTable ranking={ranking} />
+                  ) : (
+                    <div className="empty">El ranking global estará disponible cuando tu inscripción esté activa.</div>
+                  )}
                 </aside>
               </div>
             ) : null}
 
-            {user && activeView === "ranking" ? (
+            {user && canViewGlobalRanking && activeView === "ranking" ? (
               <GlobalRankingPanel ranking={ranking} user={user} onOpenPicks={() => setActiveView("picks")} />
             ) : null}
 

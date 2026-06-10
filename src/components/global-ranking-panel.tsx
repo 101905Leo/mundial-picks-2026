@@ -61,7 +61,7 @@ export function GlobalRankingPanel({ ranking, user, onOpenPicks }: Props) {
         <article>
           <span>Top visible</span>
           <strong>100</strong>
-          <small>Ranking global público</small>
+          <small>Disponible para inscritos</small>
         </article>
       </div>
 
