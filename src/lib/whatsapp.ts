@@ -25,24 +25,54 @@ function normalizePhone(phone: string) {
   return digits;
 }
 
+function timeoutSignal(ms: number) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), ms);
+
+  return {
+    signal: controller.signal,
+    cleanup: () => clearTimeout(timeout),
+  };
+}
+
 export async function sendWhatsAppMessage(to: string, body: string) {
   return sendWhatsAppTemplate(to, "Mundial Picks", body);
 }
 
 export async function notifyWhatsAppUsers(body: string) {
-  const config = whatsappConfig();
-  const recipients = config.notifyOnlyPhone
-    ? [{ phone: config.notifyOnlyPhone, name: "Mundial Picks" }]
-    : (
-        await prisma.user.findMany({
-          where: { isActive: true },
-          select: { phone: true, name: true },
-        })
-      ).map((user) => ({ phone: user.phone, name: user.name }));
+  try {
+    const config = whatsappConfig();
+    const recipients = config.notifyOnlyPhone
+      ? [{ phone: config.notifyOnlyPhone, name: "Mundial Picks" }]
+      : (
+          await prisma.user.findMany({
+            where: { isActive: true },
+            select: { phone: true, name: true },
+          })
+        ).map((user) => ({ phone: user.phone, name: user.name }));
 
-  await Promise.allSettled(
-    recipients.map((recipient) => sendWhatsAppTemplate(recipient.phone, recipient.name, body)),
-  );
+    const results = await Promise.allSettled(
+      recipients.map((recipient) => sendWhatsAppTemplate(recipient.phone, recipient.name, body)),
+    );
+
+    const sent = results.filter((result) => result.status === "fulfilled" && result.value.ok).length;
+    const skipped = results.filter((result) => result.status === "fulfilled" && result.value.skipped).length;
+
+    return {
+      attempted: recipients.length,
+      sent,
+      skipped,
+      failed: recipients.length - sent - skipped,
+    };
+  } catch (error) {
+    console.error("WhatsApp notification skipped", error);
+    return {
+      attempted: 0,
+      sent: 0,
+      skipped: 0,
+      failed: 1,
+    };
+  }
 }
 
 async function sendWhatsAppTemplate(to: string, name: string, body: string) {
@@ -53,49 +83,59 @@ async function sendWhatsAppTemplate(to: string, name: string, body: string) {
     return { skipped: true };
   }
 
-  const response = await fetch(
-    `https://graph.facebook.com/${config.apiVersion}/${config.phoneNumberId}/messages`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${config.accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messaging_product: "whatsapp",
-        recipient_type: "individual",
-        to: recipient,
-        type: "template",
-        template: {
-          name: config.templateName,
-          language: {
-            code: config.templateLanguage,
-          },
-          components: [
-            {
-              type: "body",
-              parameters: [
-                {
-                  type: "text",
-                  text: name || "Jugador",
-                },
-                {
-                  type: "text",
-                  text: body,
-                },
-              ],
-            },
-          ],
+  const timeout = timeoutSignal(8000);
+
+  try {
+    const response = await fetch(
+      `https://graph.facebook.com/${config.apiVersion}/${config.phoneNumberId}/messages`,
+      {
+        method: "POST",
+        signal: timeout.signal,
+        headers: {
+          Authorization: `Bearer ${config.accessToken}`,
+          "Content-Type": "application/json",
         },
-      }),
-    },
-  );
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          recipient_type: "individual",
+          to: recipient,
+          type: "template",
+          template: {
+            name: config.templateName,
+            language: {
+              code: config.templateLanguage,
+            },
+            components: [
+              {
+                type: "body",
+                parameters: [
+                  {
+                    type: "text",
+                    text: name || "Jugador",
+                  },
+                  {
+                    type: "text",
+                    text: body,
+                  },
+                ],
+              },
+            ],
+          },
+        }),
+      },
+    );
 
-  if (!response.ok) {
-    const details = await response.text();
-    console.error("WhatsApp notification failed", details);
+    if (!response.ok) {
+      const details = await response.text();
+      console.error("WhatsApp notification failed", details);
+      return { skipped: false, ok: false };
+    }
+
+    return { skipped: false, ok: true };
+  } catch (error) {
+    console.error("WhatsApp notification failed", error);
     return { skipped: false, ok: false };
+  } finally {
+    timeout.cleanup();
   }
-
-  return { skipped: false, ok: true };
 }

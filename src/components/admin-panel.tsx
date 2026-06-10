@@ -131,6 +131,24 @@ export function AdminPanel({ matches, onChanged }: Props) {
     onChanged();
   }
 
+  async function testWhatsApp() {
+    setMessage("Enviando prueba de WhatsApp...");
+    const response = await fetch("/api/admin/whatsapp-test", { method: "POST" });
+    const data = await response.json();
+
+    if (!response.ok) {
+      setMessage(data.error ?? "No se pudo enviar la prueba de WhatsApp");
+      return;
+    }
+
+    if (data.sent > 0) {
+      setMessage("Prueba de WhatsApp enviada. Revisa el celular configurado.");
+      return;
+    }
+
+    setMessage("WhatsApp no envio el mensaje. Revisa token, plantilla aprobada y variables en Vercel.");
+  }
+
   async function updateResults() {
     setMessage("Actualizando resultados reales...");
     const response = await fetch("/api/admin/update-results", { method: "POST" });
@@ -366,6 +384,9 @@ export function AdminPanel({ matches, onChanged }: Props) {
           </button>
           <button className="button secondary" onClick={recalculate}>
             Recalcular puntos
+          </button>
+          <button className="button secondary" onClick={testWhatsApp}>
+            Probar WhatsApp
           </button>
         </div>
       </div>
