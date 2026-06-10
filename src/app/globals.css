@@ -256,6 +256,41 @@ button {
   max-width: 820px;
 }
 
+.mobile-note {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(47, 209, 132, 0.14), transparent 38%),
+    linear-gradient(180deg, rgba(18, 24, 37, 0.97), rgba(9, 12, 20, 0.98));
+}
+
+.mobile-note .section-title {
+  margin-bottom: 10px;
+}
+
+.mobile-note p {
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0 0 14px;
+}
+
+.mobile-note p strong {
+  color: var(--gold-soft);
+}
+
+.mobile-note-steps {
+  display: grid;
+  gap: 8px;
+}
+
+.mobile-note-steps span {
+  background: rgba(5, 7, 13, 0.58);
+  border: 1px solid rgba(47, 209, 132, 0.18);
+  border-radius: 8px;
+  color: #e8fff4;
+  font-weight: 800;
+  line-height: 1.35;
+  padding: 10px 12px;
+}
+
 .landing-stats {
   display: grid;
   gap: 12px;

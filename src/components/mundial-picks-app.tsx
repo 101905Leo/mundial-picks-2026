@@ -253,6 +253,19 @@ export function MundialPicksApp() {
                       await loadData(sessionUser);
                     }}
                   />
+                  <section className="landing-card mobile-note">
+                    <div className="section-title">
+                      <h2>Úsala en tu celular</h2>
+                    </div>
+                    <p>
+                      Abre <strong>mundialpicks.online</strong> desde Safari o Chrome. Puedes registrarte, iniciar
+                      sesión, guardar tus picks y revisar el ranking desde el teléfono.
+                    </p>
+                    <div className="mobile-note-steps">
+                      <span>iPhone: Compartir → Agregar a pantalla de inicio</span>
+                      <span>Android: Menú ⋮ → Agregar a pantalla principal</span>
+                    </div>
+                  </section>
                 </aside>
               </section>
             ) : null}
