@@ -30,8 +30,18 @@ export function WorldCupNewsPanel({ compact = false }: Props) {
   async function loadNews() {
     setLoading(true);
     setMessage("");
-    const response = await fetch("/api/news");
-    const data = await response.json();
+    let response: Response;
+    let data: { items?: NewsItem[]; error?: string };
+
+    try {
+      response = await fetch("/api/news");
+      data = await response.json();
+    } catch {
+      setMessage("No se pudieron cargar noticias");
+      setItems([]);
+      setLoading(false);
+      return;
+    }
 
     if (!response.ok) {
       setMessage(data.error ?? "No se pudieron cargar noticias");
@@ -86,9 +96,13 @@ export function WorldCupNewsTicker() {
 
   useEffect(() => {
     async function loadNews() {
-      const response = await fetch("/api/news");
-      const data = await response.json();
-      setItems(response.ok ? data.items ?? [] : []);
+      try {
+        const response = await fetch("/api/news");
+        const data = await response.json();
+        setItems(response.ok ? data.items ?? [] : []);
+      } catch {
+        setItems([]);
+      }
     }
 
     loadNews();

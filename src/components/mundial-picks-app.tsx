@@ -30,14 +30,24 @@ export function MundialPicksApp() {
 
   async function loadData(viewer: User | null = user) {
     const canViewGlobalRanking = Boolean(viewer && (viewer.role === "ADMIN" || viewer.entryPaidAt));
-    const [matchesResponse, rankingResponse] = await Promise.all([
+    const [matchesResponse, rankingResponse] = await Promise.allSettled([
       fetch("/api/matches"),
       canViewGlobalRanking ? fetch("/api/rankings") : Promise.resolve(null),
     ]);
-    const matchesData = await matchesResponse.json();
-    const rankingData = rankingResponse ? await rankingResponse.json() : { ranking: [] };
-    setMatches(matchesData.matches);
-    setRanking(rankingData.ranking || []);
+
+    if (matchesResponse.status === "fulfilled" && matchesResponse.value.ok) {
+      const matchesData = await matchesResponse.value.json();
+      setMatches(matchesData.matches ?? []);
+    } else {
+      setMatches([]);
+    }
+
+    if (rankingResponse.status === "fulfilled" && rankingResponse.value?.ok) {
+      const rankingData = await rankingResponse.value.json();
+      setRanking(rankingData.ranking ?? []);
+    } else {
+      setRanking([]);
+    }
   }
 
   async function loadAdminMatches() {
@@ -48,9 +58,17 @@ export function MundialPicksApp() {
 
   useEffect(() => {
     async function boot() {
-      const sessionUser = await loadSession();
-      await loadData(sessionUser);
-      setLoading(false);
+      try {
+        const sessionUser = await loadSession();
+        await loadData(sessionUser);
+      } catch (error) {
+        console.error("Initial app load failed", error);
+        setUser(null);
+        setMatches([]);
+        setRanking([]);
+      } finally {
+        setLoading(false);
+      }
     }
     boot();
   }, []);
