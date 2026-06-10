@@ -24,6 +24,10 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "La prediccion se cierra 5 minutos antes del partido." }, { status: 409 });
   }
 
+  if (!user!.isActive) {
+    return Response.json({ error: "Tu usuario esta desactivado para guardar picks." }, { status: 403 });
+  }
+
   if (user!.role !== "ADMIN" && !user!.entryPaidAt) {
     return Response.json({ error: "Debes pagar la inscripción única para guardar picks." }, { status: 402 });
   }

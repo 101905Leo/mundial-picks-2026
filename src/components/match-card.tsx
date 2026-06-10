@@ -9,10 +9,11 @@ type Props = {
   match: Match;
   signedIn: boolean;
   canPredict: boolean;
+  disabledMessage: string;
   onSaved: () => void;
 };
 
-export function MatchCard({ match, signedIn, canPredict, onSaved }: Props) {
+export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSaved }: Props) {
   const prediction = match.predictions?.[0];
   const [message, setMessage] = useState("");
   const startsAt = new Date(match.startsAt);
@@ -22,7 +23,7 @@ export function MatchCard({ match, signedIn, canPredict, onSaved }: Props) {
   async function savePrediction(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!canPredict) {
-      setMessage("Debes pagar la inscripción única para predecir marcadores.");
+      setMessage(disabledMessage);
       return;
     }
     setMessage("");
@@ -93,7 +94,7 @@ export function MatchCard({ match, signedIn, canPredict, onSaved }: Props) {
             </button>
             {isClosed ? <p className="pick-closed-message">Predicciones cerradas 5 minutos antes del inicio.</p> : null}
             {!canPredict && !isClosed ? (
-              <p className="pick-payment-message">Paga la inscripción única para habilitar tus predicciones.</p>
+              <p className="pick-payment-message">{disabledMessage}</p>
             ) : null}
           </form>
         ) : (

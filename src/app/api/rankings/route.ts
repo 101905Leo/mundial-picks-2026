@@ -12,7 +12,6 @@ export async function GET(request: NextRequest) {
 
   const users = await prisma.user.findMany({
     where: {
-      isActive: true,
       OR: [{ entryPaidAt: { not: null } }, { role: "ADMIN" }],
     },
     select: {

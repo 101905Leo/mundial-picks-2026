@@ -19,10 +19,6 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Celular o contrasena incorrectos" }, { status: 401 });
   }
 
-  if (!user.isActive) {
-    return Response.json({ error: "Tu usuario esta desactivado. Contacta al administrador." }, { status: 403 });
-  }
-
   const sessionUser = {
     id: user.id,
     name: user.name,

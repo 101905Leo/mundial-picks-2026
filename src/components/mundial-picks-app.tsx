@@ -94,8 +94,12 @@ export function MundialPicksApp() {
   const lockedMatches = matches.filter((match) => new Date(match.startsAt) <= new Date() || match.status === "FINISHED");
   const openMatches = matches.length - lockedMatches.length;
   const upcomingMatches = matches.slice(0, 3);
-  const canPredict = Boolean(user && (user.role === "ADMIN" || user.entryPaidAt));
-  const canViewGlobalRanking = canPredict;
+  const canViewGlobalRanking = Boolean(user && (user.role === "ADMIN" || user.entryPaidAt));
+  const canPredict = Boolean(user && user.isActive && (user.role === "ADMIN" || user.entryPaidAt));
+  const pickDisabledMessage =
+    user && !user.isActive
+      ? "Tu usuario esta desactivado para guardar picks."
+      : "Paga la inscripción única para habilitar tus predicciones.";
   const matchesByDate = matches.reduce<Array<{ key: string; label: string; matches: Match[] }>>((days, match) => {
     const startsAt = new Date(match.startsAt);
     const key = startsAt.toISOString().slice(0, 10);
@@ -365,6 +369,7 @@ export function MundialPicksApp() {
                               match={match}
                               signedIn={Boolean(user)}
                               canPredict={canPredict}
+                              disabledMessage={pickDisabledMessage}
                               onSaved={refresh}
                             />
                           ))}
