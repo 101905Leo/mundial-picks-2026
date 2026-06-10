@@ -5,7 +5,7 @@ import { AdminPanel } from "@/components/admin-panel";
 import { AuthPanel } from "@/components/auth-panel";
 import { Countdown } from "@/components/countdown";
 import { EntryPanel } from "@/components/entry-panel";
-import { FormidableFacts, RandomFormidableFacts } from "@/components/formidable-facts";
+import { FormidableFacts, FormidableFactsTicker } from "@/components/formidable-facts";
 import { LeaguePanel } from "@/components/league-panel";
 import { LivePanel } from "@/components/live-panel";
 import { MatchCard } from "@/components/match-card";
@@ -140,6 +140,8 @@ export function MundialPicksApp() {
         </div>
       </section>
 
+      <FormidableFactsTicker />
+
       <div className="container">
         {loading ? (
           <div className="panel">Cargando Copa Mundial de la FIFA 2026™...</div>
@@ -260,7 +262,6 @@ export function MundialPicksApp() {
                   </section>
                   <div className="insights-sidebar">
                     <WorldCupNewsPanel compact />
-                    <RandomFormidableFacts compact count={2} title="Datos formidables" />
                   </div>
                 </aside>
               </section>
@@ -388,7 +389,6 @@ export function MundialPicksApp() {
                   <RankingTable ranking={ranking} />
                   <div className="insights-sidebar">
                     <WorldCupNewsPanel compact />
-                    <RandomFormidableFacts compact count={2} title="Datos formidables" />
                   </div>
                 </aside>
               </div>

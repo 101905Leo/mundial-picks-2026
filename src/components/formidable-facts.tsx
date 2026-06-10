@@ -171,3 +171,28 @@ export function RandomFormidableFacts({
     </section>
   );
 }
+
+export function FormidableFactsTicker() {
+  const tickerFacts = allRandomFacts().slice(0, 36);
+  const repeatedFacts = [...tickerFacts, ...tickerFacts];
+
+  return (
+    <section className="facts-ticker" aria-label="Datos formidables del Mundial 2026">
+      <div className="facts-ticker-label">
+        <span>Datos formidables</span>
+        <strong>144</strong>
+      </div>
+      <div className="facts-ticker-window">
+        <div className="facts-ticker-track">
+          {repeatedFacts.map((item, index) => (
+            <article className="ticker-fact" key={`${item.id}-${index}`}>
+              <span>{flagForTeam(item.team.name)}</span>
+              <strong>{item.team.name}</strong>
+              <em>{item.fact}</em>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
