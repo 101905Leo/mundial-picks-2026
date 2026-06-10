@@ -193,10 +193,6 @@ export function MundialPicksApp() {
                     </div>
                   </section>
 
-                  <WorldCupNewsPanel />
-
-                  <RandomFormidableFacts count={4} title="Datos formidables que no conocias" />
-
                   <section className="landing-card">
                     <div className="section-title">
                       <h2>Sistema de puntos</h2>
@@ -262,6 +258,10 @@ export function MundialPicksApp() {
                       <div className="empty">Todavía no hay puntos registrados.</div>
                     )}
                   </section>
+                  <div className="insights-sidebar">
+                    <WorldCupNewsPanel compact />
+                    <RandomFormidableFacts compact count={2} title="Datos formidables" />
+                  </div>
                 </aside>
               </section>
             ) : null}
@@ -348,8 +348,6 @@ export function MundialPicksApp() {
                       <span>{openMatches} abiertos</span>
                     </div>
                   </div>
-                  <RandomFormidableFacts compact count={2} title="Datos rápidos antes de tus picks" />
-                  <WorldCupNewsPanel compact />
                   <div className="market-columns" aria-hidden="true">
                     <span>Partido y tu marcador</span>
                     <span>Resultado real</span>
@@ -388,6 +386,10 @@ export function MundialPicksApp() {
                     <h2>Ranking global</h2>
                   </div>
                   <RankingTable ranking={ranking} />
+                  <div className="insights-sidebar">
+                    <WorldCupNewsPanel compact />
+                    <RandomFormidableFacts compact count={2} title="Datos formidables" />
+                  </div>
                 </aside>
               </div>
             ) : null}
