@@ -22,7 +22,6 @@ export function AdminPanel({ matches, onChanged }: Props) {
   const [message, setMessage] = useState("");
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [usersLoaded, setUsersLoaded] = useState(false);
-  const [selectedStatusUserId, setSelectedStatusUserId] = useState("");
   const publishedMatches = matches.filter((match) => match.isPublished).length;
 
   async function loadUsers() {
@@ -219,31 +218,6 @@ export function AdminPanel({ matches, onChanged }: Props) {
     setMessage(`Pick eliminado: ${data.deleted.user} - ${data.deleted.match}`);
     await loadUsers();
     onChanged();
-    event.currentTarget.reset();
-  }
-
-  async function activateEntry(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setMessage("");
-    const formData = new FormData(event.currentTarget);
-    const userId = String(formData.get("entryUserId"));
-    const user = users.find((item) => item.id === userId);
-
-    if (!user) {
-      setMessage("Selecciona un usuario");
-      return;
-    }
-
-    const response = await fetch(`/api/admin/users/${userId}/entry`, { method: "POST" });
-    const data = await response.json();
-
-    if (!response.ok) {
-      setMessage(data.error ?? "No se pudo activar la inscripcion");
-      return;
-    }
-
-    setMessage(`Inscripcion pagada y usuario activo: ${data.user.name}`);
-    await loadUsers();
     event.currentTarget.reset();
   }
 
@@ -541,71 +515,53 @@ export function AdminPanel({ matches, onChanged }: Props) {
             Eliminar partido
           </button>
         </form>
-        <form className="form" onSubmit={activateEntry}>
-          <h3>Confirmar pago de inscripción</h3>
-          <div className="form-row">
-            <label htmlFor="entryUserId">Usuario</label>
-            <select id="entryUserId" name="entryUserId" onFocus={() => !usersLoaded && loadUsers()} required>
-              <option value="">Selecciona usuario</option>
-              {users.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.name} - {user.phone} - {user.entryPaidAt ? "pagó inscripción" : "pago pendiente"}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button className="button primary" type="submit">
-            Confirmar pago y activar
-          </button>
-          {!usersLoaded ? (
+        <section className="form users-admin-list">
+          <div className="section-title">
+            <div>
+              <h3>Usuarios</h3>
+              <p className="muted">Activar confirma que el usuario ya pagó la inscripción.</p>
+            </div>
             <button className="button secondary" type="button" onClick={loadUsers}>
-              Cargar usuarios
+              {usersLoaded ? "Actualizar" : "Cargar usuarios"}
             </button>
-          ) : null}
-        </form>
-        <section className="form">
-          <h3>Activar pagado / desactivar usuario</h3>
-          <div className="form-row">
-            <label htmlFor="statusUserId">Usuario</label>
-            <select
-              id="statusUserId"
-              name="statusUserId"
-              onChange={(event) => setSelectedStatusUserId(event.target.value)}
-              onFocus={() => !usersLoaded && loadUsers()}
-              value={selectedStatusUserId}
-            >
-              <option value="">Selecciona usuario</option>
+          </div>
+          {usersLoaded ? (
+            <div className="admin-user-list">
               {users.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.name} - {user.phone} - {user.entryPaidAt ? "pagó inscripción" : "pago pendiente"} -{" "}
-                  {user.isActive ? "activo" : "desactivado"}
-                </option>
+                <article className={`admin-user-card ${user.isActive ? "active" : "inactive"}`} key={user.id}>
+                  <div>
+                    <strong>{user.name}</strong>
+                    <span>{user.phone}</span>
+                  </div>
+                  <div className="admin-user-badges">
+                    <span>{user.entryPaidAt ? "Pagó inscripción" : "Pago pendiente"}</span>
+                    <span>{user.isActive ? "Activo" : "Desactivado"}</span>
+                    {user.role === "ADMIN" ? <span>Admin</span> : null}
+                  </div>
+                  <div className="admin-user-actions">
+                    <button
+                      className="button secondary"
+                      disabled={user.isActive && Boolean(user.entryPaidAt)}
+                      onClick={() => updateUserStatus(user.id, true)}
+                      type="button"
+                    >
+                      Activar
+                    </button>
+                    <button
+                      className="button danger"
+                      disabled={!user.isActive}
+                      onClick={() => updateUserStatus(user.id, false)}
+                      type="button"
+                    >
+                      Desactivar
+                    </button>
+                  </div>
+                </article>
               ))}
-            </select>
-          </div>
-          <div className="inline-form">
-            <button
-              className="button secondary"
-              disabled={!selectedStatusUserId}
-              onClick={() => updateUserStatus(selectedStatusUserId, true)}
-              type="button"
-            >
-              Activar como pagado
-            </button>
-            <button
-              className="button danger"
-              disabled={!selectedStatusUserId}
-              onClick={() => updateUserStatus(selectedStatusUserId, false)}
-              type="button"
-            >
-              Desactivar
-            </button>
-          </div>
-          {!usersLoaded ? (
-            <button className="button secondary" type="button" onClick={loadUsers}>
-              Cargar usuarios
-            </button>
-          ) : null}
+            </div>
+          ) : (
+            <div className="empty">Carga los usuarios para activar pagos o desactivar accesos.</div>
+          )}
         </section>
         <form className="form" onSubmit={deletePick}>
           <h3>Eliminar pick</h3>

@@ -1615,6 +1615,78 @@ button {
   opacity: 0.45;
 }
 
+.users-admin-list {
+  grid-column: 1 / -1;
+}
+
+.users-admin-list .section-title {
+  margin-bottom: 0;
+}
+
+.users-admin-list .section-title p {
+  margin: 4px 0 0;
+}
+
+.admin-user-list {
+  display: grid;
+  gap: 10px;
+  max-height: 520px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.admin-user-card {
+  align-items: center;
+  background: linear-gradient(180deg, rgba(16, 21, 33, 0.98), rgba(8, 11, 18, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 5px solid var(--red);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(180px, 1fr) minmax(240px, 1fr) auto;
+  padding: 12px;
+}
+
+.admin-user-card.active {
+  border-left-color: var(--green-accent);
+}
+
+.admin-user-card strong {
+  color: #fff;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.admin-user-card span {
+  color: var(--muted);
+}
+
+.admin-user-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-user-badges span {
+  background: rgba(5, 7, 13, 0.62);
+  border: 1px solid rgba(244, 189, 79, 0.16);
+  border-radius: 999px;
+  color: #eef2fb;
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 6px 10px;
+}
+
+.admin-user-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-user-actions .button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .inline-form {
   align-items: end;
   display: grid;
@@ -2140,12 +2212,14 @@ button {
     grid-template-columns: 1fr;
   }
 
-  .publish-card {
+  .publish-card,
+  .admin-user-card {
     align-items: stretch;
     grid-template-columns: 1fr;
   }
 
-  .publish-actions {
+  .publish-actions,
+  .admin-user-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
   }
