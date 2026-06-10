@@ -141,6 +141,7 @@ export async function approveEntryPayment(reference: string, transactionId?: str
       where: { id: payment.userId },
       data: {
         entryPaidAt: paidAt,
+        isActive: true,
       },
     });
 

@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
     const updatedUser = await prisma.user.findUnique({
       where: { id: user.id },
-      select: { id: true, name: true, phone: true, role: true, entryPaidAt: true },
+      select: { id: true, name: true, phone: true, role: true, isActive: true, entryPaidAt: true },
     });
 
     return Response.json({ user: updatedUser, status: transaction.status });

@@ -125,6 +125,39 @@ button {
   white-space: nowrap;
 }
 
+.entry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.manual-payment-card {
+  background: rgba(5, 7, 13, 0.72);
+  border: 1px solid rgba(244, 189, 79, 0.22);
+  border-radius: 8px;
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+}
+
+.manual-payment-card span {
+  color: var(--gold-soft);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.manual-payment-card strong {
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.manual-payment-card small {
+  color: var(--muted);
+  font-weight: 700;
+}
+
 .container {
   display: grid;
   gap: 24px;
