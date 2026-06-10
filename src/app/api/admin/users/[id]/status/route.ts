@@ -26,7 +26,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   const user = await prisma.user.findUnique({
     where: { id },
-    select: { id: true, role: true },
+    select: { id: true, role: true, entryPaidAt: true },
   });
 
   if (!user) {
@@ -42,7 +42,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   const updatedUser = await prisma.user.update({
     where: { id },
-    data: { isActive: parsed.data.isActive },
+    data: {
+      isActive: parsed.data.isActive,
+      ...(parsed.data.isActive && user.role !== "ADMIN" && !user.entryPaidAt ? { entryPaidAt: new Date() } : {}),
+    },
     select: { id: true, name: true, phone: true, role: true, isActive: true, entryPaidAt: true },
   });
 

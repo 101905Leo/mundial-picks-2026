@@ -242,7 +242,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
       return;
     }
 
-    setMessage(`Inscripcion activada para ${data.user.name}`);
+    setMessage(`Inscripcion pagada y usuario activo: ${data.user.name}`);
     await loadUsers();
     event.currentTarget.reset();
   }
@@ -268,7 +268,11 @@ export function AdminPanel({ matches, onChanged }: Props) {
       return;
     }
 
-    setMessage(`${data.user.name} ahora esta ${data.user.isActive ? "activo" : "desactivado"}`);
+    setMessage(
+      data.user.isActive
+        ? `${data.user.name} ahora esta activo porque ya pago la inscripcion`
+        : `${data.user.name} ahora esta desactivado para guardar picks`,
+    );
     await loadUsers();
   }
 
@@ -538,20 +542,20 @@ export function AdminPanel({ matches, onChanged }: Props) {
           </button>
         </form>
         <form className="form" onSubmit={activateEntry}>
-          <h3>Activar inscripción</h3>
+          <h3>Confirmar pago de inscripción</h3>
           <div className="form-row">
             <label htmlFor="entryUserId">Usuario</label>
             <select id="entryUserId" name="entryUserId" onFocus={() => !usersLoaded && loadUsers()} required>
               <option value="">Selecciona usuario</option>
               {users.map((user) => (
                 <option key={user.id} value={user.id}>
-                  {user.name} - {user.phone} - {user.entryPaidAt ? "inscrito" : "pendiente"}
+                  {user.name} - {user.phone} - {user.entryPaidAt ? "pagó inscripción" : "pago pendiente"}
                 </option>
               ))}
             </select>
           </div>
           <button className="button primary" type="submit">
-            Activar inscripción
+            Confirmar pago y activar
           </button>
           {!usersLoaded ? (
             <button className="button secondary" type="button" onClick={loadUsers}>
@@ -560,7 +564,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
           ) : null}
         </form>
         <section className="form">
-          <h3>Activar / desactivar usuario</h3>
+          <h3>Activar pagado / desactivar usuario</h3>
           <div className="form-row">
             <label htmlFor="statusUserId">Usuario</label>
             <select
@@ -573,7 +577,8 @@ export function AdminPanel({ matches, onChanged }: Props) {
               <option value="">Selecciona usuario</option>
               {users.map((user) => (
                 <option key={user.id} value={user.id}>
-                  {user.name} - {user.phone} - {user.isActive ? "activo" : "desactivado"}
+                  {user.name} - {user.phone} - {user.entryPaidAt ? "pagó inscripción" : "pago pendiente"} -{" "}
+                  {user.isActive ? "activo" : "desactivado"}
                 </option>
               ))}
             </select>
@@ -585,7 +590,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
               onClick={() => updateUserStatus(selectedStatusUserId, true)}
               type="button"
             >
-              Activar
+              Activar como pagado
             </button>
             <button
               className="button danger"
