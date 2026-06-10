@@ -35,6 +35,20 @@ function timeoutSignal(ms: number) {
   };
 }
 
+function safeErrorMessage(details: string) {
+  try {
+    const parsed = JSON.parse(details) as { error?: { message?: string; code?: number; error_data?: { details?: string } } };
+    const message = parsed.error?.error_data?.details || parsed.error?.message;
+    const code = parsed.error?.code ? ` (#${parsed.error.code})` : "";
+
+    if (message) return `${message}${code}`;
+  } catch {
+    // Fall back to the raw response below.
+  }
+
+  return details.slice(0, 280);
+}
+
 export async function sendWhatsAppMessage(to: string, body: string) {
   return sendWhatsAppTemplate(to, "Mundial Picks", body);
 }
@@ -57,12 +71,16 @@ export async function notifyWhatsAppUsers(body: string) {
 
     const sent = results.filter((result) => result.status === "fulfilled" && result.value.ok).length;
     const skipped = results.filter((result) => result.status === "fulfilled" && result.value.skipped).length;
+    const errors = results
+      .map((result) => (result.status === "fulfilled" ? result.value.error : "No se pudo enviar el mensaje"))
+      .filter(Boolean);
 
     return {
       attempted: recipients.length,
       sent,
       skipped,
       failed: recipients.length - sent - skipped,
+      errors,
     };
   } catch (error) {
     console.error("WhatsApp notification skipped", error);
@@ -71,6 +89,7 @@ export async function notifyWhatsAppUsers(body: string) {
       sent: 0,
       skipped: 0,
       failed: 1,
+      errors: ["No se pudo preparar la notificacion de WhatsApp"],
     };
   }
 }
@@ -80,7 +99,12 @@ async function sendWhatsAppTemplate(to: string, name: string, body: string) {
   const recipient = normalizePhone(to);
 
   if (!config.accessToken || !config.phoneNumberId || !recipient) {
-    return { skipped: true };
+    return {
+      skipped: true,
+      error: !recipient
+        ? "No hay numero de WhatsApp para enviar la prueba"
+        : "Faltan WHATSAPP_ACCESS_TOKEN o WHATSAPP_PHONE_NUMBER_ID en Vercel",
+    };
   }
 
   const timeout = timeoutSignal(8000);
@@ -128,13 +152,13 @@ async function sendWhatsAppTemplate(to: string, name: string, body: string) {
     if (!response.ok) {
       const details = await response.text();
       console.error("WhatsApp notification failed", details);
-      return { skipped: false, ok: false };
+      return { skipped: false, ok: false, error: safeErrorMessage(details) };
     }
 
     return { skipped: false, ok: true };
   } catch (error) {
     console.error("WhatsApp notification failed", error);
-    return { skipped: false, ok: false };
+    return { skipped: false, ok: false, error: "Meta no respondio a tiempo o rechazo la conexion" };
   } finally {
     timeout.cleanup();
   }

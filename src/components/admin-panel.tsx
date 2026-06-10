@@ -146,7 +146,8 @@ export function AdminPanel({ matches, onChanged }: Props) {
       return;
     }
 
-    setMessage("WhatsApp no envio el mensaje. Revisa token, plantilla aprobada y variables en Vercel.");
+    const errorDetail = Array.isArray(data.errors) && data.errors.length ? ` Detalle: ${data.errors[0]}` : "";
+    setMessage(`WhatsApp no envio el mensaje. Revisa token, plantilla aprobada y variables en Vercel.${errorDetail}`);
   }
 
   async function updateResults() {
