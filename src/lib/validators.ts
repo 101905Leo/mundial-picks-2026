@@ -4,13 +4,13 @@ export const credentialsSchema = z.object({
   phone: z
     .string()
     .trim()
-    .regex(/^\+?[0-9\s-]{7,20}$/, "Numero celular invalido")
+    .regex(/^\+?[0-9\s-]{7,20}$/, "Numero de WhatsApp invalido")
     .transform((value) => value.replace(/[\s-]/g, "")),
   password: z.string().min(6),
 });
 
 export const registerSchema = credentialsSchema.extend({
-  name: z.string().min(2).max(80),
+  name: z.string().trim().min(2).max(80),
 });
 
 export const changePasswordSchema = z.object({

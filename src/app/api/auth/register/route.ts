@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   });
 
   if (existingUser) {
-    return Response.json({ error: "Ese numero celular ya esta registrado" }, { status: 409 });
+    return Response.json({ error: "Ese numero de WhatsApp ya esta registrado" }, { status: 409 });
   }
 
   const user = await prisma.user.create({

@@ -53,13 +53,16 @@ export function AuthPanel({ onAuth }: Props) {
       <form className="form" onSubmit={submit}>
         {mode === "register" ? (
           <div className="form-row">
-            <label htmlFor="name">Nombre</label>
-            <input id="name" name="name" minLength={2} required />
+            <label htmlFor="name">Nombre o alias</label>
+            <input id="name" name="name" minLength={2} placeholder="Ej: Leo Avella" required />
           </div>
         ) : null}
         <div className="form-row">
-          <label htmlFor="phone">Numero celular</label>
-          <input id="phone" name="phone" inputMode="tel" placeholder="3001234567" required />
+          <label htmlFor="phone">{mode === "register" ? "Numero de WhatsApp" : "Numero de WhatsApp"}</label>
+          <input id="phone" name="phone" inputMode="tel" placeholder="3008588571 o +573008588571" required />
+          {mode === "register" ? (
+            <small>Debe ser tu WhatsApp real. Luego podremos verificarlo con un código.</small>
+          ) : null}
         </div>
         <div className="form-row">
           <label htmlFor="password">Contrasena</label>
