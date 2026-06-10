@@ -6,10 +6,10 @@ import { AuthPanel } from "@/components/auth-panel";
 import { Countdown } from "@/components/countdown";
 import { EntryPanel } from "@/components/entry-panel";
 import { FormidableFacts } from "@/components/formidable-facts";
+import { GlobalRankingPanel } from "@/components/global-ranking-panel";
 import { LeaguePanel } from "@/components/league-panel";
 import { LivePanel } from "@/components/live-panel";
 import { MatchCard } from "@/components/match-card";
-import { OfficialRankingPanel } from "@/components/official-ranking-panel";
 import { RankingTable } from "@/components/ranking-table";
 import { WorldCupNewsTicker } from "@/components/worldcup-news-panel";
 import type { Match, RankingEntry, User } from "@/components/types";
@@ -18,7 +18,7 @@ export function MundialPicksApp() {
   const [user, setUser] = useState<User | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
-  const [activeView, setActiveView] = useState<"picks" | "facts" | "live" | "leagues" | "admin">("picks");
+  const [activeView, setActiveView] = useState<"picks" | "ranking" | "facts" | "live" | "leagues" | "admin">("picks");
   const [loading, setLoading] = useState(true);
 
   async function loadSession() {
@@ -261,9 +261,6 @@ export function MundialPicksApp() {
                       <div className="empty">Todavía no hay puntos registrados.</div>
                     )}
                   </section>
-                  <div className="insights-sidebar">
-                    <OfficialRankingPanel />
-                  </div>
                 </aside>
               </section>
             ) : null}
@@ -278,6 +275,15 @@ export function MundialPicksApp() {
                   }}
                 >
                   Picks
+                </button>
+                <button
+                  className={`tab ${activeView === "ranking" ? "active" : ""}`}
+                  onClick={async () => {
+                    setActiveView("ranking");
+                    await loadData();
+                  }}
+                >
+                  Ranking
                 </button>
                 <button
                   className={`tab ${activeView === "facts" ? "active" : ""}`}
@@ -388,11 +394,12 @@ export function MundialPicksApp() {
                     <h2>Ranking global</h2>
                   </div>
                   <RankingTable ranking={ranking} />
-                  <div className="insights-sidebar">
-                    <OfficialRankingPanel />
-                  </div>
                 </aside>
               </div>
+            ) : null}
+
+            {user && activeView === "ranking" ? (
+              <GlobalRankingPanel ranking={ranking} user={user} onOpenPicks={() => setActiveView("picks")} />
             ) : null}
 
             {user && activeView === "leagues" ? (
