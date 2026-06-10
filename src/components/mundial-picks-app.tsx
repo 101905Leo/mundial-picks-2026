@@ -10,6 +10,7 @@ import { LeaguePanel } from "@/components/league-panel";
 import { LivePanel } from "@/components/live-panel";
 import { MatchCard } from "@/components/match-card";
 import { RankingTable } from "@/components/ranking-table";
+import { WorldCupNewsPanel } from "@/components/worldcup-news-panel";
 import type { Match, RankingEntry, User } from "@/components/types";
 
 export function MundialPicksApp() {
@@ -192,6 +193,8 @@ export function MundialPicksApp() {
                     </div>
                   </section>
 
+                  <WorldCupNewsPanel />
+
                   <RandomFormidableFacts count={4} title="Datos formidables que no conocias" />
 
                   <section className="landing-card">
@@ -346,6 +349,7 @@ export function MundialPicksApp() {
                     </div>
                   </div>
                   <RandomFormidableFacts compact count={2} title="Datos rápidos antes de tus picks" />
+                  <WorldCupNewsPanel compact />
                   <div className="market-columns" aria-hidden="true">
                     <span>Partido y tu marcador</span>
                     <span>Resultado real</span>
