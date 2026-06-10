@@ -54,7 +54,7 @@ export function AuthPanel({ onAuth }: Props) {
         {mode === "register" ? (
           <div className="form-row">
             <label htmlFor="name">Nombre o alias</label>
-            <input id="name" name="name" minLength={2} placeholder="Ej: Leo Avella" required />
+            <input id="name" name="name" minLength={2} placeholder="Tu nombre o alias" required />
           </div>
         ) : null}
         <div className="form-row">
