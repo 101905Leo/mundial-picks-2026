@@ -8,7 +8,8 @@ export async function POST(request: NextRequest) {
   const parsed = registerSchema.safeParse(body);
 
   if (!parsed.success) {
-    return Response.json({ error: "Datos de registro invalidos" }, { status: 400 });
+    const error = parsed.error.issues[0]?.message ?? "Datos de registro invalidos";
+    return Response.json({ error }, { status: 400 });
   }
 
   const existingUser = await prisma.user.findUnique({

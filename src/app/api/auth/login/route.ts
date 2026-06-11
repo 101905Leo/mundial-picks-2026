@@ -8,7 +8,8 @@ export async function POST(request: NextRequest) {
   const parsed = credentialsSchema.safeParse(body);
 
   if (!parsed.success) {
-    return Response.json({ error: "Credenciales invalidas" }, { status: 400 });
+    const error = parsed.error.issues[0]?.message ?? "Credenciales invalidas";
+    return Response.json({ error }, { status: 400 });
   }
 
   const user = await prisma.user.findUnique({

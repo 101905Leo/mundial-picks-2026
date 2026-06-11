@@ -1,11 +1,26 @@
 import { z } from "zod";
 
+export function normalizeColombianMobilePhone(value: string) {
+  const digits = value.replace(/\D/g, "");
+  const withoutInternationalPrefix = digits.startsWith("0057") ? digits.slice(4) : digits;
+  const withoutCountryCode =
+    withoutInternationalPrefix.startsWith("57") && withoutInternationalPrefix.length === 12
+      ? withoutInternationalPrefix.slice(2)
+      : withoutInternationalPrefix;
+
+  return withoutCountryCode;
+}
+
+const colombianMobilePhoneSchema = z
+  .string()
+  .trim()
+  .transform(normalizeColombianMobilePhone)
+  .refine((value) => /^3\d{9}$/.test(value), {
+    message: "Ingresa un celular colombiano valido de 10 digitos que empiece por 3",
+  });
+
 export const credentialsSchema = z.object({
-  phone: z
-    .string()
-    .trim()
-    .regex(/^\+?[0-9\s-]{7,20}$/, "Numero de WhatsApp invalido")
-    .transform((value) => value.replace(/[\s-]/g, "")),
+  phone: colombianMobilePhoneSchema,
   password: z.string().min(6),
 });
 

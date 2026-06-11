@@ -59,9 +59,19 @@ export function AuthPanel({ onAuth }: Props) {
         ) : null}
         <div className="form-row">
           <label htmlFor="phone">{mode === "register" ? "Numero de WhatsApp" : "Numero de WhatsApp"}</label>
-          <input id="phone" name="phone" inputMode="tel" placeholder="Tu numero de WhatsApp" required />
+          <input
+            autoComplete="tel"
+            id="phone"
+            inputMode="tel"
+            maxLength={18}
+            name="phone"
+            pattern="([+]57[ -]?)?3[0-9 -]{9,13}"
+            placeholder="300 000 0000"
+            required
+            title="Ingresa un celular colombiano valido. Ejemplo: 300 000 0000"
+          />
           {mode === "register" ? (
-            <small>Debe ser tu WhatsApp real. Luego podremos verificarlo con un código.</small>
+            <small>Debe ser un celular colombiano real que empiece por 3. Ejemplo: 300 000 0000.</small>
           ) : null}
         </div>
         <div className="form-row">
