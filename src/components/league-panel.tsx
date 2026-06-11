@@ -17,7 +17,10 @@ export function LeaguePanel({ signedIn }: Props) {
   async function loadLeagues() {
     if (!signedIn) return;
     const response = await fetch("/api/leagues");
-    if (!response.ok) return;
+    if (!response.ok) {
+      setMessage("No se pudieron cargar tus ligas");
+      return;
+    }
     const data = await response.json();
     setLeagues(data.leagues);
     setSelectedLeague((current) => current ?? data.leagues[0] ?? null);
@@ -55,8 +58,10 @@ export function LeaguePanel({ signedIn }: Props) {
       setMessage(data.error ?? "No se pudo crear la liga");
       return;
     }
+
+    setMessage(`Liga creada. Comparte el codigo ${data.league.inviteCode} para invitar usuarios.`);
+    setLeagues((current) => [data.league, ...current.filter((league) => league.id !== data.league.id)]);
     setSelectedLeague(data.league);
-    await loadLeagues();
     event.currentTarget.reset();
   }
 
@@ -74,8 +79,10 @@ export function LeaguePanel({ signedIn }: Props) {
       setMessage(data.error ?? "No se pudo entrar a la liga");
       return;
     }
+
+    setMessage(`Entraste a la liga ${data.league.name}`);
+    setLeagues((current) => [data.league, ...current.filter((league) => league.id !== data.league.id)]);
     setSelectedLeague(data.league);
-    await loadLeagues();
     event.currentTarget.reset();
   }
 
@@ -113,7 +120,7 @@ export function LeaguePanel({ signedIn }: Props) {
           <h3>Crear liga</h3>
           <div className="form-row">
             <label htmlFor="league-name">Nombre</label>
-            <input id="league-name" name="name" required />
+            <input id="league-name" name="name" minLength={3} placeholder="Ej: Familia Avella" required />
           </div>
           <button className="button primary" type="submit">
             Crear
@@ -123,7 +130,7 @@ export function LeaguePanel({ signedIn }: Props) {
           <h3>Unirse</h3>
           <div className="form-row">
             <label htmlFor="invite-code">Codigo</label>
-            <input id="invite-code" name="inviteCode" required />
+            <input id="invite-code" name="inviteCode" maxLength={16} minLength={4} placeholder="ABC123" required />
           </div>
           <button className="button secondary" type="submit">
             Entrar
@@ -144,6 +151,7 @@ export function LeaguePanel({ signedIn }: Props) {
           </div>
         </div>
       </div>
+      {message ? <div className="notice">{message}</div> : null}
       {selectedLeague ? (
         <form className="panel inline-form" onSubmit={renameLeague}>
           <div className="form-row">
@@ -155,7 +163,6 @@ export function LeaguePanel({ signedIn }: Props) {
           </button>
         </form>
       ) : null}
-      {message ? <div className="notice">{message}</div> : null}
       <section className="panel">
         <div className="section-title">
           <h2>{selectedLeague ? selectedLeague.name : "Ranking por liga"}</h2>
