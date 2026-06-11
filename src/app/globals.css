@@ -1641,13 +1641,18 @@ button {
 }
 
 .publish-manager {
-  grid-column: 1 / -1;
+  align-self: start;
+  grid-column: auto;
+}
+
+.publish-manager .inline-form {
+  grid-template-columns: 1fr 1fr;
 }
 
 .publish-list {
   display: grid;
   gap: 10px;
-  max-height: 520px;
+  max-height: 360px;
   overflow: auto;
   padding-right: 4px;
 }
@@ -1659,9 +1664,9 @@ button {
   border-left: 5px solid var(--red);
   border-radius: 8px;
   display: grid;
-  gap: 12px;
-  grid-template-columns: minmax(220px, 1fr) minmax(190px, 0.8fr) auto;
-  padding: 12px;
+  gap: 10px;
+  grid-template-columns: 1fr;
+  padding: 10px;
 }
 
 .publish-card.published {
@@ -1688,8 +1693,13 @@ button {
 }
 
 .publish-actions {
-  display: flex;
+  display: grid;
   gap: 8px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.publish-actions .button {
+  min-height: 36px;
 }
 
 .publish-actions .button:disabled {
