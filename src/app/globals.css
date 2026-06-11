@@ -1598,6 +1598,48 @@ button {
   width: 60px;
 }
 
+.admin-overview {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.admin-overview article {
+  background: linear-gradient(180deg, rgba(16, 21, 33, 0.98), rgba(8, 11, 18, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  display: grid;
+  gap: 7px;
+  min-height: 86px;
+  padding: 14px;
+}
+
+.admin-overview span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.admin-overview strong {
+  color: var(--gold-soft);
+  font-size: clamp(1.55rem, 3vw, 2.35rem);
+  line-height: 1;
+}
+
+.admin-nav {
+  background: rgba(5, 7, 13, 0.46);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+}
+
+.admin-nav .tab {
+  min-width: 132px;
+}
+
 .publish-manager {
   grid-column: 1 / -1;
 }
@@ -2100,6 +2142,7 @@ button {
 
   .landing-grid,
   .landing-stats,
+  .admin-overview,
   .score-rules,
   .facts-controls,
   .facts-grid,
@@ -2289,6 +2332,10 @@ button {
   .admin-user-actions {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .admin-nav .tab {
+    flex: 1 1 100%;
   }
 }
 
