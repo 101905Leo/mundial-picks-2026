@@ -24,7 +24,7 @@ model User {
   phone        String             @unique
   passwordHash String
   role         Role               @default(USER)
-  isActive     Boolean            @default(true)
+  isActive     Boolean            @default(false)
   entryPaidAt  DateTime?
   entryPayments EntryPayment[]
   predictions  Prediction[]
