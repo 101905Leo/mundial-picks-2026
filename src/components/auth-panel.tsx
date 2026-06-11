@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import type { User } from "@/components/types";
 
 type Props = {
-  onAuth: (user: User) => void;
+  onAuth: (user: User, options?: { joinedLeague?: boolean }) => void;
 };
 
 export function AuthPanel({ onAuth }: Props) {
@@ -30,12 +30,17 @@ export function AuthPanel({ onAuth }: Props) {
       name: String(formData.get("name") ?? ""),
       phone: String(formData.get("phone") ?? ""),
       password: String(formData.get("password") ?? ""),
+      inviteCode: String(formData.get("inviteCode") ?? "").trim(),
     };
 
     const response = await fetch(`/api/auth/${mode}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(mode === "login" ? { phone: payload.phone, password: payload.password } : payload),
+      body: JSON.stringify(
+        mode === "login"
+          ? { phone: payload.phone, password: payload.password, inviteCode: payload.inviteCode }
+          : payload,
+      ),
     });
 
     const data = await response.json();
@@ -52,7 +57,7 @@ export function AuthPanel({ onAuth }: Props) {
       }
     }
 
-    onAuth(data.user);
+    onAuth(data.user, { joinedLeague: Boolean(data.joinedLeague) });
   }
 
   return (
@@ -104,6 +109,11 @@ export function AuthPanel({ onAuth }: Props) {
             minLength={6}
             required
           />
+        </div>
+        <div className="form-row">
+          <label htmlFor="inviteCode">Codigo de sala privada</label>
+          <input id="inviteCode" name="inviteCode" maxLength={16} placeholder="Opcional: ABC123" />
+          <small>Si tienes un codigo, entraras directo a esa sala sin activar el ranking global.</small>
         </div>
         {mode === "login" ? (
           <label className="check-row">

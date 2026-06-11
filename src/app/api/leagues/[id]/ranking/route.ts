@@ -50,7 +50,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       predictions: member.predictions.length,
     }))
     .sort((a, b) => b.points - a.points || b.predictions - a.predictions);
-  const ranking = members.filter((member) => member.isActive && member.entryPaidAt);
+  const ranking = members;
 
   return Response.json({ league: { id: league.id, name: league.name, inviteCode: league.inviteCode }, ranking, members });
 }

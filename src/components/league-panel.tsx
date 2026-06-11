@@ -14,8 +14,8 @@ export function LeaguePanel({ signedIn }: Props) {
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
   const [members, setMembers] = useState<LeagueMember[]>([]);
   const [message, setMessage] = useState("");
-  const activeMembers = members.filter((member) => member.isActive && member.entryPaidAt).length;
-  const pendingMembers = members.length - activeMembers;
+  const globalMembers = members.filter((member) => member.entryPaidAt).length;
+  const roomOnlyMembers = members.length - globalMembers;
 
   async function loadLeagues() {
     if (!signedIn) return;
@@ -173,7 +173,7 @@ export function LeaguePanel({ signedIn }: Props) {
             <div>
               <span className="market-kicker">Sala privada</span>
               <h2>{selectedLeague.name}</h2>
-              <p className="muted">Solo los usuarios que entren con este codigo pertenecen a esta sala.</p>
+              <p className="muted">Solo los usuarios que entren con este codigo pertenecen a esta sala y compiten aqui.</p>
             </div>
             <div className="league-code-box">
               <span>Codigo de invitacion</span>
@@ -203,12 +203,12 @@ export function LeaguePanel({ signedIn }: Props) {
               </div>
               <div className="league-room-stats">
                 <span>
-                  <strong>{activeMembers}</strong>
-                  Compitiendo
+                  <strong>{members.length}</strong>
+                  En sala
                 </span>
                 <span>
-                  <strong>{pendingMembers}</strong>
-                  Pendientes
+                  <strong>{roomOnlyMembers}</strong>
+                  Sin ranking global
                 </span>
               </div>
               <div className="league-member-list">
@@ -218,8 +218,8 @@ export function LeaguePanel({ signedIn }: Props) {
                       <strong>{member.name}</strong>
                       <span>{member.predictions} picks guardados</span>
                     </div>
-                    <span className={member.isActive && member.entryPaidAt ? "member-status active" : "member-status pending"}>
-                      {member.isActive && member.entryPaidAt ? "Compitiendo" : "Pendiente de inscripción"}
+                    <span className={member.entryPaidAt ? "member-status active" : "member-status pending"}>
+                      {member.entryPaidAt ? "Ranking global" : "Solo sala"}
                     </span>
                   </article>
                 ))}
@@ -232,7 +232,7 @@ export function LeaguePanel({ signedIn }: Props) {
       <section className="panel">
         <div className="section-title">
           <h2>{selectedLeague ? selectedLeague.name : "Ranking por liga"}</h2>
-          {selectedLeague ? <span className="muted">Solo inscritos activos compiten en este ranking.</span> : null}
+          {selectedLeague ? <span className="muted">Ranking privado de usuarios que entraron a esta sala.</span> : null}
         </div>
         <RankingTable ranking={ranking} />
       </section>

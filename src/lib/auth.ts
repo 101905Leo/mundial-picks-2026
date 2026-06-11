@@ -11,6 +11,7 @@ export type SessionUser = {
   role: "USER" | "ADMIN";
   isActive: boolean;
   entryPaidAt: Date | null;
+  hasLeagueAccess?: boolean;
 };
 
 const tokenName = "mundial_picks_token";
@@ -59,9 +60,20 @@ export async function getSessionFromRequest(request: NextRequest) {
     const payload = jwt.verify(token, jwtSecret()) as SessionUser;
     const user = await prisma.user.findUnique({
       where: { id: payload.id },
-      select: { id: true, phone: true, name: true, role: true, isActive: true, entryPaidAt: true },
+      select: {
+        id: true,
+        phone: true,
+        name: true,
+        role: true,
+        isActive: true,
+        entryPaidAt: true,
+        _count: { select: { leagues: true } },
+      },
     });
-    return user;
+    if (!user) return null;
+
+    const { _count, ...sessionUser } = user;
+    return { ...sessionUser, hasLeagueAccess: _count.leagues > 0 };
   } catch {
     return null;
   }

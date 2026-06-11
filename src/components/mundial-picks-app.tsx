@@ -113,9 +113,11 @@ export function MundialPicksApp() {
   const openMatches = matches.length - lockedMatches.length;
   const upcomingMatches = matches.slice(0, 3);
   const canViewGlobalRanking = Boolean(user && (user.role === "ADMIN" || user.entryPaidAt));
-  const canPredict = Boolean(user && user.isActive && (user.role === "ADMIN" || user.entryPaidAt));
+  const canPredict = Boolean(user && (user.role === "ADMIN" || (user.isActive && user.entryPaidAt) || user.hasLeagueAccess));
   const pickDisabledMessage =
-    user && !user.isActive
+    user?.hasLeagueAccess
+      ? "Tu acceso de sala privada permite guardar picks sin entrar al ranking global."
+      : user && !user.isActive
       ? "Tu usuario esta desactivado para guardar picks."
       : "Paga la inscripción única para habilitar tus predicciones.";
   const matchesByDate = matches.reduce<Array<{ key: string; label: string; matches: Match[] }>>((days, match) => {
@@ -266,8 +268,9 @@ export function MundialPicksApp() {
 
                 <aside className="landing-side">
                   <AuthPanel
-                    onAuth={async (sessionUser) => {
+                    onAuth={async (sessionUser, options) => {
                       setUser(sessionUser);
+                      if (options?.joinedLeague) setActiveView("leagues");
                       await loadData(sessionUser);
                     }}
                   />

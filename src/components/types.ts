@@ -5,6 +5,7 @@ export type User = {
   role: "USER" | "ADMIN";
   isActive: boolean;
   entryPaidAt: string | null;
+  hasLeagueAccess?: boolean;
 };
 
 export type Prediction = {
