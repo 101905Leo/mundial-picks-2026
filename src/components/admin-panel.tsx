@@ -377,20 +377,21 @@ export function AdminPanel({ matches, onChanged }: Props) {
       <div className="section-title">
         <h2>Panel administrador</h2>
         <div className="top-actions">
-          <button className="button secondary" onClick={importWorldCupCalendar}>
+          <button className="button secondary" onClick={importWorldCupCalendar} type="button">
             Cargar calendario Mundial 2026
           </button>
-          <button className="button primary" onClick={updateResults}>
+          <button className="button primary" onClick={updateResults} type="button">
             Actualizar resultados reales
           </button>
-          <button className="button secondary" onClick={recalculate}>
+          <button className="button secondary" onClick={recalculate} type="button">
             Recalcular puntos
           </button>
-          <button className="button secondary" onClick={testWhatsApp}>
+          <button className="button secondary" onClick={testWhatsApp} type="button">
             Probar WhatsApp
           </button>
         </div>
       </div>
+      {message ? <div className="notice">{message}</div> : null}
       <div className="grid two-columns">
         <section className="form publish-manager">
           <div className="section-title">
@@ -675,7 +676,6 @@ export function AdminPanel({ matches, onChanged }: Props) {
           </button>
         </form>
       </div>
-      {message ? <div className="notice">{message}</div> : null}
     </section>
   );
 }
