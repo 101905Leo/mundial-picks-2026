@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import type { User } from "@/components/types";
 
 type Props = {
@@ -10,6 +10,16 @@ type Props = {
 export function AuthPanel({ onAuth }: Props) {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [message, setMessage] = useState("");
+  const [phone, setPhone] = useState("");
+  const [rememberLogin, setRememberLogin] = useState(false);
+
+  useEffect(() => {
+    const savedPhone = window.localStorage.getItem("mundial_picks_phone") ?? "";
+    if (savedPhone) {
+      setPhone(savedPhone);
+      setRememberLogin(true);
+    }
+  }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -32,6 +42,14 @@ export function AuthPanel({ onAuth }: Props) {
     if (!response.ok) {
       setMessage(data.error ?? "No se pudo completar la accion");
       return;
+    }
+
+    if (mode === "login") {
+      if (rememberLogin) {
+        window.localStorage.setItem("mundial_picks_phone", data.user.phone);
+      } else {
+        window.localStorage.removeItem("mundial_picks_phone");
+      }
     }
 
     onAuth(data.user);
@@ -69,6 +87,8 @@ export function AuthPanel({ onAuth }: Props) {
             placeholder="300 000 0000"
             required
             title="Ingresa un celular colombiano valido. Ejemplo: 300 000 0000"
+            value={phone}
+            onChange={(event) => setPhone(event.target.value)}
           />
           {mode === "register" ? (
             <small>Debe ser un celular colombiano real que empiece por 3. Ejemplo: 300 000 0000.</small>
@@ -76,8 +96,25 @@ export function AuthPanel({ onAuth }: Props) {
         </div>
         <div className="form-row">
           <label htmlFor="password">Contrasena</label>
-          <input id="password" name="password" type="password" minLength={6} required />
+          <input
+            autoComplete={mode === "login" ? "current-password" : "new-password"}
+            id="password"
+            name="password"
+            type="password"
+            minLength={6}
+            required
+          />
         </div>
+        {mode === "login" ? (
+          <label className="check-row">
+            <input
+              checked={rememberLogin}
+              onChange={(event) => setRememberLogin(event.target.checked)}
+              type="checkbox"
+            />
+            Recordar mi WhatsApp en este dispositivo
+          </label>
+        ) : null}
         {message ? <div className="notice">{message}</div> : null}
         <button className="button primary" type="submit">
           {mode === "login" ? "Entrar" : "Crear cuenta"}

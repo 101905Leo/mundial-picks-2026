@@ -1117,6 +1117,21 @@ button {
   outline: none;
 }
 
+.check-row {
+  align-items: center;
+  color: #dfe6f7;
+  display: flex;
+  font-size: 0.88rem;
+  font-weight: 800;
+  gap: 9px;
+}
+
+.check-row input {
+  accent-color: var(--gold);
+  height: 16px;
+  width: 16px;
+}
+
 .sportsbook-layout {
   align-items: start;
   display: grid;
@@ -1795,7 +1810,9 @@ button {
 
 .admin-user-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
+  justify-content: flex-end;
 }
 
 .admin-user-actions .button:disabled {

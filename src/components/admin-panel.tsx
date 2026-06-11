@@ -25,6 +25,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [usersLoaded, setUsersLoaded] = useState(false);
   const [adminView, setAdminView] = useState<"matches" | "users" | "security">("matches");
+  const [selectedPasswordUserId, setSelectedPasswordUserId] = useState("");
   const publishedMatches = matches.filter((match) => match.isPublished).length;
   const finishedMatches = matches.filter((match) => match.status === "FINISHED").length;
   const activeUsers = users.filter((user) => user.isActive).length;
@@ -273,6 +274,65 @@ export function AdminPanel({ matches, onChanged }: Props) {
         : `${data.user.name} ahora esta desactivado para guardar picks`,
     );
     await loadUsers();
+  }
+
+  async function createUser(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setMessage("");
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+
+    const response = await fetch("/api/admin/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: String(formData.get("newUserName") ?? ""),
+        phone: String(formData.get("newUserPhone") ?? ""),
+        password: String(formData.get("newUserPassword") ?? ""),
+      }),
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      setMessage(data.error ?? "No se pudo crear el usuario");
+      return;
+    }
+
+    setMessage(`${data.user.name} fue creado desactivado. Activalo cuando confirme el pago.`);
+    form.reset();
+    await loadUsers();
+  }
+
+  async function resetUserPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setMessage("");
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const userId = String(formData.get("passwordUserId"));
+    const user = users.find((item) => item.id === userId);
+
+    if (!user) {
+      setMessage("Selecciona un usuario");
+      return;
+    }
+
+    const response = await fetch(`/api/admin/users/${userId}/password`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        newPassword: String(formData.get("userNewPassword") ?? ""),
+      }),
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      setMessage(data.error ?? "No se pudo cambiar la contrasena del usuario");
+      return;
+    }
+
+    setMessage(`Contrasena actualizada para ${data.user.name}. Ya puede ingresar con la nueva clave.`);
+    form.reset();
+    setSelectedPasswordUserId("");
   }
 
   async function deleteUser(event: FormEvent<HTMLFormElement>) {
@@ -601,6 +661,66 @@ export function AdminPanel({ matches, onChanged }: Props) {
         ) : null}
         {adminView === "users" ? (
           <>
+            <form className="form" onSubmit={createUser}>
+              <h3>Crear usuario</h3>
+              <div className="form-row">
+                <label htmlFor="newUserName">Nombre o apodo</label>
+                <input id="newUserName" name="newUserName" minLength={2} placeholder="Nombre del participante" required />
+              </div>
+              <div className="form-row">
+                <label htmlFor="newUserPhone">WhatsApp</label>
+                <input
+                  id="newUserPhone"
+                  inputMode="tel"
+                  maxLength={18}
+                  name="newUserPhone"
+                  pattern="([+]57[ -]?)?3[0-9 -]{9,13}"
+                  placeholder="300 000 0000"
+                  required
+                  title="Ingresa un celular colombiano valido. Ejemplo: 300 000 0000"
+                />
+              </div>
+              <div className="form-row">
+                <label htmlFor="newUserPassword">Contraseña inicial</label>
+                <input id="newUserPassword" name="newUserPassword" type="password" minLength={8} required />
+              </div>
+              <button className="button primary" type="submit">
+                Crear usuario desactivado
+              </button>
+            </form>
+            <form className="form" onSubmit={resetUserPassword}>
+              <h3>Cambiar contraseña de usuario</h3>
+              <div className="form-row">
+                <label htmlFor="passwordUserId">Usuario</label>
+                <select
+                  id="passwordUserId"
+                  name="passwordUserId"
+                  onChange={(event) => setSelectedPasswordUserId(event.target.value)}
+                  onFocus={() => !usersLoaded && loadUsers()}
+                  required
+                  value={selectedPasswordUserId}
+                >
+                  <option value="">Selecciona usuario</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.name} - {user.phone}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-row">
+                <label htmlFor="userNewPassword">Nueva contraseña</label>
+                <input id="userNewPassword" name="userNewPassword" type="password" minLength={8} required />
+              </div>
+              <button className="button primary" type="submit">
+                Guardar contraseña
+              </button>
+              {!usersLoaded ? (
+                <button className="button secondary" type="button" onClick={loadUsers}>
+                  Cargar usuarios
+                </button>
+              ) : null}
+            </form>
             <section className="form users-admin-list">
               <div className="section-title">
                 <div>
@@ -650,6 +770,16 @@ export function AdminPanel({ matches, onChanged }: Props) {
                           type="button"
                         >
                           Desactivar
+                        </button>
+                        <button
+                          className="button secondary"
+                          onClick={() => {
+                            setSelectedPasswordUserId(user.id);
+                            setMessage(`Listo para cambiar la contrasena de ${user.name}`);
+                          }}
+                          type="button"
+                        >
+                          Cambiar clave
                         </button>
                         <button className="button danger" onClick={() => deleteUserById(user.id)} type="button">
                           Eliminar

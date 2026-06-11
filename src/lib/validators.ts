@@ -33,6 +33,10 @@ export const changePasswordSchema = z.object({
   newPassword: z.string().min(8, "La nueva contrasena debe tener minimo 8 caracteres"),
 });
 
+export const adminResetPasswordSchema = z.object({
+  newPassword: z.string().min(8, "La nueva contrasena debe tener minimo 8 caracteres"),
+});
+
 export const matchSchema = z.object({
   homeTeam: z.string().min(2),
   awayTeam: z.string().min(2),

@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { hashPassword, requireAdmin } from "@/lib/auth";
+import { registerSchema } from "@/lib/validators";
 
 export async function GET(request: NextRequest) {
   const { response } = await requireAdmin(request);
@@ -40,4 +41,43 @@ export async function GET(request: NextRequest) {
       points: user.predictions.reduce((sum, prediction) => sum + prediction.points, 0),
     })),
   });
+}
+
+export async function POST(request: NextRequest) {
+  const { response } = await requireAdmin(request);
+  if (response) return response;
+
+  const body = await request.json();
+  const parsed = registerSchema.safeParse(body);
+
+  if (!parsed.success) {
+    const error = parsed.error.issues[0]?.message ?? "Datos de usuario invalidos";
+    return Response.json({ error }, { status: 400 });
+  }
+
+  const existingUser = await prisma.user.findUnique({
+    where: { phone: parsed.data.phone },
+  });
+
+  if (existingUser) {
+    return Response.json({ error: "Ese numero de WhatsApp ya esta registrado" }, { status: 409 });
+  }
+
+  const user = await prisma.user.create({
+    data: {
+      name: parsed.data.name,
+      phone: parsed.data.phone,
+      passwordHash: await hashPassword(parsed.data.password),
+      isActive: false,
+    },
+    select: { id: true, name: true, phone: true, role: true, isActive: true, entryPaidAt: true },
+  });
+
+  return Response.json({
+    user: {
+      ...user,
+      picksCount: 0,
+      points: 0,
+    },
+  }, { status: 201 });
 }
