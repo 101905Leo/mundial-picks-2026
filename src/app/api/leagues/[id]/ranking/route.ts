@@ -24,6 +24,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             select: {
               id: true,
               name: true,
+              role: true,
               predictions: { select: { points: true } },
             },
           },
@@ -37,6 +38,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 
   const ranking = league.memberships
+    .filter(({ user: member }) => member.role !== "ADMIN")
     .map(({ user: member }) => ({
       id: member.id,
       name: member.name,

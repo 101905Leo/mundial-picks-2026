@@ -16,7 +16,7 @@ async function main() {
     await prisma.user.update({
       where: { id: existingAdmin.id },
       data: {
-        name: "Admin Mundial Picks",
+        name: "mundialpick",
         phone: "3008588571",
         passwordHash,
         role: Role.ADMIN,
@@ -25,7 +25,7 @@ async function main() {
   } else {
     await prisma.user.create({
       data: {
-        name: "Admin Mundial Picks",
+        name: "mundialpick",
         phone: "3008588571",
         passwordHash,
         role: Role.ADMIN,
