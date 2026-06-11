@@ -698,6 +698,7 @@ button {
   color: inherit;
   display: inline-flex;
   gap: 8px;
+  max-width: none;
   min-height: 42px;
   padding: 8px 14px;
   text-decoration: none;
@@ -2211,7 +2212,7 @@ button {
   }
 
   .ticker-news {
-    max-width: 82vw;
+    max-width: none;
   }
 
   .live-scoreline {

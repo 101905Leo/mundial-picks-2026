@@ -25,6 +25,16 @@ function tagValue(item: string, tagName: string) {
   return decodeHtml(item.match(pattern)?.[1] || "");
 }
 
+function titleWithoutSource(title: string, source: string) {
+  const cleanSource = source.trim();
+
+  if (cleanSource && title.endsWith(` - ${cleanSource}`)) {
+    return title.slice(0, -` - ${cleanSource}`.length).trim();
+  }
+
+  return title.replace(/\s+-\s+[^-]{2,80}$/u, "").trim();
+}
+
 export async function fetchWorldCupNews() {
   const newsRssUrl = process.env.NEWS_RSS_URL || defaultNewsRssUrl;
 
@@ -42,11 +52,12 @@ export async function fetchWorldCupNews() {
     .map((match) => {
       const item = match[1];
       const publishedAt = tagValue(item, "pubDate");
+      const source = tagValue(item, "source") || "Noticias Mundial 2026";
 
       return {
-        title: tagValue(item, "title"),
+        title: titleWithoutSource(tagValue(item, "title"), source),
         link: tagValue(item, "link"),
-        source: tagValue(item, "source") || "Noticias Mundial 2026",
+        source,
         publishedAt: publishedAt ? new Date(publishedAt).toISOString() : null,
       };
     })
