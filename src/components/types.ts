@@ -36,6 +36,11 @@ export type RankingEntry = {
   predictions: number;
 };
 
+export type LeagueMember = RankingEntry & {
+  isActive: boolean;
+  entryPaidAt: string | null;
+};
+
 export type League = {
   id: string;
   name: string;

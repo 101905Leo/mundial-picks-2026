@@ -25,6 +25,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
               id: true,
               name: true,
               role: true,
+              isActive: true,
+              entryPaidAt: true,
               predictions: { select: { points: true } },
             },
           },
@@ -37,15 +39,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return Response.json({ error: "Liga no encontrada" }, { status: 404 });
   }
 
-  const ranking = league.memberships
+  const members = league.memberships
     .filter(({ user: member }) => member.role !== "ADMIN")
     .map(({ user: member }) => ({
       id: member.id,
       name: member.name,
+      isActive: member.isActive,
+      entryPaidAt: member.entryPaidAt,
       points: member.predictions.reduce((sum, prediction) => sum + prediction.points, 0),
       predictions: member.predictions.length,
     }))
     .sort((a, b) => b.points - a.points || b.predictions - a.predictions);
+  const ranking = members.filter((member) => member.isActive && member.entryPaidAt);
 
-  return Response.json({ league: { id: league.id, name: league.name, inviteCode: league.inviteCode }, ranking });
+  return Response.json({ league: { id: league.id, name: league.name, inviteCode: league.inviteCode }, ranking, members });
 }

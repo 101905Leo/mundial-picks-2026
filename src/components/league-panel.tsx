@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { RankingTable } from "@/components/ranking-table";
-import type { League, RankingEntry } from "@/components/types";
+import type { League, LeagueMember, RankingEntry } from "@/components/types";
 
 type Props = {
   signedIn: boolean;
@@ -12,7 +12,10 @@ export function LeaguePanel({ signedIn }: Props) {
   const [leagues, setLeagues] = useState<League[]>([]);
   const [selectedLeague, setSelectedLeague] = useState<League | null>(null);
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
+  const [members, setMembers] = useState<LeagueMember[]>([]);
   const [message, setMessage] = useState("");
+  const activeMembers = members.filter((member) => member.isActive && member.entryPaidAt).length;
+  const pendingMembers = members.length - activeMembers;
 
   async function loadLeagues() {
     if (!signedIn) return;
@@ -34,12 +37,17 @@ export function LeaguePanel({ signedIn }: Props) {
     async function loadRanking() {
       if (!selectedLeague) {
         setRanking([]);
+        setMembers([]);
         return;
       }
       const response = await fetch(`/api/leagues/${selectedLeague.id}/ranking`);
-      if (!response.ok) return;
+      if (!response.ok) {
+        setMessage("No se pudo cargar la sala de esta liga");
+        return;
+      }
       const data = await response.json();
       setRanking(data.ranking);
+      setMembers(data.members ?? []);
     }
     loadRanking();
   }, [selectedLeague]);
@@ -63,6 +71,13 @@ export function LeaguePanel({ signedIn }: Props) {
     setLeagues((current) => [data.league, ...current.filter((league) => league.id !== data.league.id)]);
     setSelectedLeague(data.league);
     event.currentTarget.reset();
+  }
+
+  async function copyInviteCode() {
+    if (!selectedLeague) return;
+
+    await navigator.clipboard.writeText(selectedLeague.inviteCode);
+    setMessage(`Codigo ${selectedLeague.inviteCode} copiado. Ya puedes compartirlo.`);
   }
 
   async function joinLeague(event: FormEvent<HTMLFormElement>) {
@@ -153,20 +168,71 @@ export function LeaguePanel({ signedIn }: Props) {
       </div>
       {message ? <div className="notice">{message}</div> : null}
       {selectedLeague ? (
-        <form className="panel inline-form" onSubmit={renameLeague}>
-          <div className="form-row">
-            <label htmlFor="rename-league">Cambiar nombre de liga</label>
-            <input id="rename-league" name="name" defaultValue={selectedLeague.name} minLength={3} required />
+        <section className="league-room">
+          <div className="panel league-room-hero">
+            <div>
+              <span className="market-kicker">Sala privada</span>
+              <h2>{selectedLeague.name}</h2>
+              <p className="muted">Solo los usuarios que entren con este codigo pertenecen a esta sala.</p>
+            </div>
+            <div className="league-code-box">
+              <span>Codigo de invitacion</span>
+              <strong>{selectedLeague.inviteCode}</strong>
+              <button className="button secondary" onClick={copyInviteCode} type="button">
+                Copiar codigo
+              </button>
+            </div>
           </div>
-          <button className="button primary" type="submit">
-            Guardar nombre
-          </button>
-        </form>
+          <div className="league-room-grid">
+            <form className="panel form" onSubmit={renameLeague}>
+              <h3>Administrar sala</h3>
+              <div className="form-row">
+                <label htmlFor="rename-league">Cambiar nombre de liga</label>
+                <input id="rename-league" name="name" defaultValue={selectedLeague.name} minLength={3} required />
+              </div>
+              <button className="button primary" type="submit">
+                Guardar nombre
+              </button>
+            </form>
+            <section className="panel">
+              <div className="section-title">
+                <div>
+                  <span className="market-kicker">Participantes</span>
+                  <h3>{members.length} usuarios en la sala</h3>
+                </div>
+              </div>
+              <div className="league-room-stats">
+                <span>
+                  <strong>{activeMembers}</strong>
+                  Compitiendo
+                </span>
+                <span>
+                  <strong>{pendingMembers}</strong>
+                  Pendientes
+                </span>
+              </div>
+              <div className="league-member-list">
+                {members.map((member) => (
+                  <article className="league-member" key={member.id}>
+                    <div>
+                      <strong>{member.name}</strong>
+                      <span>{member.predictions} picks guardados</span>
+                    </div>
+                    <span className={member.isActive && member.entryPaidAt ? "member-status active" : "member-status pending"}>
+                      {member.isActive && member.entryPaidAt ? "Compitiendo" : "Pendiente de inscripción"}
+                    </span>
+                  </article>
+                ))}
+                {!members.length ? <div className="empty">Aun no hay usuarios en esta sala.</div> : null}
+              </div>
+            </section>
+          </div>
+        </section>
       ) : null}
       <section className="panel">
         <div className="section-title">
           <h2>{selectedLeague ? selectedLeague.name : "Ranking por liga"}</h2>
-          {selectedLeague ? <span className="muted">Codigo: {selectedLeague.inviteCode}</span> : null}
+          {selectedLeague ? <span className="muted">Solo inscritos activos compiten en este ranking.</span> : null}
         </div>
         <RankingTable ranking={ranking} />
       </section>

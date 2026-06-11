@@ -1198,6 +1198,126 @@ button {
   color: var(--gold);
 }
 
+.league-room {
+  display: grid;
+  gap: 14px;
+}
+
+.league-room-hero {
+  align-items: center;
+  background:
+    linear-gradient(115deg, rgba(47, 209, 132, 0.16), rgba(42, 117, 255, 0.11) 44%, rgba(226, 30, 55, 0.09)),
+    linear-gradient(180deg, rgba(18, 24, 37, 0.98), rgba(8, 11, 18, 0.98));
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 300px);
+}
+
+.league-room-hero h2 {
+  color: #fff;
+  font-size: clamp(1.7rem, 4vw, 3.2rem);
+  line-height: 0.96;
+  margin: 7px 0;
+}
+
+.league-code-box {
+  background: rgba(5, 7, 13, 0.66);
+  border: 1px solid rgba(244, 189, 79, 0.26);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.league-code-box span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.league-code-box strong {
+  color: var(--gold-soft);
+  font-family: Impact, "Arial Black", Haettenschweiler, sans-serif;
+  font-size: 2rem;
+  letter-spacing: 0;
+}
+
+.league-room-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(260px, 0.72fr) minmax(0, 1.28fr);
+}
+
+.league-room-stats {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 12px;
+}
+
+.league-room-stats span {
+  background: rgba(5, 7, 13, 0.58);
+  border: 1px solid rgba(47, 209, 132, 0.18);
+  border-radius: 8px;
+  color: var(--muted);
+  display: grid;
+  gap: 4px;
+  padding: 11px 12px;
+}
+
+.league-room-stats strong {
+  color: #fff;
+  font-size: 1.55rem;
+  line-height: 1;
+}
+
+.league-member-list {
+  display: grid;
+  gap: 8px;
+  max-height: 320px;
+  overflow: auto;
+}
+
+.league-member {
+  align-items: center;
+  background: rgba(5, 7, 13, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 11px 12px;
+}
+
+.league-member strong {
+  color: #fff;
+  display: block;
+}
+
+.league-member span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.member-status {
+  border-radius: 999px;
+  font-weight: 900;
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+
+.member-status.active {
+  background: rgba(47, 209, 132, 0.17);
+  border: 1px solid rgba(47, 209, 132, 0.34);
+  color: #a9f7ca;
+}
+
+.member-status.pending {
+  background: rgba(244, 189, 79, 0.14);
+  border: 1px solid rgba(244, 189, 79, 0.28);
+  color: var(--gold-soft);
+}
+
 .market-header {
   align-items: center;
   background:
@@ -2177,6 +2297,8 @@ button {
   .news-list,
   .live-list,
   .landing-match,
+  .league-room-hero,
+  .league-room-grid,
   .ranking-hero,
   .ranking-stat-grid,
   .ranking-search-panel {
