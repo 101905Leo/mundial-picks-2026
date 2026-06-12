@@ -1318,6 +1318,186 @@ button {
   color: var(--gold-soft);
 }
 
+.league-chat {
+  display: grid;
+  gap: 12px;
+}
+
+.league-chat-messages {
+  background: rgba(5, 7, 13, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  max-height: 420px;
+  min-height: 180px;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.league-chat-message {
+  background: rgba(23, 30, 45, 0.9);
+  border-left: 3px solid var(--blue);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
+.league-chat-message > div {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.league-chat-message strong {
+  color: #fff;
+}
+
+.league-chat-message span {
+  color: var(--gold-soft);
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.league-chat-message time {
+  color: var(--muted);
+  font-size: 0.72rem;
+  margin-left: auto;
+}
+
+.league-chat-message p {
+  color: #e7ecf8;
+  line-height: 1.45;
+  margin: 7px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.league-chat-form {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.league-chat-form input {
+  background: rgba(5, 7, 13, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: var(--ink);
+  min-height: 44px;
+  padding: 0 12px;
+}
+
+.statistics-page {
+  display: grid;
+  gap: 14px;
+}
+
+.statistics-header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.statistics-header h2 {
+  color: #fff;
+  font-size: 2rem;
+  margin: 6px 0;
+}
+
+.scorer-grid,
+.standings-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.scorer-card {
+  align-items: center;
+  background: rgba(7, 10, 17, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 28px 48px minmax(0, 1fr) auto;
+  min-height: 72px;
+  padding: 10px;
+}
+
+.scorer-card img,
+.scorer-avatar {
+  align-items: center;
+  background: rgba(244, 189, 79, 0.15);
+  border-radius: 50%;
+  display: flex;
+  height: 48px;
+  justify-content: center;
+  object-fit: cover;
+  width: 48px;
+}
+
+.scorer-rank {
+  color: var(--muted);
+  text-align: center;
+}
+
+.scorer-card > div {
+  display: grid;
+  gap: 2px;
+}
+
+.scorer-card > div strong {
+  color: #fff;
+}
+
+.scorer-card span,
+.scorer-card small {
+  color: var(--muted);
+}
+
+.scorer-goals {
+  color: var(--gold-soft);
+  font-size: 1.7rem;
+}
+
+.standing-card {
+  background: rgba(7, 10, 17, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.standing-card h3 {
+  color: #fff;
+  margin: 0;
+  padding: 12px;
+}
+
+.standing-head,
+.standing-row {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 38px minmax(0, 1fr) 34px 38px 38px;
+  padding: 9px 12px;
+}
+
+.standing-head {
+  background: rgba(42, 117, 255, 0.14);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.standing-row {
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  color: #dfe6f7;
+}
+
+.standing-row strong:last-child {
+  color: var(--gold-soft);
+}
+
 .market-header {
   align-items: center;
   background:
@@ -2299,10 +2479,22 @@ button {
   .landing-match,
   .league-room-hero,
   .league-room-grid,
+  .scorer-grid,
+  .standings-grid,
   .ranking-hero,
   .ranking-stat-grid,
   .ranking-search-panel {
     grid-template-columns: 1fr;
+  }
+
+  .league-chat-form {
+    grid-template-columns: 1fr;
+  }
+
+  .statistics-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
   }
 
   .ranking-hero {

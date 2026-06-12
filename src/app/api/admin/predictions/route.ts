@@ -8,6 +8,58 @@ const deletePredictionSchema = z.object({
   matchId: z.string().min(1),
 });
 
+const savePredictionSchema = deletePredictionSchema.extend({
+  homeScore: z.number().int().min(0),
+  awayScore: z.number().int().min(0),
+  points: z.number().int().min(0).max(100),
+});
+
+export async function PUT(request: NextRequest) {
+  const { response } = await requireAdmin(request);
+  if (response) return response;
+
+  const parsed = savePredictionSchema.safeParse(await request.json());
+  if (!parsed.success) {
+    return Response.json({ error: "Pick o puntos invalidos" }, { status: 400 });
+  }
+
+  const [user, match] = await Promise.all([
+    prisma.user.findUnique({ where: { id: parsed.data.userId }, select: { id: true, name: true } }),
+    prisma.match.findUnique({
+      where: { id: parsed.data.matchId },
+      select: { id: true, homeTeam: true, awayTeam: true },
+    }),
+  ]);
+
+  if (!user || !match) {
+    return Response.json({ error: "Usuario o partido no encontrado" }, { status: 404 });
+  }
+
+  const prediction = await prisma.prediction.upsert({
+    where: { userId_matchId: { userId: user.id, matchId: match.id } },
+    update: {
+      homeScore: parsed.data.homeScore,
+      awayScore: parsed.data.awayScore,
+      points: parsed.data.points,
+      manualPoints: parsed.data.points,
+    },
+    create: {
+      userId: user.id,
+      matchId: match.id,
+      homeScore: parsed.data.homeScore,
+      awayScore: parsed.data.awayScore,
+      points: parsed.data.points,
+      manualPoints: parsed.data.points,
+    },
+  });
+
+  return Response.json({
+    prediction,
+    user: user.name,
+    match: `${match.homeTeam} vs ${match.awayTeam}`,
+  });
+}
+
 export async function DELETE(request: NextRequest) {
   const { response } = await requireAdmin(request);
   if (response) return response;

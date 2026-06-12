@@ -26,7 +26,7 @@ type ApiFootballFixture = {
 };
 
 type ApiFootballResponse = {
-  errors?: unknown;
+  errors?: Record<string, string> | string[];
   response?: ApiFootballFixture[];
 };
 
@@ -34,15 +34,25 @@ const finalStatuses = new Set(["FT", "AET", "PEN"]);
 const liveStatuses = new Set(["1H", "HT", "2H", "ET", "BT", "P", "SUSP", "INT", "LIVE"]);
 
 function normalizeTeam(value: string) {
-  return value
+  const normalized = value
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "");
+
+  const aliases: Record<string, string> = {
+    usa: "unitedstates",
+    unitedstatesofamerica: "unitedstates",
+    korearepublic: "southkorea",
+    republicofkorea: "southkorea",
+    iriran: "iran",
+  };
+
+  return aliases[normalized] ?? normalized;
 }
 
-function sameUtcDay(left: Date, right: Date) {
-  return left.toISOString().slice(0, 10) === right.toISOString().slice(0, 10);
+function closeKickoff(left: Date, right: Date) {
+  return Math.abs(left.getTime() - right.getTime()) <= 18 * 60 * 60 * 1000;
 }
 
 function statusFromApi(shortStatus?: string): MatchStatus | null {
@@ -81,10 +91,14 @@ export async function updateWorldCupResultsFromApiFootball() {
   if (!Array.isArray(data.response)) {
     throw new Error("La API de resultados no devolvio partidos validos");
   }
+  if (data.errors && Object.keys(data.errors).length > 0) {
+    throw new Error(`API-Football reporto: ${JSON.stringify(data.errors)}`);
+  }
 
   const matches = await prisma.match.findMany();
   let updated = 0;
   let checked = 0;
+  let matched = 0;
   const updatedMatches: Array<{
     id: string;
     homeTeam: string;
@@ -114,19 +128,22 @@ export async function updateWorldCupResultsFromApiFootball() {
 
     const match = matches.find((item) => {
       if (directSourceKey && item.sourceKey === directSourceKey) return true;
-      if (!sameUtcDay(item.startsAt, fixtureDate)) return false;
+      if (!closeKickoff(item.startsAt, fixtureDate)) return false;
       return normalizeTeam(item.homeTeam) === homeKey && normalizeTeam(item.awayTeam) === awayKey;
     });
 
     if (!match) continue;
+    matched += 1;
 
     const needsUpdate = match.homeScore !== homeScore || match.awayScore !== awayScore || match.status !== status;
+    const needsSourceKey = Boolean(directSourceKey && match.sourceKey !== directSourceKey);
 
-    if (!needsUpdate) continue;
+    if (!needsUpdate && !needsSourceKey) continue;
 
     const updatedMatch = await prisma.match.update({
       where: { id: match.id },
       data: {
+        ...(directSourceKey ? { sourceKey: directSourceKey } : {}),
         homeScore,
         awayScore,
         status,
@@ -141,8 +158,8 @@ export async function updateWorldCupResultsFromApiFootball() {
       },
     });
 
-    updated += 1;
-    if (updatedMatch.homeScore !== null && updatedMatch.awayScore !== null) {
+    if (needsUpdate) updated += 1;
+    if (needsUpdate && updatedMatch.homeScore !== null && updatedMatch.awayScore !== null) {
       updatedMatches.push({
         id: updatedMatch.id,
         homeTeam: updatedMatch.homeTeam,
@@ -156,6 +173,8 @@ export async function updateWorldCupResultsFromApiFootball() {
 
   return {
     checked,
+    received: data.response.length,
+    matched,
     updated,
     updatedMatches,
     source: "API-Football",

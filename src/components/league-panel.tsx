@@ -8,11 +8,19 @@ type Props = {
   signedIn: boolean;
 };
 
+type LeagueMessage = {
+  id: string;
+  body: string;
+  createdAt: string;
+  user: { id: string; name: string; role: "USER" | "ADMIN" };
+};
+
 export function LeaguePanel({ signedIn }: Props) {
   const [leagues, setLeagues] = useState<League[]>([]);
   const [selectedLeague, setSelectedLeague] = useState<League | null>(null);
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
   const [members, setMembers] = useState<LeagueMember[]>([]);
+  const [chatMessages, setChatMessages] = useState<LeagueMessage[]>([]);
   const [message, setMessage] = useState("");
   const globalMembers = members.filter((member) => member.entryPaidAt).length;
   const roomOnlyMembers = members.length - globalMembers;
@@ -50,6 +58,30 @@ export function LeaguePanel({ signedIn }: Props) {
       setMembers(data.members ?? []);
     }
     loadRanking();
+  }, [selectedLeague]);
+
+  useEffect(() => {
+    if (!selectedLeague) {
+      setChatMessages([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadMessages() {
+      const response = await fetch(`/api/leagues/${selectedLeague!.id}/messages`);
+      if (!response.ok || cancelled) return;
+      const data = await response.json();
+      if (!cancelled) setChatMessages(data.messages ?? []);
+    }
+
+    loadMessages();
+    const interval = window.setInterval(loadMessages, 8000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
   }, [selectedLeague]);
 
   async function createLeague(event: FormEvent<HTMLFormElement>) {
@@ -122,6 +154,28 @@ export function LeaguePanel({ signedIn }: Props) {
     setMessage("Nombre de liga actualizado");
     setSelectedLeague(data.league);
     await loadLeagues();
+  }
+
+  async function sendChatMessage(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selectedLeague) return;
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const response = await fetch(`/api/leagues/${selectedLeague.id}/messages`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body: String(formData.get("message") ?? "") }),
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      setMessage(data.error ?? "No se pudo enviar el mensaje");
+      return;
+    }
+
+    setChatMessages((current) => [...current, data.message].slice(-100));
+    form.reset();
   }
 
   if (!signedIn) {
@@ -227,6 +281,32 @@ export function LeaguePanel({ signedIn }: Props) {
               </div>
             </section>
           </div>
+          <section className="panel league-chat">
+            <div className="section-title">
+              <div>
+                <span className="market-kicker">Chat de la sala</span>
+                <h3>Conversacion publica para integrantes</h3>
+              </div>
+              <span className="muted">{chatMessages.length} mensajes recientes</span>
+            </div>
+            <div className="league-chat-messages" aria-live="polite">
+              {chatMessages.map((chatMessage) => (
+                <article className="league-chat-message" key={chatMessage.id}>
+                  <div>
+                    <strong>{chatMessage.user.name}</strong>
+                    {chatMessage.user.role === "ADMIN" ? <span>Admin</span> : null}
+                    <time>{new Date(chatMessage.createdAt).toLocaleString("es", { dateStyle: "short", timeStyle: "short" })}</time>
+                  </div>
+                  <p>{chatMessage.body}</p>
+                </article>
+              ))}
+              {!chatMessages.length ? <div className="empty">Todavia no hay mensajes. Inicia la conversacion.</div> : null}
+            </div>
+            <form className="league-chat-form" onSubmit={sendChatMessage}>
+              <input maxLength={500} name="message" placeholder="Escribe un mensaje para la sala..." required />
+              <button className="button primary" type="submit">Enviar</button>
+            </form>
+          </section>
         </section>
       ) : null}
       <section className="panel">

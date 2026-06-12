@@ -166,7 +166,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
     }
 
     setMessage(
-      `Resultados revisados: ${data.checked}. Partidos actualizados: ${data.updated}. Picks recalculados: ${data.predictionsUpdated}.`,
+      `API recibio: ${data.received ?? 0}. Relacionados: ${data.matched ?? 0}. Resultados revisados: ${data.checked}. Partidos actualizados: ${data.updated}. Picks recalculados: ${data.predictionsUpdated}.`,
     );
     onChanged();
   }
@@ -333,6 +333,63 @@ export function AdminPanel({ matches, onChanged }: Props) {
     setMessage(`Contrasena actualizada para ${data.user.name}. Ya puede ingresar con la nueva clave.`);
     form.reset();
     setSelectedPasswordUserId("");
+  }
+
+  async function editUser(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setMessage("");
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const userId = String(formData.get("editUserId"));
+
+    const response = await fetch(`/api/admin/users/${userId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: String(formData.get("editUserName") ?? ""),
+        phone: String(formData.get("editUserPhone") ?? ""),
+      }),
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      setMessage(data.error ?? "No se pudo editar el usuario");
+      return;
+    }
+
+    setMessage(`Usuario actualizado: ${data.user.name}`);
+    form.reset();
+    await loadUsers();
+  }
+
+  async function saveAdminPick(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setMessage("");
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+
+    const response = await fetch("/api/admin/predictions", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: String(formData.get("adminPickUserId")),
+        matchId: String(formData.get("adminPickMatchId")),
+        homeScore: Number(formData.get("adminPickHomeScore")),
+        awayScore: Number(formData.get("adminPickAwayScore")),
+        points: Number(formData.get("adminPickPoints")),
+      }),
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      setMessage(data.error ?? "No se pudo guardar el pick");
+      return;
+    }
+
+    setMessage(`Pick actualizado: ${data.user} - ${data.match}`);
+    form.reset();
+    await loadUsers();
+    onChanged();
   }
 
   async function deleteUser(event: FormEvent<HTMLFormElement>) {
@@ -720,6 +777,63 @@ export function AdminPanel({ matches, onChanged }: Props) {
                   Cargar usuarios
                 </button>
               ) : null}
+            </form>
+            <form className="form" onSubmit={editUser}>
+              <h3>Editar usuario</h3>
+              <div className="form-row">
+                <label htmlFor="editUserId">Usuario</label>
+                <select id="editUserId" name="editUserId" onFocus={() => !usersLoaded && loadUsers()} required>
+                  <option value="">Selecciona usuario</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>{user.name} - {user.phone}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-row">
+                <label htmlFor="editUserName">Nuevo nombre o apodo</label>
+                <input id="editUserName" name="editUserName" minLength={2} required />
+              </div>
+              <div className="form-row">
+                <label htmlFor="editUserPhone">Nuevo WhatsApp</label>
+                <input id="editUserPhone" inputMode="tel" name="editUserPhone" placeholder="300 000 0000" required />
+              </div>
+              <button className="button primary" type="submit">Guardar usuario</button>
+            </form>
+            <form className="form" onSubmit={saveAdminPick}>
+              <h3>Crear o editar pick y puntos</h3>
+              <div className="form-row">
+                <label htmlFor="adminPickUserId">Usuario</label>
+                <select id="adminPickUserId" name="adminPickUserId" onFocus={() => !usersLoaded && loadUsers()} required>
+                  <option value="">Selecciona usuario</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>{user.name} - {user.phone}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-row">
+                <label htmlFor="adminPickMatchId">Partido</label>
+                <select id="adminPickMatchId" name="adminPickMatchId" required>
+                  <option value="">Selecciona partido</option>
+                  {matches.map((match) => (
+                    <option key={match.id} value={match.id}>{match.homeTeam} vs {match.awayTeam}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="score-form">
+                <div className="form-row">
+                  <label htmlFor="adminPickHomeScore">Local</label>
+                  <input id="adminPickHomeScore" name="adminPickHomeScore" type="number" min={0} required />
+                </div>
+                <div className="form-row">
+                  <label htmlFor="adminPickAwayScore">Visitante</label>
+                  <input id="adminPickAwayScore" name="adminPickAwayScore" type="number" min={0} required />
+                </div>
+                <div className="form-row">
+                  <label htmlFor="adminPickPoints">Puntos</label>
+                  <input id="adminPickPoints" name="adminPickPoints" type="number" min={0} max={100} required />
+                </div>
+              </div>
+              <button className="button primary" type="submit">Guardar pick y puntos</button>
             </form>
             <section className="form users-admin-list">
               <div className="section-title">

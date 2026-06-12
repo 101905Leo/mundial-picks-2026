@@ -11,6 +11,7 @@ import { LeaguePanel } from "@/components/league-panel";
 import { LivePanel } from "@/components/live-panel";
 import { MatchCard } from "@/components/match-card";
 import { RankingTable } from "@/components/ranking-table";
+import { StatisticsPanel } from "@/components/statistics-panel";
 import { WorldCupNewsTicker } from "@/components/worldcup-news-panel";
 import type { Match, RankingEntry, User } from "@/components/types";
 
@@ -18,7 +19,7 @@ export function MundialPicksApp() {
   const [user, setUser] = useState<User | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
-  const [activeView, setActiveView] = useState<"picks" | "ranking" | "facts" | "live" | "leagues" | "admin">("picks");
+  const [activeView, setActiveView] = useState<"picks" | "ranking" | "facts" | "statistics" | "live" | "leagues" | "admin">("picks");
   const [loading, setLoading] = useState(true);
 
   async function loadSession() {
@@ -322,6 +323,12 @@ export function MundialPicksApp() {
                   Datos
                 </button>
                 <button
+                  className={`tab ${activeView === "statistics" ? "active" : ""}`}
+                  onClick={() => setActiveView("statistics")}
+                >
+                  Estadisticas
+                </button>
+                <button
                   className={`tab ${activeView === "live" ? "active" : ""}`}
                   onClick={async () => {
                     setActiveView("live");
@@ -440,6 +447,8 @@ export function MundialPicksApp() {
             ) : null}
 
             {user && activeView === "facts" ? <FormidableFacts /> : null}
+
+            {user && activeView === "statistics" ? <StatisticsPanel /> : null}
 
             {user && activeView === "live" ? (
               <LivePanel matches={matches} />
