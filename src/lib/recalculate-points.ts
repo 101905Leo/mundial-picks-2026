@@ -2,9 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { calculatePredictionPoints } from "@/lib/scoring";
 
 export async function recalculateFinishedMatchPoints() {
-  const finishedMatches = await prisma.match.findMany({
+  const scoreMatches = await prisma.match.findMany({
     where: {
-      status: "FINISHED",
+      status: { in: ["LIVE", "FINISHED"] },
       homeScore: { not: null },
       awayScore: { not: null },
     },
@@ -13,14 +13,14 @@ export async function recalculateFinishedMatchPoints() {
 
   let updated = 0;
 
-  for (const match of finishedMatches) {
+  for (const match of scoreMatches) {
     await Promise.all(
       match.predictions.map((prediction) => {
         updated += 1;
         return prisma.prediction.update({
           where: { id: prediction.id },
           data: {
-            lockedAt: prediction.lockedAt ?? new Date(),
+            lockedAt: match.status === "FINISHED" ? prediction.lockedAt ?? new Date() : prediction.lockedAt,
             points:
               prediction.manualPoints ??
               calculatePredictionPoints(
