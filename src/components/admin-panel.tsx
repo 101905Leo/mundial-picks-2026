@@ -562,7 +562,6 @@ export function AdminPanel({ matches, onChanged }: Props) {
         matchId: String(formData.get("adminPickMatchId")),
         homeScore: Number(formData.get("adminPickHomeScore")),
         awayScore: Number(formData.get("adminPickAwayScore")),
-        points: Number(formData.get("adminPickPoints")),
       }),
     });
     const data = await response.json();
@@ -573,6 +572,34 @@ export function AdminPanel({ matches, onChanged }: Props) {
     }
 
     setMessage(`Pick actualizado por super admin: ${data.user} - ${data.match}.`);
+    form.reset();
+    await loadUsers();
+    onChanged();
+  }
+
+  async function saveAdminPickPoints(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setMessage("");
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+
+    const response = await fetch("/api/admin/predictions", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: String(formData.get("adminPointsUserId")),
+        matchId: String(formData.get("adminPointsMatchId")),
+        points: Number(formData.get("adminManualPoints")),
+      }),
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      setMessage(data.error ?? "No se pudieron guardar los puntos");
+      return;
+    }
+
+    setMessage(`Puntos manuales actualizados: ${data.user} - ${data.match}.`);
     form.reset();
     await loadUsers();
     onChanged();
@@ -1137,8 +1164,8 @@ export function AdminPanel({ matches, onChanged }: Props) {
             <form className="form" onSubmit={saveAdminPick}>
               <h3>Crear o editar pick de participante</h3>
               <p className="muted">
-                Solo el super admin puede modificar picks y puntos aunque el partido ya esté cerrado.
-                Los puntos manuales se respetan cuando recalcules.
+                Solo el super admin puede modificar picks aunque el partido ya esté cerrado.
+                Los puntos se calculan automáticamente si el partido ya tiene marcador.
               </p>
               <div className="form-row">
                 <label htmlFor="adminPickUserId">Usuario</label>
@@ -1171,11 +1198,42 @@ export function AdminPanel({ matches, onChanged }: Props) {
                   <input id="adminPickAwayScore" name="adminPickAwayScore" type="number" min={0} required />
                 </div>
                 <div className="form-row">
-                  <label htmlFor="adminPickPoints">Puntos</label>
-                  <input id="adminPickPoints" name="adminPickPoints" type="number" min={0} max={100} required />
+                  <span className="muted">Los puntos manuales se editan abajo, separados del pick.</span>
                 </div>
               </div>
-              <button className="button primary" type="submit">Guardar pick y puntos manuales</button>
+              <button className="button primary" type="submit">Guardar pick</button>
+            </form>
+            <form className="form" onSubmit={saveAdminPickPoints}>
+              <h3>Ajustar puntos manuales</h3>
+              <p className="muted">
+                Usa esto solo para corregir puntos de un pick existente. Estos puntos se respetan al recalcular.
+              </p>
+              <div className="form-row">
+                <label htmlFor="adminPointsUserId">Usuario</label>
+                <select id="adminPointsUserId" name="adminPointsUserId" onFocus={() => !usersLoaded && loadUsers()} required>
+                  <option value="">Selecciona usuario</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>{user.name} - {user.phone}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-row">
+                <label htmlFor="adminPointsMatchId">Partido</label>
+                <select id="adminPointsMatchId" name="adminPointsMatchId" required>
+                  <option value="">Selecciona partido</option>
+                  {matches.map((match) => (
+                    <option key={match.id} value={match.id}>
+                      {match.homeTeam} vs {match.awayTeam} · {match.status}
+                      {match.isPublished ? "" : " · oculto"}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-row">
+                <label htmlFor="adminManualPoints">Puntos manuales</label>
+                <input id="adminManualPoints" name="adminManualPoints" type="number" min={0} max={100} required />
+              </div>
+              <button className="button primary" type="submit">Guardar puntos</button>
             </form>
             <section className="form users-admin-list">
               <div className="section-title">
