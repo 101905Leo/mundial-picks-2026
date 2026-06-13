@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
+import { matchBelongsToRoomScope } from "@/lib/room-match-scope";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { user, response } = await requireUser(request);
@@ -61,9 +62,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     .filter(({ user: member }) => member.role !== "ADMIN")
     .map(({ user: member, role }) => {
       const roomPredictions = member.predictions.filter(
-        ({ match }) =>
-          match.roomId === league.id ||
-          (match.roomId === null && match.competitionId === league.competitionId),
+        ({ match }) => matchBelongsToRoomScope(match, league),
       );
       const finishedPredictions = roomPredictions
         .filter(({ match }) => match.status === "FINISHED")

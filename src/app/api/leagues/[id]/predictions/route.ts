@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
+import { roomMatchScopeWhere } from "@/lib/room-match-scope";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { user, response } = await requireUser(request);
@@ -9,7 +10,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const { id } = await params;
   const membership = await prisma.leagueMembership.findUnique({
     where: { userId_leagueId: { userId: user!.id, leagueId: id } },
-    select: { id: true, league: { select: { competitionId: true } } },
+    select: { id: true, league: { select: { id: true, competitionId: true } } },
   });
 
   if (!membership) {
@@ -27,10 +28,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       userId: { in: memberIds },
       match: {
         isPublished: true,
-        OR: [
-          { roomId: id },
-          { roomId: null, competitionId: membership.league.competitionId },
-        ],
+        ...roomMatchScopeWhere(membership.league),
       },
     },
     orderBy: [{ match: { startsAt: "desc" } }, { user: { name: "asc" } }],
@@ -55,9 +53,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     },
   });
 
-  const visiblePredictions = predictions.filter(
-    ({ match }) => match.isPublished && match.status === "LIVE",
-  );
+  const now = new Date();
+  const liveWindowStart = new Date(now.getTime() - 4 * 60 * 60 * 1000);
+  const visiblePredictions = predictions.filter(({ match }) => {
+    const looksInPlayByTime = match.startsAt <= now && match.startsAt >= liveWindowStart;
+    return match.isPublished && (match.status === "LIVE" || (looksInPlayByTime && match.status !== "FINISHED"));
+  });
 
   return Response.json({ predictions: visiblePredictions });
 }
