@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { matchBelongsToRoomScope } from "@/lib/room-match-scope";
+import { calculatePredictionPoints } from "@/lib/scoring";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { user, response } = await requireUser(request);
@@ -32,12 +33,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
               predictions: {
                 select: {
                   points: true,
+                  manualPoints: true,
                   homeScore: true,
                   awayScore: true,
                   match: {
                     select: {
+                      id: true,
                       roomId: true,
                       competitionId: true,
+                      isPublished: true,
                       status: true,
                       startsAt: true,
                       homeScore: true,
@@ -58,18 +62,32 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 
   const weekStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const predictionPoints = (prediction: (typeof league.memberships)[number]["user"]["predictions"][number]) => {
+    if (prediction.manualPoints !== null) return prediction.manualPoints;
+    if (
+      (prediction.match.status === "LIVE" || prediction.match.status === "FINISHED") &&
+      prediction.match.homeScore !== null &&
+      prediction.match.awayScore !== null
+    ) {
+      return calculatePredictionPoints(
+        { homeScore: prediction.homeScore, awayScore: prediction.awayScore },
+        { homeScore: prediction.match.homeScore, awayScore: prediction.match.awayScore },
+      );
+    }
+    return prediction.points;
+  };
   const members = league.memberships
     .filter(({ user: member }) => member.role !== "ADMIN")
     .map(({ user: member, role }) => {
       const roomPredictions = member.predictions.filter(
-        ({ match }) => matchBelongsToRoomScope(match, league),
+        ({ match }) => match.isPublished && matchBelongsToRoomScope(match, league),
       );
       const finishedPredictions = roomPredictions
         .filter(({ match }) => match.status === "FINISHED")
         .sort((a, b) => b.match.startsAt.getTime() - a.match.startsAt.getTime());
       let currentStreak = 0;
       for (const prediction of finishedPredictions) {
-        if (prediction.points >= 2) currentStreak += 1;
+        if (predictionPoints(prediction) >= 2) currentStreak += 1;
         else break;
       }
 
@@ -79,7 +97,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         isActive: member.isActive,
         entryPaidAt: member.entryPaidAt,
         roomRole: role,
-        points: roomPredictions.reduce((sum, prediction) => sum + prediction.points, 0),
+        points: roomPredictions.reduce((sum, prediction) => sum + predictionPoints(prediction), 0),
         predictions: roomPredictions.length,
         exactScores: roomPredictions.filter(
           ({ homeScore, awayScore, match }) =>
@@ -90,7 +108,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         currentStreak,
         weeklyPoints: roomPredictions
           .filter(({ match }) => match.startsAt >= weekStart)
-          .reduce((sum, prediction) => sum + prediction.points, 0),
+          .reduce((sum, prediction) => sum + predictionPoints(prediction), 0),
       };
     })
     .sort((a, b) => b.points - a.points || b.predictions - a.predictions);
