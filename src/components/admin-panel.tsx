@@ -572,7 +572,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
       return;
     }
 
-    setMessage(`Pick actualizado: ${data.user} - ${data.match}`);
+    setMessage(`Pick actualizado por super admin: ${data.user} - ${data.match}.`);
     form.reset();
     await loadUsers();
     onChanged();
@@ -1135,7 +1135,11 @@ export function AdminPanel({ matches, onChanged }: Props) {
               <button className="button primary" type="submit">Guardar usuario</button>
             </form>
             <form className="form" onSubmit={saveAdminPick}>
-              <h3>Crear o editar pick y puntos</h3>
+              <h3>Crear o editar pick de participante</h3>
+              <p className="muted">
+                Solo el super admin puede modificar picks y puntos aunque el partido ya esté cerrado.
+                Los puntos manuales se respetan cuando recalcules.
+              </p>
               <div className="form-row">
                 <label htmlFor="adminPickUserId">Usuario</label>
                 <select id="adminPickUserId" name="adminPickUserId" onFocus={() => !usersLoaded && loadUsers()} required>
@@ -1150,7 +1154,10 @@ export function AdminPanel({ matches, onChanged }: Props) {
                 <select id="adminPickMatchId" name="adminPickMatchId" required>
                   <option value="">Selecciona partido</option>
                   {matches.map((match) => (
-                    <option key={match.id} value={match.id}>{match.homeTeam} vs {match.awayTeam}</option>
+                    <option key={match.id} value={match.id}>
+                      {match.homeTeam} vs {match.awayTeam} · {match.status}
+                      {match.isPublished ? "" : " · oculto"}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -1168,7 +1175,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
                   <input id="adminPickPoints" name="adminPickPoints" type="number" min={0} max={100} required />
                 </div>
               </div>
-              <button className="button primary" type="submit">Guardar pick y puntos</button>
+              <button className="button primary" type="submit">Guardar pick y puntos manuales</button>
             </form>
             <section className="form users-admin-list">
               <div className="section-title">

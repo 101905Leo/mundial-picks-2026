@@ -41,19 +41,20 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   });
 
   await Promise.all(
-    match.predictions.map((prediction) =>
-      prisma.prediction.update({
+    match.predictions.map((prediction) => {
+      const calculatedPoints = calculatePredictionPoints(
+        { homeScore: prediction.homeScore, awayScore: prediction.awayScore },
+        { homeScore: match.homeScore!, awayScore: match.awayScore! },
+      );
+
+      return prisma.prediction.update({
         where: { id: prediction.id },
         data: {
           lockedAt: parsed.data.isFinal ? prediction.lockedAt ?? new Date() : prediction.lockedAt,
-          points: calculatePredictionPoints(
-            { homeScore: prediction.homeScore, awayScore: prediction.awayScore },
-            { homeScore: match.homeScore!, awayScore: match.awayScore! },
-          ),
-          manualPoints: null,
+          points: prediction.manualPoints ?? calculatedPoints,
         },
-      }),
-    ),
+      });
+    }),
   );
 
   await notifyWhatsAppUsers(

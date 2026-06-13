@@ -27,7 +27,7 @@ export async function PUT(request: NextRequest) {
     prisma.user.findUnique({ where: { id: parsed.data.userId }, select: { id: true, name: true } }),
     prisma.match.findUnique({
       where: { id: parsed.data.matchId },
-      select: { id: true, homeTeam: true, awayTeam: true },
+      select: { id: true, homeTeam: true, awayTeam: true, startsAt: true, status: true },
     }),
   ]);
 
@@ -42,6 +42,10 @@ export async function PUT(request: NextRequest) {
       awayScore: parsed.data.awayScore,
       points: parsed.data.points,
       manualPoints: parsed.data.points,
+      lockedAt:
+        match.status === "FINISHED" || match.startsAt <= new Date()
+          ? new Date()
+          : null,
     },
     create: {
       userId: user.id,
@@ -50,6 +54,10 @@ export async function PUT(request: NextRequest) {
       awayScore: parsed.data.awayScore,
       points: parsed.data.points,
       manualPoints: parsed.data.points,
+      lockedAt:
+        match.status === "FINISHED" || match.startsAt <= new Date()
+          ? new Date()
+          : null,
     },
   });
 
@@ -57,6 +65,7 @@ export async function PUT(request: NextRequest) {
     prediction,
     user: user.name,
     match: `${match.homeTeam} vs ${match.awayTeam}`,
+    override: "El super admin modifico este pick aunque el partido este cerrado.",
   });
 }
 

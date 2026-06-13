@@ -16,16 +16,16 @@ export async function recalculateFinishedMatchPoints() {
   for (const match of scoreMatches) {
     await Promise.all(
       match.predictions.map((prediction) => {
+        const calculatedPoints = calculatePredictionPoints(
+          { homeScore: prediction.homeScore, awayScore: prediction.awayScore },
+          { homeScore: match.homeScore!, awayScore: match.awayScore! },
+        );
         updated += 1;
         return prisma.prediction.update({
           where: { id: prediction.id },
           data: {
             lockedAt: match.status === "FINISHED" ? prediction.lockedAt ?? new Date() : prediction.lockedAt,
-            points: calculatePredictionPoints(
-              { homeScore: prediction.homeScore, awayScore: prediction.awayScore },
-              { homeScore: match.homeScore!, awayScore: match.awayScore! },
-            ),
-            manualPoints: null,
+            points: prediction.manualPoints ?? calculatedPoints,
           },
         });
       }),
