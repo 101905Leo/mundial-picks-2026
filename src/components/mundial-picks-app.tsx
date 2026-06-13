@@ -158,7 +158,7 @@ export function MundialPicksApp() {
         <Countdown matches={matches} compact />
         <div className="top-actions">
           {user ? <span className="user-chip">{user.name}</span> : null}
-          {user ? <EntryPanel user={user} /> : null}
+          {user && !user.hasLeagueAccess ? <EntryPanel user={user} /> : null}
           {user ? (
             <button className="button danger" onClick={logout}>
               Salir

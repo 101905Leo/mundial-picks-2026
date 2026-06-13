@@ -1263,6 +1263,26 @@ button {
   text-transform: uppercase;
 }
 
+.room-payment-required {
+  align-items: center;
+  background:
+    linear-gradient(100deg, rgba(244, 189, 79, 0.16), rgba(42, 117, 255, 0.11)),
+    rgba(10, 14, 23, 0.98);
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.room-payment-required h3 {
+  color: #fff;
+  margin: 6px 0;
+}
+
+.room-payment-required p {
+  color: var(--muted);
+  margin: 0;
+}
+
 .room-list {
   align-items: stretch;
   display: grid;
@@ -1769,6 +1789,24 @@ button {
   justify-self: end;
   min-width: auto;
   padding: 0;
+}
+
+.countdown-next-match {
+  max-width: 250px;
+  text-align: right;
+}
+
+.countdown-next-match span {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.countdown-next-match strong {
+  color: #fff;
+  font-size: 0.88rem;
+  line-height: 1.1;
 }
 
 .countdown-panel.compact .countdown-grid {
@@ -2750,6 +2788,7 @@ button {
   .room-main-layout,
   .room-promo,
   .public-room-promo,
+  .room-payment-required,
   .scorer-grid,
   .standings-grid,
   .ranking-hero,
@@ -2919,6 +2958,11 @@ button {
 
   .countdown-panel.compact .countdown-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .countdown-next-match {
+    max-width: none;
+    text-align: left;
   }
 
   .market-columns {

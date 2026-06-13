@@ -30,6 +30,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
   const finishedMatches = matches.filter((match) => match.status === "FINISHED").length;
   const activeUsers = users.filter((user) => user.isActive).length;
   const paidUsers = users.filter((user) => user.entryPaidAt).length;
+  const publishedOpenMatches = matches.filter((match) => match.isPublished && match.status !== "FINISHED");
 
   async function loadUsers() {
     const response = await fetch("/api/admin/users");
@@ -615,6 +616,9 @@ export function AdminPanel({ matches, onChanged }: Props) {
                 <button className="button secondary" onClick={testWhatsApp} type="button">
                   Probar WhatsApp
                 </button>
+                <a className="button secondary" href="/api/admin/export" download>
+                  Descargar Excel
+                </a>
               </div>
             </section>
             <section className="form admin-guide">
@@ -683,7 +687,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
                       </button>
                       <button
                         className="button danger"
-                        disabled={match.status === "FINISHED"}
+                        disabled={!match.isPublished || match.status === "FINISHED"}
                         onClick={() => closeMatch(match)}
                         type="button"
                       >
@@ -754,9 +758,9 @@ export function AdminPanel({ matches, onChanged }: Props) {
               <div className="form-row">
                 <label htmlFor="matchId">Partido</label>
                 <select id="matchId" name="matchId" required>
-                  {matches.filter((match) => match.status !== "FINISHED").map((match) => (
+                  {publishedOpenMatches.map((match) => (
                     <option key={match.id} value={match.id}>
-                      {match.homeTeam} vs {match.awayTeam} {match.isPublished ? "" : "(oculto)"}
+                      {match.homeTeam} vs {match.awayTeam}
                     </option>
                   ))}
                 </select>
@@ -782,8 +786,8 @@ export function AdminPanel({ matches, onChanged }: Props) {
               <small className="muted">
                 El parcial deja el partido en vivo y actualiza puntos provisionales. Cerrar partido deja el resultado final.
               </small>
-              {!matches.some((match) => match.status !== "FINISHED") ? (
-                <div className="empty">No hay partidos abiertos para actualizar.</div>
+              {!publishedOpenMatches.length ? (
+                <div className="empty">No hay partidos publicados y abiertos para actualizar.</div>
               ) : null}
             </form>
             <form className="form" onSubmit={deleteMatch}>

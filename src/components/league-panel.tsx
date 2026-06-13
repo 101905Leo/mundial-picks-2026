@@ -159,11 +159,13 @@ export function LeaguePanel({ user }: Props) {
       return;
     }
 
-    setMessage("Sala creada. El código se generó según el cupo seleccionado.");
-    setLeagues((current) => [data.league, ...current.filter((league) => league.id !== data.league.id)]);
-    setSelectedLeague(data.league);
-    setRoomView("picks");
-    form.reset();
+    setMessage("Sala creada. Abriendo Wompi para confirmar el cupo.");
+    if (data.checkout?.checkoutUrl) {
+      window.location.href = data.checkout.checkoutUrl;
+      return;
+    }
+
+    await loadLeagues();
   }
 
   async function joinLeague(event: FormEvent<HTMLFormElement>) {
@@ -194,6 +196,20 @@ export function LeaguePanel({ user }: Props) {
     const invitation = `Únete a "${selectedLeague.name}" en Mundial Picks: https://www.mundialpicks.online. Código: ${selectedLeague.inviteCode}`;
     await navigator.clipboard.writeText(invitation);
     setMessage("Invitación copiada para compartir.");
+  }
+
+  async function payRoom() {
+    if (!selectedLeague) return;
+    setMessage("Abriendo Wompi...");
+    const response = await fetch(`/api/leagues/${selectedLeague.id}/checkout`, { method: "POST" });
+    const data = await response.json();
+
+    if (!response.ok) {
+      setMessage(data.error ?? "No se pudo abrir el pago de la sala");
+      return;
+    }
+
+    window.location.href = data.checkout.checkoutUrl;
   }
 
   async function renameLeague(event: FormEvent<HTMLFormElement>) {
@@ -297,6 +313,10 @@ export function LeaguePanel({ user }: Props) {
   const liveMatches = matches.filter((match) => match.status === "LIVE");
   const totalPicks = members.reduce((sum, member) => sum + member.predictions, 0);
   const finishedMatches = matches.filter((match) => match.status === "FINISHED").length;
+  const availableSpots = selectedLeague ? Math.max(0, selectedLeague.maxParticipants - members.length) : 0;
+  const savedPicks = matches.flatMap((match) =>
+    (match.predictions ?? []).map((prediction) => ({ match, prediction })),
+  );
 
   return (
     <div className="grid">
@@ -327,7 +347,12 @@ export function LeaguePanel({ user }: Props) {
           </div>
           <div className="form-row">
             <label htmlFor="maxParticipants">Cupo de participantes</label>
-            <input id="maxParticipants" name="maxParticipants" type="number" min={2} max={200} defaultValue={20} required />
+            <select id="maxParticipants" name="maxParticipants" defaultValue="20" required>
+              <option value="20">20 participantes · $40.000 COP</option>
+              <option value="50">50 participantes · $80.000 COP</option>
+              <option value="100">100 participantes · $120.000 COP</option>
+            </select>
+            <small>El código se identificará como MP20, MP50 o MP100 y se bloqueará al completar el cupo.</small>
           </div>
           <details className="room-first-match">
             <summary>Crear primer partido (opcional)</summary>
@@ -335,7 +360,7 @@ export function LeaguePanel({ user }: Props) {
             <div className="form-row"><label htmlFor="room-away">Visitante</label><input id="room-away" name="awayTeam" /></div>
             <div className="form-row"><label htmlFor="room-start">Inicio</label><input id="room-start" name="startsAt" type="datetime-local" /></div>
           </details>
-          <button className="button primary" type="submit">Crear sala y código</button>
+          <button className="button primary" type="submit">Crear sala y pagar</button>
         </form>
 
         <form className="panel form" onSubmit={joinLeague}>
@@ -377,7 +402,9 @@ export function LeaguePanel({ user }: Props) {
             <div>
               <span className="market-kicker">{selectedLeague.competition?.name ?? "Sala privada"}</span>
               <h2>{selectedLeague.name}</h2>
-              <p className="muted">{members.length}/{selectedLeague.maxParticipants} participantes · {matches.length} partidos</p>
+              <p className="muted">
+                {members.length}/{selectedLeague.maxParticipants} participantes · {availableSpots} cupos disponibles · {matches.length} partidos
+              </p>
             </div>
             {isOwner ? (
               <div className="room-owner-actions">
@@ -392,6 +419,19 @@ export function LeaguePanel({ user }: Props) {
             )}
           </div>
 
+          {!selectedLeague.paidAt ? (
+            <section className="panel room-payment-required">
+              <div>
+                <span className="market-kicker">Sala pendiente de activación</span>
+                <h3>Confirma el plan de {selectedLeague.maxParticipants} participantes</h3>
+                <p>El código de invitación se habilitará cuando Wompi apruebe el pago.</p>
+              </div>
+              {isOwner ? (
+                <button className="button primary" onClick={payRoom} type="button">Pagar y activar sala</button>
+              ) : null}
+            </section>
+          ) : (
+          <>
           <nav className="admin-nav room-nav" aria-label="Secciones de la sala">
             {([
               ["picks", "Picks"],
@@ -428,6 +468,24 @@ export function LeaguePanel({ user }: Props) {
                     />
                   ))}
                   {!matches.length ? <div className="empty">Esta liga todavía no tiene partidos publicados.</div> : null}
+                </div>
+              </section>
+              <section className="panel room-predictions">
+                <div className="section-title">
+                  <div><span className="market-kicker">Tu historial</span><h3>Mis picks guardados</h3></div>
+                </div>
+                <div className="room-prediction-list">
+                  {savedPicks.map(({ match, prediction }) => (
+                    <article className="room-prediction" key={prediction.id}>
+                      <div>
+                        <strong>{match.homeTeam} vs {match.awayTeam}</strong>
+                        <span>{new Date(match.startsAt).toLocaleString("es", { dateStyle: "short", timeStyle: "short" })}</span>
+                      </div>
+                      <strong>{prediction.homeScore} - {prediction.awayScore}</strong>
+                      <span>{prediction.points} pts</span>
+                    </article>
+                  ))}
+                  {!savedPicks.length ? <div className="empty">Todavía no has guardado picks en esta sala.</div> : null}
                 </div>
               </section>
               <section className="panel room-predictions">
@@ -527,6 +585,8 @@ export function LeaguePanel({ user }: Props) {
               </button>
             </section>
           </div>
+          </>
+          )}
         </section>
       ) : null}
     </div>

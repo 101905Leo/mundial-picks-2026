@@ -49,6 +49,9 @@ export type League = {
   ownerId: string;
   competitionId?: string | null;
   maxParticipants: number;
+  paymentStatus?: string;
+  paymentAmountInCents?: number;
+  paidAt?: string | null;
   competition?: {
     id: string;
     name: string;

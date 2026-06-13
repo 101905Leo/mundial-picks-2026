@@ -34,28 +34,7 @@ export function Countdown({ matches, compact = false }: Props) {
   }, []);
 
   if (!nextMatch) {
-    return (
-      <div className={`countdown-panel ${compact ? "compact" : ""}`}>
-        <div className="countdown-grid" aria-label="Tiempo restante">
-          <span>
-            <strong>0</strong>
-            Dias
-          </span>
-          <span>
-            <strong>00</strong>
-            Horas
-          </span>
-          <span>
-            <strong>00</strong>
-            Min
-          </span>
-          <span>
-            <strong>00</strong>
-            Seg
-          </span>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   const targetDate = new Date(nextMatch.startsAt);
@@ -63,6 +42,10 @@ export function Countdown({ matches, compact = false }: Props) {
 
   return (
     <div className={`countdown-panel ${compact ? "compact" : ""}`}>
+      <div className="countdown-next-match">
+        <span>Próximo partido</span>
+        <strong>{nextMatch.homeTeam} vs {nextMatch.awayTeam}</strong>
+      </div>
       <div className="countdown-grid" aria-label="Tiempo restante">
         <span>
           <strong>{time.days}</strong>

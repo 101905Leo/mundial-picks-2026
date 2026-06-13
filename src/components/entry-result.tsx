@@ -26,7 +26,11 @@ export function EntryResult() {
         return;
       }
 
-      setMessage(data.status === "APPROVED" ? "Inscripción activa. Redirigiendo..." : `Estado de pago: ${data.status}`);
+      const approvedMessage =
+        data.paymentType === "room"
+          ? "Sala activada. Redirigiendo..."
+          : "Inscripción activa. Redirigiendo...";
+      setMessage(data.status === "APPROVED" ? approvedMessage : `Estado de pago: ${data.status}`);
 
       if (data.status === "APPROVED") {
         window.setTimeout(() => {

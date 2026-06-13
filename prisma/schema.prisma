@@ -103,6 +103,10 @@ model League {
   ownerId         String
   competitionId   String?
   maxParticipants Int                @default(20)
+  paymentReference String?           @unique
+  paymentStatus    String            @default("PENDING")
+  paymentAmountInCents Int           @default(0)
+  paidAt          DateTime?
   owner           User               @relation("LeagueOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   competition     Competition?       @relation(fields: [competitionId], references: [id], onDelete: SetNull)
   memberships     LeagueMembership[]

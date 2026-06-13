@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { approveEntryPayment, verifyWompiEvent } from "@/lib/wompi";
+import { applyWompiPayment, verifyWompiEvent } from "@/lib/wompi";
 
 export async function POST(request: Request) {
   const event = await request.json();
@@ -20,8 +20,8 @@ export async function POST(request: Request) {
         },
       });
 
-      if (transaction.status === "APPROVED") {
-        await approveEntryPayment(transaction.reference, transaction.id);
+      if (transaction.status === "APPROVED" || String(transaction.reference).startsWith("room_")) {
+        await applyWompiPayment(transaction.reference, transaction.id, transaction.status);
       }
     }
   }

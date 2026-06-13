@@ -22,6 +22,10 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Sala no encontrada" }, { status: 404 });
   }
 
+  if (!league.paidAt || league.paymentStatus !== "APPROVED") {
+    return Response.json({ error: "Esta sala todavía no ha confirmado el pago de su cupo" }, { status: 403 });
+  }
+
   const existingMembership = await prisma.leagueMembership.findUnique({
     where: { userId_leagueId: { userId: user!.id, leagueId: league.id } },
   });

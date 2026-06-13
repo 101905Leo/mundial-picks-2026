@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { leagueSchema } from "@/lib/validators";
+import { createWompiRoomCheckout } from "@/lib/wompi";
 
 function inviteCode(maxParticipants: number) {
   const capacity = String(maxParticipants).padStart(2, "0");
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const maxParticipants = parsed.data.maxParticipants ?? 20;
+    const maxParticipants = parsed.data.maxParticipants;
     const competition =
       (parsed.data.competitionId
         ? await prisma.competition.findUnique({ where: { id: parsed.data.competitionId } })
@@ -93,8 +94,15 @@ export async function POST(request: NextRequest) {
       return createdLeague;
     });
 
-    return Response.json({ league }, { status: 201 });
-  } catch {
-    return Response.json({ error: "No se pudo crear la liga. Intenta de nuevo." }, { status: 500 });
+    const checkout = await createWompiRoomCheckout({
+      leagueId: league.id,
+      user: { name: user!.name, phone: user!.phone },
+      maxParticipants,
+    });
+
+    return Response.json({ league: { ...league, paymentStatus: "PENDING", paidAt: null }, checkout }, { status: 201 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "No se pudo crear la sala. Intenta de nuevo.";
+    return Response.json({ error: message }, { status: 500 });
   }
 }

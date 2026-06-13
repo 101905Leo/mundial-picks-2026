@@ -28,6 +28,9 @@ export async function POST(request: NextRequest) {
   }
 
   if (league) {
+    if (!league.paidAt || league.paymentStatus !== "APPROVED") {
+      return Response.json({ error: "La sala todavía no ha confirmado el pago de su cupo" }, { status: 403 });
+    }
     const participants = await prisma.leagueMembership.count({ where: { leagueId: league.id } });
     if (participants >= league.maxParticipants) {
       return Response.json({ error: "Esta sala ya completo su cupo de participantes" }, { status: 409 });

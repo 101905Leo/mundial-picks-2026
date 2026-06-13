@@ -26,6 +26,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     where: {
       userId: { in: memberIds },
       match: {
+        isPublished: true,
         OR: [
           { roomId: id },
           { roomId: null, competitionId: membership.league.competitionId },
@@ -46,6 +47,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           awayTeam: true,
           startsAt: true,
           status: true,
+          isPublished: true,
           homeScore: true,
           awayScore: true,
         },
@@ -53,14 +55,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     },
   });
 
-  const now = new Date();
-  const visiblePredictions = predictions.filter(({ match }) => {
-    if (match.status === "LIVE") return true;
-    if (match.status === "FINISHED" || match.startsAt > now) return false;
-
-    const estimatedEnd = new Date(match.startsAt.getTime() + 3 * 60 * 60 * 1000);
-    return estimatedEnd > now;
-  });
+  const visiblePredictions = predictions.filter(
+    ({ match }) => match.isPublished && match.status === "LIVE",
+  );
 
   return Response.json({ predictions: visiblePredictions });
 }

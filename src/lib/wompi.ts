@@ -30,6 +30,16 @@ export function entryFee() {
   };
 }
 
+export const roomPlans = [
+  { maxParticipants: 20, priceCop: 40000 },
+  { maxParticipants: 50, priceCop: 80000 },
+  { maxParticipants: 100, priceCop: 120000 },
+] as const;
+
+export function roomPlanFor(maxParticipants: number) {
+  return roomPlans.find((plan) => plan.maxParticipants === maxParticipants) ?? roomPlans[0];
+}
+
 export function wompiCheckoutUrl(params: {
   publicKey: string;
   reference: string;
@@ -52,13 +62,19 @@ export function wompiCheckoutUrl(params: {
   return url.toString();
 }
 
-export async function createWompiEntryCheckout(user: { id: string; name: string; phone: string }) {
+function wompiKeys() {
   const publicKey = process.env.WOMPI_PUBLIC_KEY;
   const integritySecret = process.env.WOMPI_INTEGRITY_SECRET;
 
   if (!publicKey || !integritySecret) {
     throw new Error("Faltan WOMPI_PUBLIC_KEY o WOMPI_INTEGRITY_SECRET en .env");
   }
+
+  return { publicKey, integritySecret };
+}
+
+export async function createWompiEntryCheckout(user: { id: string; name: string; phone: string }) {
+  const { publicKey, integritySecret } = wompiKeys();
 
   const fee = entryFee();
   const reference = `entry_${user.id}_${Date.now()}`;
@@ -83,6 +99,43 @@ export async function createWompiEntryCheckout(user: { id: string; name: string;
       redirectUrl: `${appUrl()}/entry/success`,
       customerName: user.name,
       customerPhone: user.phone,
+    }),
+  };
+}
+
+export async function createWompiRoomCheckout(params: {
+  leagueId: string;
+  user: { name: string; phone: string };
+  maxParticipants: number;
+}) {
+  const { publicKey, integritySecret } = wompiKeys();
+  const plan = roomPlanFor(params.maxParticipants);
+  const amountInCents = plan.priceCop * 100;
+  const reference = `room_${params.leagueId}_${Date.now()}`;
+  const signature = sha256(`${reference}${amountInCents}${currency}${integritySecret}`);
+
+  await prisma.league.update({
+    where: { id: params.leagueId },
+    data: {
+      paymentReference: reference,
+      paymentStatus: "PENDING",
+      paymentAmountInCents: amountInCents,
+      paidAt: null,
+      maxParticipants: plan.maxParticipants,
+    },
+  });
+
+  return {
+    reference,
+    plan,
+    checkoutUrl: wompiCheckoutUrl({
+      publicKey,
+      reference,
+      amountInCents,
+      signature,
+      redirectUrl: `${appUrl()}/entry/success`,
+      customerName: params.user.name,
+      customerPhone: params.user.phone,
     }),
   };
 }
@@ -147,6 +200,49 @@ export async function approveEntryPayment(reference: string, transactionId?: str
 
     return updatedPayment;
   });
+}
+
+export async function approveRoomPayment(reference: string, transactionId?: string, status = "APPROVED") {
+  const paidAt = status === "APPROVED" ? new Date() : null;
+
+  return prisma.league.update({
+    where: { paymentReference: reference },
+    data: {
+      paymentStatus: status,
+      paidAt,
+      paymentReference: reference,
+    },
+    select: {
+      id: true,
+      name: true,
+      paidAt: true,
+      paymentStatus: true,
+      paymentAmountInCents: true,
+    },
+  });
+}
+
+export async function applyWompiPayment(reference: string, transactionId?: string, status = "APPROVED") {
+  if (reference.startsWith("room_")) {
+    return {
+      type: "room" as const,
+      payment: await approveRoomPayment(reference, transactionId, status),
+    };
+  }
+
+  if (status === "APPROVED") {
+    return {
+      type: "entry" as const,
+      payment: await approveEntryPayment(reference, transactionId),
+    };
+  }
+
+  await prisma.entryPayment.updateMany({
+    where: { reference },
+    data: { status, transactionId },
+  });
+
+  return { type: "entry" as const, payment: null };
 }
 
 function getByPath(source: unknown, path: string) {
