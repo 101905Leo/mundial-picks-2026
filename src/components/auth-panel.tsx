@@ -38,7 +38,7 @@ export function AuthPanel({ onAuth }: Props) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(
         mode === "login"
-          ? { phone: payload.phone, password: payload.password, inviteCode: payload.inviteCode }
+          ? { phone: payload.phone, password: payload.password }
           : payload,
       ),
     });
@@ -110,11 +110,13 @@ export function AuthPanel({ onAuth }: Props) {
             required
           />
         </div>
-        <div className="form-row">
-          <label htmlFor="inviteCode">Codigo de sala privada</label>
-          <input id="inviteCode" name="inviteCode" maxLength={16} placeholder="Opcional: ABC123" />
-          <small>Si tienes un codigo, entraras directo a esa sala sin activar el ranking global.</small>
-        </div>
+        {mode === "register" ? (
+          <div className="form-row">
+            <label htmlFor="inviteCode">Codigo de sala</label>
+            <input id="inviteCode" name="inviteCode" maxLength={16} minLength={4} placeholder="MP20ABCD" required />
+            <small>Solo se solicita una vez. Después entrarás automáticamente a tu sala.</small>
+          </div>
+        ) : null}
         {mode === "login" ? (
           <label className="check-row">
             <input

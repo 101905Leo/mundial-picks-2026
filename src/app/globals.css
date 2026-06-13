@@ -1305,6 +1305,30 @@ button {
   z-index: 5;
 }
 
+.room-main-layout {
+  align-items: start;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.75fr);
+}
+
+.room-main-content {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.room-main-chat {
+  max-height: calc(100vh - 170px);
+  position: sticky;
+  top: 82px;
+}
+
+.room-main-chat .league-chat-messages {
+  max-height: calc(100vh - 430px);
+  min-height: 260px;
+}
+
 .room-picks-board {
   width: 100%;
 }
@@ -2723,6 +2747,7 @@ button {
   .league-play-grid,
   .competition-grid,
   .room-stat-grid,
+  .room-main-layout,
   .room-promo,
   .public-room-promo,
   .scorer-grid,
@@ -2750,6 +2775,15 @@ button {
   .live-external-notice {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .room-main-chat {
+    max-height: none;
+    position: static;
+  }
+
+  .room-main-chat .league-chat-messages {
+    max-height: 420px;
   }
 
   .statistics-header {

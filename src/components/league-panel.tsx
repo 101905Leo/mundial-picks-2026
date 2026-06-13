@@ -4,10 +4,12 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { LivePanel } from "@/components/live-panel";
 import { MatchCard } from "@/components/match-card";
 import { RankingTable } from "@/components/ranking-table";
+import { FormidableFacts } from "@/components/formidable-facts";
+import { StatisticsPanel } from "@/components/statistics-panel";
 import type { Competition, League, LeagueMember, Match, RankingEntry, User } from "@/components/types";
 
 type Props = { user: User };
-type RoomView = "picks" | "ranking" | "statistics" | "live" | "chat" | "participants";
+type RoomView = "picks" | "facts" | "ranking" | "statistics" | "live" | "participants";
 
 type LeagueMessage = {
   id: string;
@@ -220,19 +222,6 @@ export function LeaguePanel({ user }: Props) {
     if (response.ok) await loadRoom();
   }
 
-  async function deleteRoom() {
-    if (!selectedLeague || !window.confirm(`¿Eliminar definitivamente "${selectedLeague.name}"?`)) return;
-    const response = await fetch(`/api/leagues/${selectedLeague.id}`, { method: "DELETE" });
-    const data = await response.json();
-    if (!response.ok) {
-      setMessage(data.error ?? "No se pudo eliminar la sala");
-      return;
-    }
-    setMessage(`Sala eliminada: ${data.deleted.name}`);
-    setSelectedLeague(null);
-    await loadLeagues();
-  }
-
   async function postMessage(payload: { body?: string; audioData?: string; audioMime?: string; audioDuration?: number }) {
     if (!selectedLeague) return;
     const response = await fetch(`/api/leagues/${selectedLeague.id}/messages`, {
@@ -311,16 +300,16 @@ export function LeaguePanel({ user }: Props) {
 
   return (
     <div className="grid">
-      <section className="room-promo panel">
+      {!selectedLeague ? <section className="room-promo panel">
         <div>
           <span className="market-kicker">El centro de la competencia</span>
           <h2>Entra a una sala y juega todo desde allí</h2>
           <p>Cada sala reúne sus picks, ranking, estadísticas, partidos en vivo, chat y participantes.</p>
         </div>
         <a className="button primary" href="https://goallive.online" rel="noreferrer" target="_blank">Ver partidos</a>
-      </section>
+      </section> : null}
 
-      <div className="grid three-columns room-entry-grid">
+      {!selectedLeague ? <div className="grid three-columns room-entry-grid">
         <form className="panel form room-create-form" onSubmit={createLeague}>
           <h3>Crear sala</h3>
           <div className="form-row">
@@ -363,7 +352,7 @@ export function LeaguePanel({ user }: Props) {
           <div className="tabs room-list">
             {leagues.map((league) => (
               <button
-                className={`tab ${selectedLeague?.id === league.id ? "active" : ""}`}
+                className="tab"
                 key={league.id}
                 onClick={() => {
                   setSelectedLeague(league);
@@ -378,7 +367,7 @@ export function LeaguePanel({ user }: Props) {
             {!leagues.length ? <div className="empty">Crea una sala o entra con un código.</div> : null}
           </div>
         </div>
-      </div>
+      </div> : null}
 
       {message ? <div className="notice">{message}</div> : null}
 
@@ -394,17 +383,22 @@ export function LeaguePanel({ user }: Props) {
               <div className="room-owner-actions">
                 <span>Administras esta sala</span>
                 <button className="button primary" onClick={copyInvitation} type="button">Copiar invitación</button>
+                <button className="button secondary" onClick={() => setSelectedLeague(null)} type="button">Mis salas</button>
               </div>
-            ) : null}
+            ) : (
+              <div className="room-owner-actions">
+                <button className="button secondary" onClick={() => setSelectedLeague(null)} type="button">Mis salas</button>
+              </div>
+            )}
           </div>
 
           <nav className="admin-nav room-nav" aria-label="Secciones de la sala">
             {([
               ["picks", "Picks"],
+              ["facts", "Datos"],
               ["ranking", "Ranking"],
               ["statistics", "Estadísticas"],
               ["live", "En vivo"],
-              ["chat", "Chat"],
               ["participants", "Participantes"],
             ] as Array<[RoomView, string]>).map(([view, label]) => (
               <button className={`tab ${roomView === view ? "active" : ""}`} key={view} onClick={() => setRoomView(view)} type="button">
@@ -413,6 +407,8 @@ export function LeaguePanel({ user }: Props) {
             ))}
           </nav>
 
+          <div className="room-main-layout">
+            <div className="room-main-content">
           {roomView === "picks" ? (
             <div className="grid">
               <section className="panel market-board room-picks-board">
@@ -452,6 +448,8 @@ export function LeaguePanel({ user }: Props) {
             </div>
           ) : null}
 
+          {roomView === "facts" ? <FormidableFacts /> : null}
+
           {roomView === "ranking" ? (
             <section className="panel room-ranking">
               <div className="section-title"><div><span className="market-kicker">Clasificación privada</span><h3>Ranking de la sala</h3></div></div>
@@ -460,18 +458,48 @@ export function LeaguePanel({ user }: Props) {
           ) : null}
 
           {roomView === "statistics" ? (
-            <section className="room-stat-grid">
-              <article className="panel"><span>Participantes</span><strong>{members.length}</strong></article>
-              <article className="panel"><span>Picks guardados</span><strong>{totalPicks}</strong></article>
-              <article className="panel"><span>Partidos finalizados</span><strong>{finishedMatches}</strong></article>
-              <article className="panel"><span>Partidos en vivo</span><strong>{liveMatches.length}</strong></article>
-            </section>
+            <div className="grid">
+              <section className="room-stat-grid">
+                <article className="panel"><span>Participantes</span><strong>{members.length}</strong></article>
+                <article className="panel"><span>Picks guardados</span><strong>{totalPicks}</strong></article>
+                <article className="panel"><span>Partidos finalizados</span><strong>{finishedMatches}</strong></article>
+                <article className="panel"><span>Partidos en vivo</span><strong>{liveMatches.length}</strong></article>
+              </section>
+              <StatisticsPanel />
+            </div>
           ) : null}
 
           {roomView === "live" ? <LivePanel matches={matches} /> : null}
 
-          {roomView === "chat" ? (
-            <section className="panel league-chat">
+          {roomView === "participants" ? (
+            <div className="league-room-grid">
+              <section className="panel">
+                <div className="section-title"><div><span className="market-kicker">Integrantes</span><h3>{members.length} participantes</h3></div></div>
+                <div className="league-member-list">
+                  {members.map((member) => (
+                    <article className="league-member" key={member.id}>
+                      <div><strong>{member.name}</strong><span>{member.predictions} picks · {member.points} puntos</span></div>
+                      {isOwner && member.id !== user.id ? (
+                        <button className="button danger compact-button" onClick={() => removeMember(member)} type="button">Retirar</button>
+                      ) : null}
+                    </article>
+                  ))}
+                </div>
+              </section>
+              {isOwner ? (
+                <section className="panel room-management">
+                  <form className="form" onSubmit={renameLeague}>
+                    <h3>Administrar sala</h3>
+                    <div className="form-row"><label htmlFor="rename-league">Nombre</label><input id="rename-league" name="name" defaultValue={selectedLeague.name} minLength={3} required /></div>
+                    <button className="button secondary" type="submit">Guardar nombre</button>
+                  </form>
+                </section>
+              ) : null}
+            </div>
+          ) : null}
+            </div>
+
+            <section className="panel league-chat room-main-chat">
               <div className="section-title"><div><span className="market-kicker">Chat público</span><h3>Conversación de la sala</h3></div></div>
               <div className="league-chat-messages" aria-live="polite">
                 {chatMessages.map((chatMessage) => (
@@ -498,35 +526,7 @@ export function LeaguePanel({ user }: Props) {
                 {recording ? "Detener y enviar nota" : "Grabar nota de voz"}
               </button>
             </section>
-          ) : null}
-
-          {roomView === "participants" ? (
-            <div className="league-room-grid">
-              <section className="panel">
-                <div className="section-title"><div><span className="market-kicker">Integrantes</span><h3>{members.length} participantes</h3></div></div>
-                <div className="league-member-list">
-                  {members.map((member) => (
-                    <article className="league-member" key={member.id}>
-                      <div><strong>{member.name}</strong><span>{member.predictions} picks · {member.points} puntos</span></div>
-                      {isOwner && member.id !== user.id ? (
-                        <button className="button danger compact-button" onClick={() => removeMember(member)} type="button">Retirar</button>
-                      ) : null}
-                    </article>
-                  ))}
-                </div>
-              </section>
-              {isOwner ? (
-                <section className="panel room-management">
-                  <form className="form" onSubmit={renameLeague}>
-                    <h3>Administrar sala</h3>
-                    <div className="form-row"><label htmlFor="rename-league">Nombre</label><input id="rename-league" name="name" defaultValue={selectedLeague.name} minLength={3} required /></div>
-                    <button className="button secondary" type="submit">Guardar nombre</button>
-                    <button className="button danger" onClick={deleteRoom} type="button">Eliminar sala</button>
-                  </form>
-                </section>
-              ) : null}
-            </div>
-          ) : null}
+          </div>
         </section>
       ) : null}
     </div>

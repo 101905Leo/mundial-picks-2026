@@ -86,6 +86,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
       body: JSON.stringify({
         homeScore: Number(formData.get("homeScore")),
         awayScore: Number(formData.get("awayScore")),
+        isFinal: formData.get("resultType") === "final",
       }),
     });
 
@@ -95,7 +96,11 @@ export function AdminPanel({ matches, onChanged }: Props) {
       return;
     }
 
-    setMessage("Resultado guardado y puntos recalculados");
+    setMessage(
+      formData.get("resultType") === "final"
+        ? "Resultado final guardado y puntos recalculados"
+        : "Marcador parcial guardado. El partido continúa en vivo.",
+    );
     onChanged();
   }
 
@@ -705,7 +710,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
               </button>
             </form>
             <form className="form" onSubmit={saveResult}>
-              <h3>Cargar resultado</h3>
+              <h3>Actualizar marcador</h3>
               <div className="form-row">
                 <label htmlFor="matchId">Partido</label>
                 <select id="matchId" name="matchId" required>
@@ -725,10 +730,17 @@ export function AdminPanel({ matches, onChanged }: Props) {
                   <label htmlFor="resultAway">Visitante</label>
                   <input id="resultAway" name="awayScore" type="number" min={0} required />
                 </div>
-                <button className="button primary" type="submit">
-                  Guardar
-                </button>
               </div>
+              <div className="form-row">
+                <label htmlFor="resultType">Estado del marcador</label>
+                <select id="resultType" name="resultType" defaultValue="partial" required>
+                  <option value="partial">Marcador parcial · partido en vivo</option>
+                  <option value="final">Resultado final · cerrar y calcular puntos</option>
+                </select>
+              </div>
+              <button className="button primary" type="submit">
+                Guardar marcador
+              </button>
             </form>
             <form className="form" onSubmit={deleteMatch}>
               <h3>Eliminar partido</h3>

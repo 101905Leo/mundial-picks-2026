@@ -32,25 +32,3 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   return Response.json({ league: updatedLeague });
 }
-
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { user, response } = await requireUser(request);
-  if (response) return response;
-
-  const { id } = await params;
-  const league = await prisma.league.findUnique({
-    where: { id },
-    select: { id: true, name: true, ownerId: true },
-  });
-
-  if (!league) {
-    return Response.json({ error: "Sala no encontrada" }, { status: 404 });
-  }
-
-  if (league.ownerId !== user!.id) {
-    return Response.json({ error: "Solo el creador puede eliminar esta sala" }, { status: 403 });
-  }
-
-  await prisma.league.delete({ where: { id } });
-  return Response.json({ deleted: { id: league.id, name: league.name } });
-}

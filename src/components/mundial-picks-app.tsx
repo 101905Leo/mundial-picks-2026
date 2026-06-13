@@ -22,7 +22,7 @@ export function MundialPicksApp() {
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
   const [activeView, setActiveView] = useState<
     "picks" | "ranking" | "facts" | "statistics" | "live" | "rooms" | "leagues" | "admin"
-  >("picks");
+  >("rooms");
   const [loading, setLoading] = useState(true);
 
   async function loadSession() {
@@ -104,7 +104,7 @@ export function MundialPicksApp() {
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
-    setActiveView("picks");
+    setActiveView("rooms");
     await loadData(null);
   }
 
@@ -313,53 +313,10 @@ export function MundialPicksApp() {
             {user ? (
               <nav className="tabs" aria-label="Secciones principales">
                 <button
-                  className={`tab ${activeView === "picks" ? "active" : ""}`}
-                  onClick={async () => {
-                    setActiveView("picks");
-                    await loadData();
-                  }}
-                >
-                  Picks
-                </button>
-                {canViewGlobalRanking ? (
-                  <button
-                    className={`tab ${activeView === "ranking" ? "active" : ""}`}
-                    onClick={async () => {
-                      setActiveView("ranking");
-                      await loadData(user);
-                    }}
-                  >
-                    Ranking
-                  </button>
-                ) : null}
-                <button
-                  className={`tab ${activeView === "facts" ? "active" : ""}`}
-                  onClick={() => {
-                    setActiveView("facts");
-                  }}
-                >
-                  Datos
-                </button>
-                <button
-                  className={`tab ${activeView === "statistics" ? "active" : ""}`}
-                  onClick={() => setActiveView("statistics")}
-                >
-                  Estadisticas
-                </button>
-                <button
-                  className={`tab ${activeView === "live" ? "active" : ""}`}
-                  onClick={async () => {
-                    setActiveView("live");
-                    await loadData();
-                  }}
-                >
-                  En vivo
-                </button>
-                <button
                   className={`tab ${activeView === "rooms" ? "active" : ""}`}
                   onClick={() => setActiveView("rooms")}
                 >
-                  Salas
+                  Mi sala
                 </button>
                 <button
                   className={`tab ${activeView === "leagues" ? "active" : ""}`}

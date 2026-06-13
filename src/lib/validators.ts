@@ -26,6 +26,7 @@ export const credentialsSchema = z.object({
 
 export const registerSchema = credentialsSchema.extend({
   name: z.string().trim().min(2).max(80),
+  inviteCode: z.string().trim().min(4, "Ingresa el codigo de la sala").max(16),
 });
 
 export const changePasswordSchema = z.object({
@@ -53,6 +54,7 @@ export const broadcastUrlSchema = z.object({
 export const resultSchema = z.object({
   homeScore: z.number().int().min(0),
   awayScore: z.number().int().min(0),
+  isFinal: z.boolean().default(false),
 });
 
 export const predictionSchema = resultSchema.extend({

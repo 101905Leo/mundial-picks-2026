@@ -23,28 +23,32 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     data: {
       homeScore: parsed.data.homeScore,
       awayScore: parsed.data.awayScore,
-      status: "FINISHED",
+      status: parsed.data.isFinal ? "FINISHED" : "LIVE",
     },
     include: { predictions: true },
   });
 
-  await Promise.all(
-    match.predictions.map((prediction) =>
-      prisma.prediction.update({
-        where: { id: prediction.id },
-        data: {
-          lockedAt: prediction.lockedAt ?? new Date(),
-          points: calculatePredictionPoints(
-            { homeScore: prediction.homeScore, awayScore: prediction.awayScore },
-            { homeScore: match.homeScore!, awayScore: match.awayScore! },
-          ),
-        },
-      }),
-    ),
-  );
+  if (parsed.data.isFinal) {
+    await Promise.all(
+      match.predictions.map((prediction) =>
+        prisma.prediction.update({
+          where: { id: prediction.id },
+          data: {
+            lockedAt: prediction.lockedAt ?? new Date(),
+            points: calculatePredictionPoints(
+              { homeScore: prediction.homeScore, awayScore: prediction.awayScore },
+              { homeScore: match.homeScore!, awayScore: match.awayScore! },
+            ),
+          },
+        }),
+      ),
+    );
+  }
 
   await notifyWhatsAppUsers(
-    `Resultado actualizado: ${match.homeTeam} ${match.homeScore}-${match.awayScore} ${match.awayTeam}. Ya se recalcularon los puntos.`,
+    parsed.data.isFinal
+      ? `Resultado final: ${match.homeTeam} ${match.homeScore}-${match.awayScore} ${match.awayTeam}. Ya se recalcularon los puntos.`
+      : `Marcador parcial: ${match.homeTeam} ${match.homeScore}-${match.awayScore} ${match.awayTeam}. Partido en juego.`,
   );
 
   return Response.json({ match });
