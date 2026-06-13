@@ -44,7 +44,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     where: { id },
     data: {
       isActive: parsed.data.isActive,
-      ...(parsed.data.isActive && user.role !== "ADMIN" && !user.entryPaidAt ? { entryPaidAt: new Date() } : {}),
     },
     select: { id: true, name: true, phone: true, role: true, isActive: true, entryPaidAt: true },
   });

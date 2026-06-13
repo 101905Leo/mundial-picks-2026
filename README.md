@@ -27,7 +27,7 @@ Aplicacion web de quiniela para el Mundial 2026, sin apuestas con dinero real.
 - Importacion automatica del calendario de la Copa Mundial de la FIFA 2026™.
 - Cron automatico diario en Vercel para actualizar resultados reales y recalcular puntos.
 - Notificaciones por WhatsApp para actualizaciones del administrador, si configuras WhatsApp Cloud API.
-- Inscripcion unica con Wompi por 50.000 COP.
+- Planes de salas con Wompi según el número de participantes.
 - Premio visible de 1.000.000 COP.
 
 ## Estructura
@@ -213,9 +213,9 @@ Fuente de datos por defecto:
 https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json
 ```
 
-## Inscripcion con Wompi
+## Planes de salas con Wompi
 
-Los usuarios pueden registrarse e iniciar sesion. Para guardar picks necesitan pagar una inscripcion unica de 50.000 COP. El admin no necesita pagar inscripcion.
+Los usuarios pueden registrarse e ingresar con código sin pagar individualmente. El cobro se realiza solamente al crear una sala: 20 participantes por 40.000 COP, 50 por 80.000 COP o 100 por 120.000 COP.
 
 Agrega estos valores en `.env`:
 
@@ -226,11 +226,10 @@ WOMPI_PRIVATE_KEY="prv_test_..."
 WOMPI_EVENTS_SECRET="test_events_..."
 WOMPI_INTEGRITY_SECRET="test_integrity_..."
 WOMPI_ENVIRONMENT="sandbox"
-ENTRY_FEE_COP="50000"
 PRIZE_AMOUNT_COP="1000000"
 ```
 
-`ENTRY_FEE_COP="50000"` cobra 50.000 COP por la inscripcion unica. `PRIZE_AMOUNT_COP="1000000"` documenta el premio visible de 1.000.000 COP.
+`PRIZE_AMOUNT_COP="1000000"` documenta el premio visible de 1.000.000 COP.
 
 Configura en Wompi la URL de eventos:
 

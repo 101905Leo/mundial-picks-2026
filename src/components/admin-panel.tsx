@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import type { Competition, Match } from "@/components/types";
 import { flagForTeam } from "@/lib/team-flags";
 
@@ -48,8 +48,10 @@ export function AdminPanel({ matches, onChanged }: Props) {
   const publishedMatches = matches.filter((match) => match.isPublished).length;
   const resultLoadedMatches = matches.filter((match) => match.homeScore !== null && match.awayScore !== null).length;
   const activeUsers = users.filter((user) => user.isActive).length;
-  const paidUsers = users.filter((user) => user.entryPaidAt).length;
   const publishedOpenMatches = matches.filter((match) => match.isPublished && match.status !== "FINISHED");
+  const playedPublishedMatches = matches
+    .filter((match) => match.isPublished && new Date(match.startsAt) <= new Date())
+    .sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime());
 
   async function loadUsers() {
     const response = await fetch("/api/admin/users");
@@ -83,6 +85,10 @@ export function AdminPanel({ matches, onChanged }: Props) {
     }
     if (!usersLoaded) await loadUsers();
   }
+
+  useEffect(() => {
+    loadRooms();
+  }, []);
 
   async function createTrialRoom(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -364,7 +370,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
 
     setMessage(
       data.user.isActive
-        ? `${data.user.name} ahora esta activo porque ya pago la inscripcion`
+        ? `${data.user.name} ahora está activo`
         : `${data.user.name} ahora esta desactivado para guardar picks`,
     );
     await loadUsers();
@@ -643,8 +649,8 @@ export function AdminPanel({ matches, onChanged }: Props) {
           <strong>{usersLoaded ? activeUsers : "-"}</strong>
         </article>
         <article>
-          <span>Inscripciones pagadas</span>
-          <strong>{usersLoaded ? paidUsers : "-"}</strong>
+          <span>Salas registradas</span>
+          <strong>{adminRooms.length || "-"}</strong>
         </article>
       </div>
       <div className="admin-nav" aria-label="Secciones del administrador">
@@ -713,6 +719,16 @@ export function AdminPanel({ matches, onChanged }: Props) {
                 <button className="button secondary" onClick={testWhatsApp} type="button">
                   Probar WhatsApp
                 </button>
+                <button
+                  className="button primary"
+                  onClick={async () => {
+                    setAdminView("rooms");
+                    await loadRooms();
+                  }}
+                  type="button"
+                >
+                  Administrar salas
+                </button>
                 <a className="button secondary" href="/api/admin/export" download>
                   Descargar Excel
                 </a>
@@ -725,8 +741,44 @@ export function AdminPanel({ matches, onChanged }: Props) {
                 <li>Publica únicamente los partidos que quieres mostrar.</li>
                 <li>La actualización automática consulta resultados cada 15 minutos.</li>
                 <li>Usa la actualización manual solo para comprobar o corregir.</li>
-                <li>Activa usuarios cuando confirmes el pago de inscripción.</li>
+                <li>Los pagos se administran por plan de sala, no por usuario.</li>
               </ol>
+            </section>
+            <section className="form result-audit">
+              <div className="section-title">
+                <div>
+                  <span className="market-kicker">Revisión de marcadores</span>
+                  <h3>Partidos publicados que ya comenzaron</h3>
+                </div>
+              </div>
+              <div className="admin-user-list">
+                {playedPublishedMatches.map((match) => {
+                  const hasScore = match.homeScore !== null && match.awayScore !== null;
+                  const statusLabel = !hasScore
+                    ? "Falta marcador"
+                    : match.status === "FINISHED"
+                    ? "Cerrado"
+                    : match.status === "LIVE"
+                    ? "En vivo"
+                    : "Marcador cargado, falta cerrar";
+                  return (
+                    <article className={`admin-user-card ${hasScore ? "active" : "inactive"}`} key={match.id}>
+                      <div>
+                        <strong>{match.homeTeam} vs {match.awayTeam}</strong>
+                        <span>{new Date(match.startsAt).toLocaleString("es", { dateStyle: "short", timeStyle: "short" })}</span>
+                      </div>
+                      <div className="admin-user-stats">
+                        <span>
+                          <strong>{hasScore ? `${match.homeScore}-${match.awayScore}` : "--"}</strong>
+                          Marcador
+                        </span>
+                      </div>
+                      <div className="admin-user-badges"><span>{statusLabel}</span></div>
+                    </article>
+                  );
+                })}
+                {!playedPublishedMatches.length ? <div className="empty">No hay partidos publicados que ya hayan comenzado.</div> : null}
+              </div>
             </section>
           </>
         ) : null}
@@ -1028,7 +1080,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
               <div className="section-title">
                 <div>
                   <h3>Base de usuarios</h3>
-                  <p className="muted">Consulta WhatsApp, picks guardados, puntos, pago y estado de cada usuario.</p>
+                  <p className="muted">Consulta WhatsApp, picks guardados, puntos y estado de cada usuario.</p>
                 </div>
                 <button className="button secondary" type="button" onClick={loadUsers}>
                   {usersLoaded ? "Actualizar" : "Cargar usuarios"}
@@ -1053,14 +1105,13 @@ export function AdminPanel({ matches, onChanged }: Props) {
                         </span>
                       </div>
                       <div className="admin-user-badges">
-                        <span>{user.entryPaidAt ? "Pagó inscripción" : "Pago pendiente"}</span>
                         <span>{user.isActive ? "Activo" : "Desactivado"}</span>
                         {user.role === "ADMIN" ? <span>Admin</span> : null}
                       </div>
                       <div className="admin-user-actions">
                         <button
                           className="button secondary"
-                          disabled={user.isActive && Boolean(user.entryPaidAt)}
+                          disabled={user.isActive}
                           onClick={() => updateUserStatus(user.id, true)}
                           type="button"
                         >

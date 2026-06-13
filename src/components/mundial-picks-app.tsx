@@ -5,7 +5,6 @@ import { AdminPanel } from "@/components/admin-panel";
 import { AuthPanel } from "@/components/auth-panel";
 import { CompetitionPanel } from "@/components/competition-panel";
 import { Countdown } from "@/components/countdown";
-import { EntryPanel } from "@/components/entry-panel";
 import { FormidableFacts } from "@/components/formidable-facts";
 import { GlobalRankingPanel } from "@/components/global-ranking-panel";
 import { LeaguePanel } from "@/components/league-panel";
@@ -33,7 +32,7 @@ export function MundialPicksApp() {
   }
 
   async function loadData(viewer: User | null = user) {
-    const canViewGlobalRanking = Boolean(viewer && (viewer.role === "ADMIN" || viewer.entryPaidAt));
+    const canViewGlobalRanking = Boolean(viewer);
     const [matchesResponse, rankingResponse] = await Promise.allSettled([
       fetch("/api/matches"),
       canViewGlobalRanking ? fetch("/api/rankings") : Promise.resolve(null),
@@ -117,14 +116,12 @@ export function MundialPicksApp() {
   const lockedMatches = matches.filter((match) => new Date(match.startsAt) <= new Date() || match.status === "FINISHED");
   const openMatches = matches.length - lockedMatches.length;
   const upcomingMatches = matches.slice(0, 3);
-  const canViewGlobalRanking = Boolean(user && (user.role === "ADMIN" || user.entryPaidAt));
-  const canPredict = Boolean(user && (user.role === "ADMIN" || (user.isActive && user.entryPaidAt) || user.hasLeagueAccess));
+  const canViewGlobalRanking = Boolean(user);
+  const canPredict = Boolean(user && (user.role === "ADMIN" || user.hasLeagueAccess));
   const pickDisabledMessage =
-    user?.hasLeagueAccess
-      ? "Tu acceso de sala privada permite guardar picks sin entrar al ranking global."
-      : user && !user.isActive
-      ? "Tu usuario esta desactivado para guardar picks."
-      : "Paga la inscripción única para habilitar tus predicciones.";
+    user && !user.hasLeagueAccess
+      ? "Entra a una sala con código para guardar picks."
+      : "Tu acceso de sala permite guardar picks.";
   const matchesByDate = matches.reduce<Array<{ key: string; label: string; matches: Match[] }>>((days, match) => {
     const startsAt = new Date(match.startsAt);
     const key = startsAt.toISOString().slice(0, 10);
@@ -158,7 +155,6 @@ export function MundialPicksApp() {
         <Countdown matches={matches} compact />
         <div className="top-actions">
           {user ? <span className="user-chip">{user.name}</span> : null}
-          {user && !user.hasLeagueAccess ? <EntryPanel user={user} /> : null}
           {user ? (
             <button className="button danger" onClick={logout}>
               Salir
@@ -195,8 +191,8 @@ export function MundialPicksApp() {
                         <span>Premio</span>
                       </div>
                       <div>
-                        <strong>$50K</strong>
-                        <span>Inscripción</span>
+                        <strong>3</strong>
+                        <span>Planes de sala</span>
                       </div>
                       <div>
                         <strong>104</strong>
@@ -410,7 +406,7 @@ export function MundialPicksApp() {
                   {canViewGlobalRanking ? (
                     <RankingTable ranking={ranking} />
                   ) : (
-                    <div className="empty">El ranking global estará disponible cuando tu inscripción esté activa.</div>
+                    <div className="empty">Inicia sesión para consultar el ranking global.</div>
                   )}
                 </aside>
               </div>

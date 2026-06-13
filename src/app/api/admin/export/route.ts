@@ -18,7 +18,6 @@ export async function GET(request: NextRequest) {
       name: true,
       phone: true,
       isActive: true,
-      entryPaidAt: true,
       leagues: { select: { league: { select: { name: true } } } },
       predictions: {
         orderBy: { match: { startsAt: "asc" } },
@@ -44,7 +43,6 @@ export async function GET(request: NextRequest) {
     "Usuario",
     "WhatsApp",
     "Estado",
-    "Pago global",
     "Salas",
     "Partido",
     "Fecha",
@@ -58,7 +56,6 @@ export async function GET(request: NextRequest) {
       user.name,
       user.phone,
       user.isActive ? "Activo" : "Desactivado",
-      user.entryPaidAt ? "Pagado" : "Sin pago global",
       user.leagues.map((membership) => membership.league.name).join(" | "),
     ];
 

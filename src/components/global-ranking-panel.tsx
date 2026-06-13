@@ -38,7 +38,7 @@ export function GlobalRankingPanel({ ranking, user, onOpenPicks }: Props) {
         <aside className="ranking-access-card">
           <span>Tu acceso</span>
           <strong>{user.name}</strong>
-          <p>{user.entryPaidAt || user.role === "ADMIN" ? "Inscripción activa" : "Inscripción pendiente"}</p>
+          <p>Ranking disponible. Para competir y guardar picks debes pertenecer a una sala.</p>
         </aside>
       </div>
 

@@ -57,8 +57,8 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Tu usuario esta desactivado para guardar picks." }, { status: 403 });
   }
 
-  if (user!.role !== "ADMIN" && !user!.entryPaidAt && !hasLeagueAccess) {
-    return Response.json({ error: "Debes pagar la inscripción única o entrar con codigo de sala para guardar picks." }, { status: 402 });
+  if (user!.role !== "ADMIN" && !roomId) {
+    return Response.json({ error: "Debes entrar a una sala para guardar picks." }, { status: 403 });
   }
 
   const prediction = await prisma.prediction.upsert({

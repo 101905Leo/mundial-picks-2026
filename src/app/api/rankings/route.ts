@@ -6,13 +6,8 @@ export async function GET(request: NextRequest) {
   const { user, response } = await requireUser(request);
   if (response) return response;
 
-  if (user!.role !== "ADMIN" && !user!.entryPaidAt) {
-    return Response.json({ error: "Solo usuarios inscritos pueden ver el ranking global" }, { status: 403 });
-  }
-
   const users = await prisma.user.findMany({
     where: {
-      entryPaidAt: { not: null },
       role: "USER",
     },
     select: {
