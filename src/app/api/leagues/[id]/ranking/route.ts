@@ -46,7 +46,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const members = league.memberships
     .filter(({ user: member }) => member.role !== "ADMIN")
-    .map(({ user: member }) => {
+    .map(({ user: member, role }) => {
       const roomPredictions = member.predictions.filter(
         ({ match }) =>
           match.roomId === league.id ||
@@ -58,6 +58,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         name: member.name,
         isActive: member.isActive,
         entryPaidAt: member.entryPaidAt,
+        roomRole: role,
         points: roomPredictions.reduce((sum, prediction) => sum + prediction.points, 0),
         predictions: roomPredictions.length,
       };
@@ -73,6 +74,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       ownerId: league.ownerId,
       competitionId: league.competitionId,
       maxParticipants: league.maxParticipants,
+      paymentStatus: league.paymentStatus,
+      paymentAmountInCents: league.paymentAmountInCents,
+      paidAt: league.paidAt,
+      memberships: league.memberships.map((roomMembership) => ({
+        id: roomMembership.id,
+        userId: roomMembership.userId,
+        role: roomMembership.role,
+      })),
     },
     ranking,
     members,

@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
   const leagues = await prisma.league.findMany({
     where: { memberships: { some: { userId: user!.id } } },
     include: {
-      memberships: { select: { id: true } },
+      memberships: { select: { id: true, userId: true, role: true } },
       competition: { select: { id: true, name: true, season: true, country: true } },
     },
     orderBy: { createdAt: "desc" },
@@ -68,12 +68,12 @@ export async function POST(request: NextRequest) {
           competitionId: competition.id,
           maxParticipants,
           memberships: {
-            create: { userId: user!.id },
+            create: { userId: user!.id, role: "ADMIN" },
           },
         },
         include: {
           competition: { select: { id: true, name: true, season: true, country: true } },
-          memberships: { select: { id: true } },
+          memberships: { select: { id: true, userId: true, role: true } },
         },
       });
 

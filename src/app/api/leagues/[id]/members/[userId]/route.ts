@@ -12,15 +12,22 @@ export async function DELETE(
   const { id, userId } = await params;
   const league = await prisma.league.findUnique({
     where: { id },
-    select: { ownerId: true },
+    select: {
+      ownerId: true,
+      memberships: {
+        where: { userId: user!.id },
+        select: { role: true },
+      },
+    },
   });
 
   if (!league) {
     return Response.json({ error: "Sala no encontrada" }, { status: 404 });
   }
 
-  if (league.ownerId !== user!.id) {
-    return Response.json({ error: "Solo el creador puede administrar integrantes" }, { status: 403 });
+  const canManage = user!.role === "ADMIN" || league.ownerId === user!.id || league.memberships[0]?.role === "ADMIN";
+  if (!canManage) {
+    return Response.json({ error: "Solo un administrador de sala puede administrar integrantes" }, { status: 403 });
   }
 
   if (userId === league.ownerId) {
@@ -34,6 +41,10 @@ export async function DELETE(
 
   if (!membership) {
     return Response.json({ error: "El usuario no pertenece a esta sala" }, { status: 404 });
+  }
+
+  if (membership.role === "ADMIN" && league.ownerId !== user!.id && user!.role !== "ADMIN") {
+    return Response.json({ error: "Solo el creador puede retirar a otro administrador de sala" }, { status: 403 });
   }
 
   await prisma.leagueMembership.delete({ where: { id: membership.id } });

@@ -18,6 +18,11 @@ enum MatchStatus {
   FINISHED
 }
 
+enum LeagueRole {
+  MEMBER
+  ADMIN
+}
+
 model User {
   id             String             @id @default(cuid())
   name           String
@@ -135,6 +140,7 @@ model LeagueMembership {
   id       String   @id @default(cuid())
   userId   String
   leagueId String
+  role     LeagueRole @default(MEMBER)
   joinedAt DateTime @default(now())
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)

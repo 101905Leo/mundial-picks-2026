@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import type { Match } from "@/components/types";
+import type { Competition, Match } from "@/components/types";
 import { flagForTeam } from "@/lib/team-flags";
 
 type AdminUser = {
@@ -20,14 +20,33 @@ type Props = {
   onChanged: () => void;
 };
 
+type AdminRoom = {
+  id: string;
+  name: string;
+  inviteCode: string;
+  ownerId: string;
+  maxParticipants: number;
+  paymentStatus: string;
+  paidAt: string | null;
+  competition: { id: string; name: string; season: string } | null;
+  owner: { id: string; name: string; phone: string };
+  memberships: Array<{
+    role: "MEMBER" | "ADMIN";
+    user: { id: string; name: string; phone: string };
+  }>;
+};
+
 export function AdminPanel({ matches, onChanged }: Props) {
   const [message, setMessage] = useState("");
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [usersLoaded, setUsersLoaded] = useState(false);
-  const [adminView, setAdminView] = useState<"overview" | "matches" | "users" | "security">("overview");
+  const [adminView, setAdminView] = useState<"overview" | "matches" | "users" | "rooms" | "security">("overview");
   const [selectedPasswordUserId, setSelectedPasswordUserId] = useState("");
+  const [adminRooms, setAdminRooms] = useState<AdminRoom[]>([]);
+  const [competitions, setCompetitions] = useState<Competition[]>([]);
+  const [selectedAdminRoomId, setSelectedAdminRoomId] = useState("");
   const publishedMatches = matches.filter((match) => match.isPublished).length;
-  const finishedMatches = matches.filter((match) => match.status === "FINISHED").length;
+  const resultLoadedMatches = matches.filter((match) => match.homeScore !== null && match.awayScore !== null).length;
   const activeUsers = users.filter((user) => user.isActive).length;
   const paidUsers = users.filter((user) => user.entryPaidAt).length;
   const publishedOpenMatches = matches.filter((match) => match.isPublished && match.status !== "FINISHED");
@@ -43,6 +62,74 @@ export function AdminPanel({ matches, onChanged }: Props) {
 
     setUsers(data.users);
     setUsersLoaded(true);
+  }
+
+  async function loadRooms() {
+    const [roomsResponse, competitionsResponse] = await Promise.all([
+      fetch("/api/admin/rooms"),
+      fetch("/api/competitions"),
+    ]);
+    const roomsData = await roomsResponse.json();
+
+    if (!roomsResponse.ok) {
+      setMessage(roomsData.error ?? "No se pudieron cargar las salas");
+      return;
+    }
+
+    setAdminRooms(roomsData.rooms ?? []);
+    if (competitionsResponse.ok) {
+      const competitionsData = await competitionsResponse.json();
+      setCompetitions(competitionsData.competitions ?? []);
+    }
+    if (!usersLoaded) await loadUsers();
+  }
+
+  async function createTrialRoom(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const response = await fetch("/api/admin/rooms", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: String(formData.get("trialRoomName")),
+        ownerId: String(formData.get("trialOwnerId")),
+        competitionId: String(formData.get("trialCompetitionId")),
+      }),
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      setMessage(data.error ?? "No se pudo crear la prueba gratis");
+      return;
+    }
+
+    setMessage(`Prueba gratis creada para ${data.owner}. Código: ${data.room.inviteCode}`);
+    form.reset();
+    await loadRooms();
+  }
+
+  async function updateRoomAdmin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const response = await fetch("/api/admin/rooms", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        leagueId: String(formData.get("adminRoomId")),
+        userId: String(formData.get("roomAdminUserId")),
+        role: String(formData.get("roomRole")),
+      }),
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      setMessage(data.error ?? "No se pudo cambiar el administrador de sala");
+      return;
+    }
+
+    setMessage(`${data.membership.user.name} ahora es ${data.membership.role === "ADMIN" ? "administrador" : "participante"} en ${data.room}.`);
+    await loadRooms();
   }
 
   async function createMatch(event: FormEvent<HTMLFormElement>) {
@@ -548,8 +635,8 @@ export function AdminPanel({ matches, onChanged }: Props) {
           </strong>
         </article>
         <article>
-          <span>Resultados cargados</span>
-          <strong>{finishedMatches}</strong>
+          <span>Marcadores cargados</span>
+          <strong>{resultLoadedMatches}</strong>
         </article>
         <article>
           <span>Usuarios activos</span>
@@ -584,6 +671,16 @@ export function AdminPanel({ matches, onChanged }: Props) {
           type="button"
         >
           Usuarios
+        </button>
+        <button
+          className={`tab ${adminView === "rooms" ? "active" : ""}`}
+          onClick={async () => {
+            setAdminView("rooms");
+            await loadRooms();
+          }}
+          type="button"
+        >
+          Salas
         </button>
         <button
           className={`tab ${adminView === "security" ? "active" : ""}`}
@@ -1053,6 +1150,106 @@ export function AdminPanel({ matches, onChanged }: Props) {
                 </button>
               ) : null}
             </form>
+          </>
+        ) : null}
+        {adminView === "rooms" ? (
+          <>
+            <form className="form" onSubmit={createTrialRoom}>
+              <span className="market-kicker">Beneficio administrado</span>
+              <h3>Generar prueba gratis</h3>
+              <p className="muted">Crea una sala activa para máximo 10 participantes, sin cobro por Wompi.</p>
+              <div className="form-row">
+                <label htmlFor="trialRoomName">Nombre de la sala</label>
+                <input id="trialRoomName" name="trialRoomName" minLength={3} placeholder="Prueba amigos" required />
+              </div>
+              <div className="form-row">
+                <label htmlFor="trialOwnerId">Administrador de la sala</label>
+                <select id="trialOwnerId" name="trialOwnerId" required>
+                  <option value="">Selecciona usuario</option>
+                  {users.filter((item) => item.role === "USER").map((item) => (
+                    <option key={item.id} value={item.id}>{item.name} - {item.phone}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-row">
+                <label htmlFor="trialCompetitionId">Liga</label>
+                <select id="trialCompetitionId" name="trialCompetitionId" required>
+                  <option value="">Selecciona liga</option>
+                  {competitions.map((competition) => (
+                    <option key={competition.id} value={competition.id}>{competition.name} · {competition.season}</option>
+                  ))}
+                </select>
+              </div>
+              <button className="button primary" type="submit">Crear prueba gratis de 10</button>
+            </form>
+
+            <form className="form" onSubmit={updateRoomAdmin}>
+              <span className="market-kicker">Permisos de sala</span>
+              <h3>Asignar administrador</h3>
+              <div className="form-row">
+                <label htmlFor="adminRoomId">Sala</label>
+                <select
+                  id="adminRoomId"
+                  name="adminRoomId"
+                  onChange={(event) => setSelectedAdminRoomId(event.target.value)}
+                  required
+                  value={selectedAdminRoomId}
+                >
+                  <option value="">Selecciona sala</option>
+                  {adminRooms.map((room) => (
+                    <option key={room.id} value={room.id}>{room.name} · {room.inviteCode}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-row">
+                <label htmlFor="roomAdminUserId">Participante</label>
+                <select id="roomAdminUserId" name="roomAdminUserId" required>
+                  <option value="">Selecciona participante</option>
+                  {adminRooms.find((room) => room.id === selectedAdminRoomId)?.memberships.map((membership) => (
+                    <option key={membership.user.id} value={membership.user.id}>
+                      {membership.user.name} · {membership.role === "ADMIN" ? "Admin actual" : "Participante"}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-row">
+                <label htmlFor="roomRole">Rol</label>
+                <select id="roomRole" name="roomRole" defaultValue="ADMIN" required>
+                  <option value="ADMIN">Administrador de sala</option>
+                  <option value="MEMBER">Participante</option>
+                </select>
+              </div>
+              <button className="button primary" type="submit">Guardar rol de sala</button>
+            </form>
+
+            <section className="form users-admin-list">
+              <div className="section-title">
+                <div>
+                  <h3>Salas registradas</h3>
+                  <p className="muted">Revisa cupo, pago y administradores asignados.</p>
+                </div>
+                <button className="button secondary" onClick={loadRooms} type="button">Actualizar</button>
+              </div>
+              <div className="admin-user-list">
+                {adminRooms.map((room) => (
+                  <article className="admin-user-card active" key={room.id}>
+                    <div>
+                      <strong>{room.name}</strong>
+                      <span>{room.competition?.name ?? "Sin liga"} · Código {room.inviteCode}</span>
+                    </div>
+                    <div className="admin-user-stats">
+                      <span><strong>{room.memberships.length}/{room.maxParticipants}</strong>Cupo</span>
+                      <span><strong>{room.memberships.filter((membership) => membership.role === "ADMIN").length}</strong>Admins</span>
+                    </div>
+                    <div className="admin-user-badges">
+                      <span>{room.paymentStatus === "TRIAL" ? "Prueba gratis" : room.paidAt ? "Pagada" : "Pago pendiente"}</span>
+                      <span>Creador: {room.owner.name}</span>
+                    </div>
+                  </article>
+                ))}
+                {!adminRooms.length ? <div className="empty">No hay salas registradas.</div> : null}
+              </div>
+            </section>
           </>
         ) : null}
         {adminView === "security" ? (

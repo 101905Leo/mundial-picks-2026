@@ -52,6 +52,10 @@ export function LeaguePanel({ user }: Props) {
   const recordingStartedAtRef = useRef(0);
   const recordingTimerRef = useRef<number | null>(null);
   const isOwner = selectedLeague?.ownerId === user.id;
+  const isRoomAdmin =
+    user.role === "ADMIN" ||
+    selectedLeague?.memberships?.some((membership) => membership.userId === user.id && membership.role === "ADMIN") === true;
+  const canManageRoom = Boolean(isOwner || isRoomAdmin);
 
   async function loadLeagues() {
     const [roomsResponse, competitionsResponse] = await Promise.all([
@@ -406,7 +410,7 @@ export function LeaguePanel({ user }: Props) {
                 {members.length}/{selectedLeague.maxParticipants} participantes · {availableSpots} cupos disponibles · {matches.length} partidos
               </p>
             </div>
-            {isOwner ? (
+            {canManageRoom ? (
               <div className="room-owner-actions">
                 <span>Administras esta sala</span>
                 <button className="button primary" onClick={copyInvitation} type="button">Copiar invitación</button>
@@ -537,14 +541,15 @@ export function LeaguePanel({ user }: Props) {
                   {members.map((member) => (
                     <article className="league-member" key={member.id}>
                       <div><strong>{member.name}</strong><span>{member.predictions} picks · {member.points} puntos</span></div>
-                      {isOwner && member.id !== user.id ? (
+                      {canManageRoom && member.id !== user.id ? (
                         <button className="button danger compact-button" onClick={() => removeMember(member)} type="button">Retirar</button>
                       ) : null}
+                      {member.roomRole === "ADMIN" ? <span className="market-kicker">Admin sala</span> : null}
                     </article>
                   ))}
                 </div>
               </section>
-              {isOwner ? (
+              {canManageRoom ? (
                 <section className="panel room-management">
                   <form className="form" onSubmit={renameLeague}>
                     <h3>Administrar sala</h3>

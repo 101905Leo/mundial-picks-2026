@@ -15,14 +15,23 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
 
   const { id } = await params;
-  const league = await prisma.league.findUnique({ where: { id } });
+  const league = await prisma.league.findUnique({
+    where: { id },
+    include: {
+      memberships: {
+        where: { userId: user!.id },
+        select: { role: true },
+      },
+    },
+  });
 
   if (!league) {
     return Response.json({ error: "Liga no encontrada" }, { status: 404 });
   }
 
-  if (league.ownerId !== user!.id) {
-    return Response.json({ error: "Solo el creador puede cambiar el nombre" }, { status: 403 });
+  const canManage = user!.role === "ADMIN" || league.ownerId === user!.id || league.memberships[0]?.role === "ADMIN";
+  if (!canManage) {
+    return Response.json({ error: "Solo un administrador de sala puede cambiar el nombre" }, { status: 403 });
   }
 
   const updatedLeague = await prisma.league.update({

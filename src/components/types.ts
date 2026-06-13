@@ -40,6 +40,7 @@ export type RankingEntry = {
 export type LeagueMember = RankingEntry & {
   isActive: boolean;
   entryPaidAt: string | null;
+  roomRole?: "MEMBER" | "ADMIN";
 };
 
 export type League = {
@@ -58,7 +59,7 @@ export type League = {
     season: string;
     country: string | null;
   } | null;
-  memberships?: { id: string }[];
+  memberships?: { id: string; userId: string; role: "MEMBER" | "ADMIN" }[];
 };
 
 export type Competition = {
