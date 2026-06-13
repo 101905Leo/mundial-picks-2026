@@ -21,9 +21,13 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const result = await updateResultsAndRecalculate({ enforceSchedule: true });
+    const forceRun = ["1", "true", "si", "yes"].includes(
+      (request.nextUrl.searchParams.get("force") ?? "").toLowerCase(),
+    );
+    const result = await updateResultsAndRecalculate({ enforceSchedule: !forceRun });
     return Response.json({
       ok: true,
+      forced: forceRun,
       ranAt: new Date().toISOString(),
       ...result,
     });

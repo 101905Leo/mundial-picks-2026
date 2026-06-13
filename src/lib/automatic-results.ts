@@ -4,15 +4,16 @@ import { recalculateFinishedMatchPoints } from "@/lib/recalculate-points";
 import { notifyWhatsAppUsers } from "@/lib/whatsapp";
 
 export function isAutomaticResultsWindow(date = new Date()) {
-  const hourInBogota = Number(
-    new Intl.DateTimeFormat("en-US", {
-      timeZone: "America/Bogota",
-      hour: "2-digit",
-      hour12: false,
-    }).format(date),
-  );
+  const hourPart = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Bogota",
+    hour: "numeric",
+    hour12: false,
+  })
+    .formatToParts(date)
+    .find((part) => part.type === "hour");
+  const hourInBogota = Number(hourPart?.value ?? "0") % 24;
 
-  return hourInBogota >= 14 && hourInBogota <= 23;
+  return hourInBogota >= 14 || hourInBogota === 0;
 }
 
 export async function updateResultsAndRecalculate(options: { enforceSchedule?: boolean } = {}) {
@@ -25,7 +26,7 @@ export async function updateResultsAndRecalculate(options: { enforceSchedule?: b
       updatedMatches: [],
       predictionsUpdated: 0,
       skipped: true,
-      source: "Fuera del horario automatico de 14:00 a 00:00 America/Bogota",
+      source: "Fuera del horario automatico de 14:00 a 00:59 America/Bogota",
     };
   }
 

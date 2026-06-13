@@ -215,6 +215,14 @@ En el plan Hobby de Vercel, los Cron Jobs solo pueden ejecutarse una vez al dia.
 https://tu-dominio.com/api/cron/update-results?secret=TU_CRON_SECRET
 ```
 
+La tarea automatica solo corre entre las 14:00 y las 00:59 hora Colombia. Para probarla manualmente sin esperar ese horario, abre:
+
+```txt
+https://tu-dominio.com/api/cron/update-results?secret=TU_CRON_SECRET&force=true
+```
+
+Si devuelve `skipped: true`, la ruta esta funcionando pero esta fuera del horario automatico. Si devuelve `No autorizado`, el secreto de la URL no coincide con `CRON_SECRET`. Si devuelve `Sin proveedor de resultados configurado`, falta `FOOTBALL_DATA_API_KEY` en Vercel.
+
 Fuente de datos por defecto:
 
 ```txt
