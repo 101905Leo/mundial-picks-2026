@@ -10,7 +10,7 @@ function winner(score: Score) {
 }
 
 function goalDifference(score: Score) {
-  return score.homeScore - score.awayScore;
+  return Math.abs(score.homeScore - score.awayScore);
 }
 
 export function calculatePredictionPoints(prediction: Score, result: Score) {

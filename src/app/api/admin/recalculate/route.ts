@@ -7,9 +7,15 @@ export async function POST(request: NextRequest) {
   const { response } = await requireAdmin(request);
   if (response) return response;
 
-  const updated = await recalculateFinishedMatchPoints();
+  const body = await request.json().catch(() => ({}));
+  const clearManualPoints = body?.clearManualPoints === true;
+  const updated = await recalculateFinishedMatchPoints({ clearManualPoints });
 
-  await notifyWhatsAppUsers(`Puntos recalculados en Copa Mundial de la FIFA 2026™. Picks actualizados: ${updated}.`);
+  await notifyWhatsAppUsers(
+    clearManualPoints
+      ? `Puntos recalculados automaticamente en Copa Mundial de la FIFA 2026™. Picks actualizados: ${updated}.`
+      : `Puntos recalculados en Copa Mundial de la FIFA 2026™. Picks actualizados: ${updated}.`,
+  );
 
-  return Response.json({ updated });
+  return Response.json({ updated, clearManualPoints });
 }

@@ -310,15 +310,30 @@ export function AdminPanel({ matches, onChanged }: Props) {
     event.currentTarget.reset();
   }
 
-  async function recalculate() {
+  async function recalculate(options: { clearManualPoints?: boolean } = {}) {
+    if (
+      options.clearManualPoints &&
+      !window.confirm("¿Recalcular todo automaticamente y borrar ajustes manuales de puntos?")
+    ) {
+      return;
+    }
+
     setMessage("");
-    const response = await fetch("/api/admin/recalculate", { method: "POST" });
+    const response = await fetch("/api/admin/recalculate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(options),
+    });
     const data = await response.json();
     if (!response.ok) {
       setMessage(data.error ?? "No se pudo recalcular");
       return;
     }
-    setMessage(`Picks recalculados: ${data.updated}`);
+    setMessage(
+      data.clearManualPoints
+        ? `Picks recalculados automaticamente: ${data.updated}. Ajustes manuales limpiados.`
+        : `Picks recalculados: ${data.updated}. Se respetaron puntos manuales.`,
+    );
     onChanged();
   }
 
@@ -831,8 +846,11 @@ export function AdminPanel({ matches, onChanged }: Props) {
                 <button className="button primary" onClick={updateResults} type="button">
                   Actualizar resultados
                 </button>
-                <button className="button secondary" onClick={recalculate} type="button">
+                <button className="button secondary" onClick={() => recalculate()} type="button">
                   Recalcular puntos
+                </button>
+                <button className="button secondary" onClick={() => recalculate({ clearManualPoints: true })} type="button">
+                  Recalcular automático
                 </button>
                 <button className="button secondary" onClick={importWorldCupCalendar} type="button">
                   Cargar calendario

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { calculatePredictionPoints } from "@/lib/scoring";
 
-export async function recalculateFinishedMatchPoints() {
+export async function recalculateFinishedMatchPoints(options: { clearManualPoints?: boolean } = {}) {
   const scoreMatches = await prisma.match.findMany({
     where: {
       status: { in: ["LIVE", "FINISHED"] },
@@ -25,7 +25,8 @@ export async function recalculateFinishedMatchPoints() {
           where: { id: prediction.id },
           data: {
             lockedAt: match.status === "FINISHED" ? prediction.lockedAt ?? new Date() : prediction.lockedAt,
-            points: prediction.manualPoints ?? calculatedPoints,
+            points: options.clearManualPoints ? calculatedPoints : prediction.manualPoints ?? calculatedPoints,
+            ...(options.clearManualPoints ? { manualPoints: null } : {}),
           },
         });
       }),
