@@ -53,6 +53,7 @@ export function LeaguePanel({ user }: Props) {
   const [predictions, setPredictions] = useState<RoomPrediction[]>([]);
   const [groupInfo, setGroupInfo] = useState<GroupInfo | null>(null);
   const [message, setMessage] = useState("");
+  const [syncError, setSyncError] = useState("");
   const isOwner = selectedLeague?.ownerId === user.id;
   const isRoomAdmin =
     user.role === "ADMIN" ||
@@ -86,26 +87,33 @@ export function LeaguePanel({ user }: Props) {
   async function loadRoom() {
     if (!selectedLeague) return;
 
-    const [rankingResponse, predictionsResponse, matchesResponse] = await Promise.all([
-      fetch(`/api/leagues/${selectedLeague.id}/ranking`),
-      fetch(`/api/leagues/${selectedLeague.id}/predictions`),
-      fetch(`/api/leagues/${selectedLeague.id}/matches`),
-    ]);
+    try {
+      const roomId = selectedLeague.id;
+      const [rankingResponse, predictionsResponse, matchesResponse] = await Promise.all([
+        fetch(`/api/leagues/${roomId}/ranking`, { cache: "no-store" }),
+        fetch(`/api/leagues/${roomId}/predictions`, { cache: "no-store" }),
+        fetch(`/api/leagues/${roomId}/matches`, { cache: "no-store" }),
+      ]);
 
-    if (rankingResponse.ok) {
+      if (!rankingResponse.ok || !predictionsResponse.ok || !matchesResponse.ok) {
+        const failedResponse = [rankingResponse, predictionsResponse, matchesResponse].find((response) => !response.ok);
+        const failedData = await failedResponse?.json().catch(() => ({}));
+        setSyncError(failedData?.error ?? "No se pudo sincronizar la sala.");
+        return;
+      }
+
       const data = await rankingResponse.json();
       setRanking(data.ranking ?? []);
       setMembers(data.members ?? []);
       setGroupInfo(data.groupInfo ?? null);
       setSelectedLeague((current) => (current?.id === data.league.id ? { ...current, ...data.league } : current));
-    }
-    if (predictionsResponse.ok) {
-      const data = await predictionsResponse.json();
-      setPredictions(data.predictions ?? []);
-    }
-    if (matchesResponse.ok) {
-      const data = await matchesResponse.json();
-      setMatches(data.matches ?? []);
+      const predictionsData = await predictionsResponse.json();
+      setPredictions(predictionsData.predictions ?? []);
+      const matchesData = await matchesResponse.json();
+      setMatches(matchesData.matches ?? []);
+      setSyncError("");
+    } catch {
+      setSyncError("No hay conexión con la base de datos. Los picks y resultados no pueden sincronizarse.");
     }
   }
 
@@ -115,6 +123,28 @@ export function LeaguePanel({ user }: Props) {
 
   useEffect(() => {
     loadRoom();
+  }, [selectedLeague?.id]);
+
+  useEffect(() => {
+    if (!selectedLeague) return;
+
+    let refreshing = false;
+    async function refreshRoom() {
+      if (document.visibilityState !== "visible" || refreshing) return;
+      refreshing = true;
+      try {
+        await loadRoom();
+      } finally {
+        refreshing = false;
+      }
+    }
+
+    const interval = window.setInterval(refreshRoom, 10000);
+    window.addEventListener("focus", refreshRoom);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refreshRoom);
+    };
   }, [selectedLeague?.id]);
 
   useEffect(() => {
@@ -137,7 +167,7 @@ export function LeaguePanel({ user }: Props) {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [selectedLeague]);
+  }, [selectedLeague?.id]);
 
   async function createLeague(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -415,6 +445,7 @@ export function LeaguePanel({ user }: Props) {
       </div> : null}
 
       {message ? <div className="notice">{message}</div> : null}
+      {syncError ? <div className="notice error">{syncError}</div> : null}
 
       {selectedLeague ? (
         <section className="league-room">

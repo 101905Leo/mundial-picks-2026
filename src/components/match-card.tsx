@@ -29,26 +29,30 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
     }
     setMessage("");
 
-    const formData = new FormData(event.currentTarget);
-    const response = await fetch("/api/predictions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        matchId: match.id,
-        roomId,
-        homeScore: Number(formData.get("homeScore")),
-        awayScore: Number(formData.get("awayScore")),
-      }),
-    });
+    try {
+      const formData = new FormData(event.currentTarget);
+      const response = await fetch("/api/predictions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          matchId: match.id,
+          roomId,
+          homeScore: Number(formData.get("homeScore")),
+          awayScore: Number(formData.get("awayScore")),
+        }),
+      });
 
-    const data = await response.json();
-    if (!response.ok) {
-      setMessage(data.error ?? "No se pudo guardar el pick");
-      return;
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setMessage(data.error ?? "No se pudo guardar el pick");
+        return;
+      }
+
+      setMessage("Pick guardado");
+      await onSaved();
+    } catch {
+      setMessage("No hay conexión con el servidor. Verifica la base de datos e intenta nuevamente.");
     }
-
-    setMessage("Pick guardado");
-    onSaved();
   }
 
   return (

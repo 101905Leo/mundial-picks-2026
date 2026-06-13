@@ -26,7 +26,10 @@ export function MundialPicksApp() {
 
   async function loadSession() {
     const response = await fetch("/api/auth/me");
-    const data = await response.json();
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.error ?? "No se pudo consultar la sesión");
+    }
     setUser(data.user);
     return data.user as User | null;
   }
@@ -80,11 +83,15 @@ export function MundialPicksApp() {
   useEffect(() => {
     async function refreshSessionStatus() {
       if (document.visibilityState === "visible") {
-        await loadSession();
+        try {
+          await loadSession();
+        } catch (error) {
+          console.warn("Session refresh failed", error);
+        }
       }
     }
 
-    const interval = window.setInterval(refreshSessionStatus, 15000);
+    const interval = window.setInterval(refreshSessionStatus, 60000);
     window.addEventListener("focus", refreshSessionStatus);
     document.addEventListener("visibilitychange", refreshSessionStatus);
 
@@ -94,6 +101,24 @@ export function MundialPicksApp() {
       document.removeEventListener("visibilitychange", refreshSessionStatus);
     };
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    let refreshing = false;
+    async function refreshVisibleData() {
+      if (document.visibilityState !== "visible" || refreshing) return;
+      refreshing = true;
+      try {
+        await loadData(user);
+      } finally {
+        refreshing = false;
+      }
+    }
+
+    const interval = window.setInterval(refreshVisibleData, 15000);
+    return () => window.clearInterval(interval);
+  }, [user?.id]);
 
   async function refresh() {
     const sessionUser = await loadSession();

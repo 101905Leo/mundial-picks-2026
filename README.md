@@ -190,16 +190,22 @@ El proyecto incluye `vercel.json` con un Cron Job diario compatible con Vercel H
 GET /api/cron/update-results
 ```
 
-Esa ruta consulta API-Football, actualiza resultados reales, recalcula puntos y envia notificacion por WhatsApp si hubo resultados nuevos.
+Esa ruta consulta primero football-data.org y usa API-Football como respaldo, actualiza resultados reales,
+recalcula puntos y envia notificacion por WhatsApp si hubo resultados nuevos.
 
 Variables necesarias en Vercel:
 
 ```txt
+FOOTBALL_DATA_API_KEY="..."
+FOOTBALL_DATA_COMPETITION_CODE="WC"
 API_FOOTBALL_KEY="..."
 API_FOOTBALL_LEAGUE_ID="1"
 API_FOOTBALL_SEASON="2026"
 CRON_SECRET="una-clave-larga-y-secreta"
 ```
+
+`football-data.org` incluye la Copa Mundial en su cobertura gratuita. API-Football puede permanecer configurado
+como segundo proveedor, pero su plan gratuito actualmente no permite consultar la temporada 2026.
 
 Tambien puedes seguir usando el boton manual **Actualizar resultados reales** desde el panel administrador.
 
