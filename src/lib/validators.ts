@@ -65,6 +65,8 @@ export const leagueSchema = z.object({
   name: z.string().min(3).max(80),
   competitionId: z.string().min(1).optional(),
   maxParticipants: z.union([z.literal(20), z.literal(50), z.literal(100)]).default(20),
+  description: z.string().trim().max(500).optional(),
+  rules: z.string().trim().max(3000).optional(),
   firstMatch: z
     .object({
       homeTeam: z.string().trim().min(2),

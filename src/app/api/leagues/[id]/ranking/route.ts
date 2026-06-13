@@ -12,12 +12,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   });
 
   if (!membership) {
-    return Response.json({ error: "No perteneces a esta liga" }, { status: 403 });
+    return Response.json({ error: "No perteneces a esta sala" }, { status: 403 });
   }
 
   const league = await prisma.league.findUnique({
     where: { id },
     include: {
+      plan: true,
       memberships: {
         include: {
           user: {
@@ -30,7 +31,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
               predictions: {
                 select: {
                   points: true,
-                  match: { select: { roomId: true, competitionId: true } },
+                  homeScore: true,
+                  awayScore: true,
+                  match: {
+                    select: {
+                      roomId: true,
+                      competitionId: true,
+                      status: true,
+                      startsAt: true,
+                      homeScore: true,
+                      awayScore: true,
+                    },
+                  },
                 },
               },
             },
@@ -41,9 +53,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   });
 
   if (!league) {
-    return Response.json({ error: "Liga no encontrada" }, { status: 404 });
+    return Response.json({ error: "Sala no encontrada" }, { status: 404 });
   }
 
+  const weekStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const members = league.memberships
     .filter(({ user: member }) => member.role !== "ADMIN")
     .map(({ user: member, role }) => {
@@ -52,6 +65,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           match.roomId === league.id ||
           (match.roomId === null && match.competitionId === league.competitionId),
       );
+      const finishedPredictions = roomPredictions
+        .filter(({ match }) => match.status === "FINISHED")
+        .sort((a, b) => b.match.startsAt.getTime() - a.match.startsAt.getTime());
+      let currentStreak = 0;
+      for (const prediction of finishedPredictions) {
+        if (prediction.points >= 2) currentStreak += 1;
+        else break;
+      }
 
       return {
         id: member.id,
@@ -61,10 +82,23 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         roomRole: role,
         points: roomPredictions.reduce((sum, prediction) => sum + prediction.points, 0),
         predictions: roomPredictions.length,
+        exactScores: roomPredictions.filter(
+          ({ homeScore, awayScore, match }) =>
+            match.status === "FINISHED" &&
+            homeScore === match.homeScore &&
+            awayScore === match.awayScore,
+        ).length,
+        currentStreak,
+        weeklyPoints: roomPredictions
+          .filter(({ match }) => match.startsAt >= weekStart)
+          .reduce((sum, prediction) => sum + prediction.points, 0),
       };
     })
     .sort((a, b) => b.points - a.points || b.predictions - a.predictions);
   const ranking = members;
+  const weeklyLeader = [...members].sort((a, b) => b.weeklyPoints - a.weeklyPoints)[0] ?? null;
+  const bestActiveStreak = [...members].sort((a, b) => b.currentStreak - a.currentStreak)[0] ?? null;
+  const mostExact = [...members].sort((a, b) => b.exactScores - a.exactScores)[0] ?? null;
 
   return Response.json({
     league: {
@@ -74,6 +108,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       ownerId: league.ownerId,
       competitionId: league.competitionId,
       maxParticipants: league.maxParticipants,
+      status: league.status,
+      expiresAt: league.expiresAt,
+      description: league.description,
+      rules: league.rules,
+      planId: league.planId,
+      plan: league.plan,
       paymentStatus: league.paymentStatus,
       paymentAmountInCents: league.paymentAmountInCents,
       paidAt: league.paidAt,
@@ -85,5 +125,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     },
     ranking,
     members,
+    groupInfo: {
+      memberCount: members.length,
+      predictionCount: members.reduce((sum, member) => sum + member.predictions, 0),
+      weeklyLeader,
+      bestActiveStreak,
+      mostExact,
+    },
   });
 }

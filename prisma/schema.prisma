@@ -23,6 +23,13 @@ enum LeagueRole {
   ADMIN
 }
 
+enum RoomStatus {
+  ACTIVE
+  EXPIRED
+  SUSPENDED
+  CLOSED
+}
+
 model User {
   id             String             @id @default(cuid())
   name           String
@@ -102,25 +109,47 @@ model Prediction {
 }
 
 model League {
-  id              String             @id @default(cuid())
-  name            String
-  inviteCode      String             @unique
-  ownerId         String
-  competitionId   String?
-  maxParticipants Int                @default(20)
-  paymentReference String?           @unique
-  paymentStatus    String            @default("PENDING")
-  paymentAmountInCents Int           @default(0)
-  paidAt          DateTime?
-  owner           User               @relation("LeagueOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  competition     Competition?       @relation(fields: [competitionId], references: [id], onDelete: SetNull)
-  memberships     LeagueMembership[]
-  messages        LeagueMessage[]
-  matches         Match[]            @relation("RoomMatches")
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  id                   String             @id @default(cuid())
+  name                 String
+  inviteCode           String             @unique
+  ownerId              String
+  competitionId        String?
+  planId               String?
+  maxParticipants      Int                @default(20)
+  status               RoomStatus         @default(ACTIVE)
+  expiresAt            DateTime?
+  description          String?
+  rules                String?
+  paymentReference     String?            @unique
+  paymentStatus        String             @default("PENDING")
+  paymentAmountInCents Int                @default(0)
+  paidAt               DateTime?
+  owner                User               @relation("LeagueOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  competition          Competition?       @relation(fields: [competitionId], references: [id], onDelete: SetNull)
+  plan                 RoomPlan?          @relation(fields: [planId], references: [id], onDelete: SetNull)
+  memberships          LeagueMembership[]
+  messages             LeagueMessage[]
+  matches              Match[]            @relation("RoomMatches")
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
 
   @@index([competitionId])
+  @@index([planId])
+  @@index([status, expiresAt])
+}
+
+model RoomPlan {
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  name             String
+  participantLimit Int?
+  durationDays     Int      @default(365)
+  priceInCents     Int
+  benefits         String[]
+  isActive         Boolean  @default(true)
+  rooms            League[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 model Competition {
@@ -137,11 +166,11 @@ model Competition {
 }
 
 model LeagueMembership {
-  id       String   @id @default(cuid())
+  id       String     @id @default(cuid())
   userId   String
   leagueId String
   role     LeagueRole @default(MEMBER)
-  joinedAt DateTime @default(now())
+  joinedAt DateTime   @default(now())
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   league League @relation(fields: [leagueId], references: [id], onDelete: Cascade)

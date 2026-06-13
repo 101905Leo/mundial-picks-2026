@@ -25,6 +25,8 @@ export async function POST(request: NextRequest) {
     const roomAccess = await prisma.league.findFirst({
       where: {
         id: roomId,
+        status: "ACTIVE",
+        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
         memberships: { some: { userId: user!.id } },
       },
       select: { id: true, competitionId: true },

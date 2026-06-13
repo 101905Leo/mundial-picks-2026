@@ -5,8 +5,8 @@ import { PwaRegister } from "@/components/pwa-register";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Copa Mundial de la FIFA 2026™",
-  description: "Quiniela social del Mundial 2026 sin apuestas con dinero real.",
+  title: "Mundial Picks | Salas privadas de quiniela",
+  description: "Crea y administra salas privadas de quiniela con picks, chat y ranking independiente.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import type { Competition, Match } from "@/components/types";
+import type { Competition, Match, RoomPlan } from "@/components/types";
 import { flagForTeam } from "@/lib/team-flags";
 
 type AdminUser = {
@@ -26,14 +26,25 @@ type AdminRoom = {
   inviteCode: string;
   ownerId: string;
   maxParticipants: number;
+  status: "ACTIVE" | "EXPIRED" | "SUSPENDED" | "CLOSED";
+  expiresAt: string | null;
   paymentStatus: string;
+  paymentAmountInCents: number;
   paidAt: string | null;
+  plan: { id: string; name: string; slug: string } | null;
   competition: { id: string; name: string; season: string } | null;
   owner: { id: string; name: string; phone: string };
   memberships: Array<{
     role: "MEMBER" | "ADMIN";
     user: { id: string; name: string; phone: string };
   }>;
+};
+
+type RoomSummary = {
+  total: number;
+  activeRooms: number;
+  expiredRooms: number;
+  incomeInCents: number;
 };
 
 export function AdminPanel({ matches, onChanged }: Props) {
@@ -44,7 +55,10 @@ export function AdminPanel({ matches, onChanged }: Props) {
   const [selectedPasswordUserId, setSelectedPasswordUserId] = useState("");
   const [adminRooms, setAdminRooms] = useState<AdminRoom[]>([]);
   const [competitions, setCompetitions] = useState<Competition[]>([]);
+  const [roomPlans, setRoomPlans] = useState<RoomPlan[]>([]);
+  const [roomSummary, setRoomSummary] = useState<RoomSummary>({ total: 0, activeRooms: 0, expiredRooms: 0, incomeInCents: 0 });
   const [selectedAdminRoomId, setSelectedAdminRoomId] = useState("");
+  const [selectedSettingsRoomId, setSelectedSettingsRoomId] = useState("");
   const publishedMatches = matches.filter((match) => match.isPublished).length;
   const resultLoadedMatches = matches.filter((match) => match.homeScore !== null && match.awayScore !== null).length;
   const activeUsers = users.filter((user) => user.isActive).length;
@@ -67,9 +81,10 @@ export function AdminPanel({ matches, onChanged }: Props) {
   }
 
   async function loadRooms() {
-    const [roomsResponse, competitionsResponse] = await Promise.all([
+    const [roomsResponse, competitionsResponse, plansResponse] = await Promise.all([
       fetch("/api/admin/rooms"),
       fetch("/api/competitions"),
+      fetch("/api/plans"),
     ]);
     const roomsData = await roomsResponse.json();
 
@@ -79,9 +94,14 @@ export function AdminPanel({ matches, onChanged }: Props) {
     }
 
     setAdminRooms(roomsData.rooms ?? []);
+    setRoomSummary(roomsData.summary ?? { total: 0, activeRooms: 0, expiredRooms: 0, incomeInCents: 0 });
     if (competitionsResponse.ok) {
       const competitionsData = await competitionsResponse.json();
       setCompetitions(competitionsData.competitions ?? []);
+    }
+    if (plansResponse.ok) {
+      const plansData = await plansResponse.json();
+      setRoomPlans(plansData.plans ?? []);
     }
     if (!usersLoaded) await loadUsers();
   }
@@ -115,6 +135,37 @@ export function AdminPanel({ matches, onChanged }: Props) {
     await loadRooms();
   }
 
+  async function createManualRoom(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const expiresAt = String(formData.get("manualExpiresAt") ?? "");
+    const response = await fetch("/api/admin/rooms", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        mode: "MANUAL",
+        name: String(formData.get("manualRoomName")),
+        ownerId: String(formData.get("manualOwnerId")),
+        competitionId: String(formData.get("manualCompetitionId")),
+        planId: String(formData.get("manualPlanId") ?? "") || undefined,
+        maxParticipants: Number(formData.get("manualMaxParticipants")),
+        expiresAt: expiresAt ? new Date(expiresAt).toISOString() : undefined,
+        pricePaidCop: Number(formData.get("manualPricePaidCop") || 0),
+      }),
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      setMessage(data.error ?? "No se pudo crear la sala manual");
+      return;
+    }
+
+    setMessage(`Sala creada para ${data.owner}. Código: ${data.room.inviteCode}`);
+    form.reset();
+    await loadRooms();
+  }
+
   async function updateRoomAdmin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -136,6 +187,41 @@ export function AdminPanel({ matches, onChanged }: Props) {
 
     setMessage(`${data.membership.user.name} ahora es ${data.membership.role === "ADMIN" ? "administrador" : "participante"} en ${data.room}.`);
     await loadRooms();
+  }
+
+  async function updateRoomSettings(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const expiresAt = String(formData.get("settingsExpiresAt") ?? "");
+    const maxParticipants = String(formData.get("settingsMaxParticipants") ?? "");
+    const response = await fetch("/api/admin/rooms", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "roomSettings",
+        leagueId: String(formData.get("settingsRoomId")),
+        name: String(formData.get("settingsRoomName") ?? "").trim() || undefined,
+        ownerId: String(formData.get("settingsOwnerId") ?? "") || undefined,
+        status: String(formData.get("settingsStatus") ?? "") || undefined,
+        maxParticipants: maxParticipants ? Number(maxParticipants) : undefined,
+        expiresAt: expiresAt ? new Date(expiresAt).toISOString() : undefined,
+      }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      setMessage(data.error ?? "No se pudo actualizar la sala");
+      return;
+    }
+    setMessage(`Sala actualizada: ${data.room.name}`);
+    await loadRooms();
+  }
+
+  async function deleteAdminRoom(room: AdminRoom) {
+    if (!window.confirm(`¿Eliminar definitivamente la sala "${room.name}"?`)) return;
+    const response = await fetch(`/api/leagues/${room.id}`, { method: "DELETE" });
+    const data = await response.json();
+    setMessage(response.ok ? `Sala eliminada: ${room.name}` : data.error ?? "No se pudo eliminar la sala");
+    if (response.ok) await loadRooms();
   }
 
   async function createMatch(event: FormEvent<HTMLFormElement>) {
@@ -649,8 +735,16 @@ export function AdminPanel({ matches, onChanged }: Props) {
           <strong>{usersLoaded ? activeUsers : "-"}</strong>
         </article>
         <article>
-          <span>Salas registradas</span>
-          <strong>{adminRooms.length || "-"}</strong>
+          <span>Salas activas</span>
+          <strong>{roomSummary.activeRooms || "-"}</strong>
+        </article>
+        <article>
+          <span>Salas vencidas</span>
+          <strong>{roomSummary.expiredRooms}</strong>
+        </article>
+        <article>
+          <span>Ingresos por salas</span>
+          <strong>{new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(roomSummary.incomeInCents / 100)}</strong>
         </article>
       </div>
       <div className="admin-nav" aria-label="Secciones del administrador">
@@ -1205,6 +1299,55 @@ export function AdminPanel({ matches, onChanged }: Props) {
         ) : null}
         {adminView === "rooms" ? (
           <>
+            <form className="form" onSubmit={createManualRoom}>
+              <span className="market-kicker">Alta administrativa</span>
+              <h3>Crear sala manualmente</h3>
+              <div className="form-row">
+                <label htmlFor="manualRoomName">Nombre de la sala</label>
+                <input id="manualRoomName" name="manualRoomName" minLength={3} required />
+              </div>
+              <div className="form-row">
+                <label htmlFor="manualOwnerId">Propietario</label>
+                <select id="manualOwnerId" name="manualOwnerId" required>
+                  <option value="">Selecciona usuario</option>
+                  {users.filter((item) => item.role === "USER").map((item) => (
+                    <option key={item.id} value={item.id}>{item.name} - {item.phone}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-row">
+                <label htmlFor="manualCompetitionId">Liga</label>
+                <select id="manualCompetitionId" name="manualCompetitionId" required>
+                  <option value="">Selecciona liga</option>
+                  {competitions.map((competition) => (
+                    <option key={competition.id} value={competition.id}>{competition.name} · {competition.season}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-row">
+                <label htmlFor="manualPlanId">Plan</label>
+                <select id="manualPlanId" name="manualPlanId">
+                  <option value="">Personalizado</option>
+                  {roomPlans.map((plan) => <option key={plan.id} value={plan.id}>{plan.name}</option>)}
+                </select>
+              </div>
+              <div className="inline-form">
+                <div className="form-row">
+                  <label htmlFor="manualMaxParticipants">Límite</label>
+                  <input id="manualMaxParticipants" name="manualMaxParticipants" type="number" min={2} max={10000} defaultValue={20} required />
+                </div>
+                <div className="form-row">
+                  <label htmlFor="manualExpiresAt">Vencimiento</label>
+                  <input id="manualExpiresAt" name="manualExpiresAt" type="datetime-local" />
+                </div>
+                <div className="form-row">
+                  <label htmlFor="manualPricePaidCop">Valor pagado COP</label>
+                  <input id="manualPricePaidCop" name="manualPricePaidCop" type="number" min={0} step={1000} defaultValue={0} />
+                </div>
+              </div>
+              <button className="button primary" type="submit">Crear y activar sala</button>
+            </form>
+
             <form className="form" onSubmit={createTrialRoom}>
               <span className="market-kicker">Beneficio administrado</span>
               <h3>Generar prueba gratis</h3>
@@ -1273,6 +1416,66 @@ export function AdminPanel({ matches, onChanged }: Props) {
               <button className="button primary" type="submit">Guardar rol de sala</button>
             </form>
 
+            <form className="form" onSubmit={updateRoomSettings}>
+              <span className="market-kicker">Control de alquiler</span>
+              <h3>Estado, propietario y vencimiento</h3>
+              <div className="form-row">
+                <label htmlFor="settingsRoomId">Sala</label>
+                <select
+                  id="settingsRoomId"
+                  name="settingsRoomId"
+                  onChange={(event) => setSelectedSettingsRoomId(event.target.value)}
+                  required
+                  value={selectedSettingsRoomId}
+                >
+                  <option value="">Selecciona sala</option>
+                  {adminRooms.map((room) => <option key={room.id} value={room.id}>{room.name} · {room.inviteCode}</option>)}
+                </select>
+              </div>
+              <div className="form-row">
+                <label htmlFor="settingsRoomName">Nombre de la sala</label>
+                <input
+                  id="settingsRoomName"
+                  key={selectedSettingsRoomId}
+                  name="settingsRoomName"
+                  defaultValue={adminRooms.find((room) => room.id === selectedSettingsRoomId)?.name ?? ""}
+                  minLength={3}
+                  maxLength={80}
+                  placeholder="Selecciona una sala"
+                />
+              </div>
+              <div className="form-row">
+                <label htmlFor="settingsOwnerId">Nuevo propietario (opcional)</label>
+                <select id="settingsOwnerId" name="settingsOwnerId">
+                  <option value="">Conservar propietario</option>
+                  {users.filter((item) => item.role === "USER").map((item) => (
+                    <option key={item.id} value={item.id}>{item.name} - {item.phone}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="inline-form">
+                <div className="form-row">
+                  <label htmlFor="settingsStatus">Estado</label>
+                  <select id="settingsStatus" name="settingsStatus" defaultValue="">
+                    <option value="">Conservar estado</option>
+                    <option value="ACTIVE">Activa</option>
+                    <option value="SUSPENDED">Suspendida</option>
+                    <option value="EXPIRED">Vencida</option>
+                    <option value="CLOSED">Cerrada</option>
+                  </select>
+                </div>
+                <div className="form-row">
+                  <label htmlFor="settingsMaxParticipants">Límite</label>
+                  <input id="settingsMaxParticipants" name="settingsMaxParticipants" type="number" min={2} max={10000} placeholder="Conservar" />
+                </div>
+                <div className="form-row">
+                  <label htmlFor="settingsExpiresAt">Vencimiento</label>
+                  <input id="settingsExpiresAt" name="settingsExpiresAt" type="datetime-local" />
+                </div>
+              </div>
+              <button className="button primary" type="submit">Guardar configuración</button>
+            </form>
+
             <section className="form users-admin-list">
               <div className="section-title">
                 <div>
@@ -1294,7 +1497,12 @@ export function AdminPanel({ matches, onChanged }: Props) {
                     </div>
                     <div className="admin-user-badges">
                       <span>{room.paymentStatus === "TRIAL" ? "Prueba gratis" : room.paidAt ? "Pagada" : "Pago pendiente"}</span>
+                      <span>{room.status === "ACTIVE" ? "Activa" : room.status === "EXPIRED" ? "Vencida" : room.status === "SUSPENDED" ? "Suspendida" : "Cerrada"}</span>
                       <span>Creador: {room.owner.name}</span>
+                      {room.expiresAt ? <span>Vence: {new Date(room.expiresAt).toLocaleDateString("es")}</span> : null}
+                    </div>
+                    <div className="admin-user-actions">
+                      <button className="button danger" onClick={() => deleteAdminRoom(room)} type="button">Eliminar sala</button>
                     </div>
                   </article>
                 ))}

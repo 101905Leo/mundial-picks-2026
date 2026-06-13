@@ -57,7 +57,7 @@ export function StatisticsPanel() {
       <section className="panel statistics-header">
         <div>
           <span className="market-kicker">Copa Mundial 2026</span>
-          <h2>Estadisticas del torneo</h2>
+          <h2>Estadísticas de la competición</h2>
           <p className="muted">Goleadores, asistencias y posiciones de los grupos.</p>
         </div>
         <button className="button secondary" onClick={loadStatistics} type="button">

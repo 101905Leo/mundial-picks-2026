@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
     include: {
       memberships: { select: { id: true, userId: true, role: true } },
       competition: { select: { id: true, name: true, season: true, country: true } },
+      plan: true,
     },
     orderBy: { createdAt: "desc" },
   });
@@ -44,11 +45,14 @@ export async function POST(request: NextRequest) {
   const parsed = leagueSchema.safeParse(body);
 
   if (!parsed.success) {
-    return Response.json({ error: "Nombre de liga invalido" }, { status: 400 });
+    return Response.json({ error: "Datos de sala inválidos" }, { status: 400 });
   }
 
   try {
     const maxParticipants = parsed.data.maxParticipants;
+    const planSlug =
+      maxParticipants === 20 ? "sala-basica" : maxParticipants === 50 ? "sala-pro" : "sala-premium";
+    const plan = await prisma.roomPlan.findUnique({ where: { slug: planSlug } });
     const competition =
       (parsed.data.competitionId
         ? await prisma.competition.findUnique({ where: { id: parsed.data.competitionId } })
@@ -66,13 +70,19 @@ export async function POST(request: NextRequest) {
           inviteCode: await uniqueInviteCode(maxParticipants),
           ownerId: user!.id,
           competitionId: competition.id,
+          planId: plan?.id,
           maxParticipants,
+          status: "ACTIVE",
+          expiresAt: new Date(Date.now() + (plan?.durationDays ?? 365) * 24 * 60 * 60 * 1000),
+          description: parsed.data.description || "Sala privada de quiniela para amigos, familia o compañeros.",
+          rules: parsed.data.rules || "El administrador de la sala define las reglas internas para sus participantes.",
           memberships: {
             create: { userId: user!.id, role: "ADMIN" },
           },
         },
         include: {
           competition: { select: { id: true, name: true, season: true, country: true } },
+          plan: true,
           memberships: { select: { id: true, userId: true, role: true } },
         },
       });

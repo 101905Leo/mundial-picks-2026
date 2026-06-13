@@ -154,6 +154,7 @@ export function MundialPicksApp() {
         </div>
         <Countdown matches={matches} compact />
         <div className="top-actions">
+          <a className="button secondary" href="/planes">Planes</a>
           {user ? <span className="user-chip">{user.name}</span> : null}
           {user ? (
             <button className="button danger" onClick={logout}>
@@ -183,16 +184,16 @@ export function MundialPicksApp() {
               <section className="landing-grid">
                 <div className="landing-main">
                   <section className="landing-card landing-intro">
-                    <span className="market-kicker">Quiniela oficial de amigos</span>
-                    <h2>Predice, suma puntos y pelea el ranking desde el primer partido.</h2>
+                    <span className="market-kicker">Salas privadas de quiniela</span>
+                    <h2>Crea tu sala, invita a tu grupo y administra un ranking independiente.</h2>
                     <div className="landing-stats">
-                      <div className="prize-stat">
-                        <strong>$1M</strong>
-                        <span>Premio</span>
+                      <div>
+                        <strong>4</strong>
+                        <span>Planes de sala</span>
                       </div>
                       <div>
-                        <strong>3</strong>
-                        <span>Planes de sala</span>
+                        <strong>100</strong>
+                        <span>Participantes</span>
                       </div>
                       <div>
                         <strong>104</strong>
@@ -203,6 +204,17 @@ export function MundialPicksApp() {
                         <span>Selecciones</span>
                       </div>
                     </div>
+                    <div className="landing-cta-row">
+                      <a className="button primary" href="#registro">Registrarme gratis</a>
+                      <a className="button secondary" href="/planes">Ver planes</a>
+                    </div>
+                  </section>
+
+                  <section className="landing-card room-sales-points">
+                    <article><strong>Crea tu sala privada</strong><span>Un espacio exclusivo para tu grupo.</span></article>
+                    <article><strong>Organiza tu quiniela</strong><span>Configura reglas y participantes.</span></article>
+                    <article><strong>Reta a tus amigos</strong><span>Comparte el código por WhatsApp.</span></article>
+                    <article><strong>Administra tu ranking</strong><span>Consulta puntos, rachas y exactos.</span></article>
                   </section>
 
                   <section className="landing-card">
@@ -229,16 +241,22 @@ export function MundialPicksApp() {
 
                   <section className="landing-card public-room-promo">
                     <div>
-                      <span className="market-kicker">Más divertido en grupo</span>
-                      <h2>Crea tu propia sala privada</h2>
+                      <span className="market-kicker">Alquila una sala para tu grupo</span>
+                      <h2>Tu quiniela, tus participantes y tus reglas</h2>
                       <p>
-                        Invita amigos o compañeros de trabajo, armen su ranking independiente y comparen los picks
-                        cerrados de todos.
+                        Invita amigos o compañeros de trabajo, administra el cupo y consulta un ranking privado.
                       </p>
                     </div>
-                    <a className="button primary" href="https://goallive.online" rel="noreferrer" target="_blank">
-                      Ver partidos en GoalLive
-                    </a>
+                    <div className="landing-cta-row">
+                      <a className="button primary" href="/planes">Crear sala privada</a>
+                      <a className="button secondary" href="https://goallive.online" rel="noreferrer" target="_blank">Ver partidos</a>
+                    </div>
+                  </section>
+
+                  <section className="landing-card room-legal-notice">
+                    Mundial Picks solo proporciona la plataforma tecnológica para crear y administrar salas privadas.
+                    Los premios, pagos, acuerdos o beneficios ofrecidos dentro de cada sala son responsabilidad exclusiva
+                    del creador o administrador de la sala.
                   </section>
 
                   <section className="landing-card">
@@ -281,7 +299,7 @@ export function MundialPicksApp() {
                   </section>
                 </div>
 
-                <aside className="landing-side">
+                <aside className="landing-side" id="registro">
                   <AuthPanel
                     onAuth={async (sessionUser, options) => {
                       setUser(sessionUser);

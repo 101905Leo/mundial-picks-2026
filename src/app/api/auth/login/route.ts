@@ -30,8 +30,11 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "Codigo de sala no encontrado" }, { status: 404 });
     }
 
-    if (!league.paidAt || league.paymentStatus !== "APPROVED") {
+    if (!league.paidAt || !["APPROVED", "TRIAL", "MANUAL"].includes(league.paymentStatus)) {
       return Response.json({ error: "La sala todavía no ha confirmado el pago de su cupo" }, { status: 403 });
+    }
+    if (league.status !== "ACTIVE" || (league.expiresAt && league.expiresAt <= new Date())) {
+      return Response.json({ error: "La sala está vencida, suspendida o cerrada" }, { status: 403 });
     }
 
     const existingMembership = await prisma.leagueMembership.findUnique({

@@ -1263,6 +1263,52 @@ button {
   text-transform: uppercase;
 }
 
+.room-status-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.room-status-line span {
+  background: rgba(5, 7, 13, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: var(--gold-soft);
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 6px 8px;
+}
+
+.room-information {
+  align-items: start;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+}
+
+.room-information h3 {
+  color: #fff;
+  margin: 6px 0;
+}
+
+.room-information p {
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.room-legal-notice {
+  background: rgba(244, 189, 79, 0.08);
+  border: 1px solid rgba(244, 189, 79, 0.28);
+  border-left: 4px solid var(--gold);
+  border-radius: 6px;
+  color: #e8dcc2;
+  line-height: 1.55;
+  padding: 14px;
+}
+
 .room-payment-required {
   align-items: center;
   background:
@@ -1357,6 +1403,53 @@ button {
   display: grid;
   gap: 14px;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.room-ranking-summary {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.room-ranking-summary article {
+  display: grid;
+  gap: 8px;
+}
+
+.room-ranking-summary span,
+.room-group-insights span {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.room-ranking-summary strong {
+  color: var(--gold-soft);
+  font-size: 2rem;
+}
+
+.room-group-insights {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.room-group-insights article {
+  background: rgba(5, 7, 13, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px;
+}
+
+.room-group-insights strong {
+  color: #fff;
+  overflow-wrap: anywhere;
+}
+
+.room-group-insights small {
+  color: var(--gold-soft);
 }
 
 .room-stat-grid article {
@@ -1562,12 +1655,6 @@ button {
   overflow-wrap: anywhere;
 }
 
-.league-chat-message audio {
-  margin-top: 9px;
-  max-width: 100%;
-  width: 340px;
-}
-
 .league-chat-form {
   display: grid;
   gap: 10px;
@@ -1583,13 +1670,132 @@ button {
   padding: 0 12px;
 }
 
-.voice-button {
-  justify-self: start;
-}
-
 .competition-page {
   display: grid;
   gap: 14px;
+}
+
+.landing-cta-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 16px;
+}
+
+.room-sales-points {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.room-sales-points article {
+  background: rgba(5, 7, 13, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  display: grid;
+  gap: 5px;
+  padding: 13px;
+}
+
+.room-sales-points strong {
+  color: #fff;
+}
+
+.room-sales-points span {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.plans-shell {
+  background:
+    linear-gradient(135deg, rgba(47, 209, 132, 0.08), transparent 42%),
+    #070a10;
+  color: var(--ink);
+  min-height: 100vh;
+  padding: 20px clamp(16px, 5vw, 72px) 48px;
+}
+
+.plans-header {
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 16px;
+}
+
+.plans-brand {
+  text-decoration: none;
+}
+
+.plans-intro {
+  margin: 56px auto 30px;
+  max-width: 850px;
+  text-align: center;
+}
+
+.plans-intro h1 {
+  color: #fff;
+  font-size: clamp(2.2rem, 6vw, 4.6rem);
+  line-height: 1;
+  margin: 10px 0 16px;
+}
+
+.plans-intro p {
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.plans-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0 auto;
+  max-width: 1320px;
+}
+
+.plan-card {
+  background: rgba(13, 18, 29, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 8px;
+  display: grid;
+  gap: 20px;
+  grid-template-rows: auto 1fr auto;
+  padding: 22px;
+}
+
+.plan-card.featured {
+  border-color: rgba(244, 189, 79, 0.7);
+  box-shadow: inset 0 3px 0 var(--gold);
+}
+
+.plan-card h2 {
+  color: #fff;
+  margin: 8px 0;
+}
+
+.plan-card p,
+.plan-card li {
+  color: var(--muted);
+}
+
+.plan-card ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.plan-price {
+  color: var(--gold-soft);
+  display: block;
+  font-size: 1.75rem;
+}
+
+.plans-legal {
+  margin: 22px auto 0;
+  max-width: 1320px;
 }
 
 .competition-header h2 {
@@ -2785,7 +2991,10 @@ button {
   .league-play-grid,
   .competition-grid,
   .room-stat-grid,
+  .room-ranking-summary,
+  .room-group-insights,
   .room-main-layout,
+  .room-information,
   .room-promo,
   .public-room-promo,
   .room-payment-required,
@@ -2794,6 +3003,14 @@ button {
   .ranking-hero,
   .ranking-stat-grid,
   .ranking-search-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .plans-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .room-sales-points {
     grid-template-columns: 1fr;
   }
 
@@ -2809,6 +3026,11 @@ button {
 
   .room-owner-actions {
     justify-items: start;
+  }
+
+  .plans-header {
+    align-items: flex-start;
+    gap: 12px;
   }
 
   .live-external-notice {

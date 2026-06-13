@@ -1,6 +1,6 @@
 # Mundial Picks 2026
 
-Aplicacion web de quiniela para el Mundial 2026, sin apuestas con dinero real.
+Aplicacion web para alquilar y administrar salas privadas de quiniela.
 
 ## Stack
 
@@ -20,15 +20,16 @@ Aplicacion web de quiniela para el Mundial 2026, sin apuestas con dinero real.
   - Ganador correcto: 3 puntos
   - Diferencia de goles correcta: 2 puntos
   - Participacion: 1 punto
-- Ranking global.
-- Ligas privadas con codigo de invitacion.
-- Ranking por liga.
+- Salas privadas con codigo de invitacion.
+- Ranking, chat, reglas y estadisticas por sala.
+- Planes de alquiler para 20, 50, 100 o cupo personalizado.
+- Panel del propietario para administrar participantes y compartir invitaciones.
 - Panel administrador para crear partidos, cargar resultados y recalcular puntos.
 - Importacion automatica del calendario de la Copa Mundial de la FIFA 2026™.
 - Cron automatico diario en Vercel para actualizar resultados reales y recalcular puntos.
 - Notificaciones por WhatsApp para actualizaciones del administrador, si configuras WhatsApp Cloud API.
 - Planes de salas con Wompi según el número de participantes.
-- Premio visible de 1.000.000 COP.
+- Aviso legal que separa la plataforma de los acuerdos internos de cada grupo.
 
 ## Estructura
 
@@ -62,6 +63,9 @@ GET  /api/leagues
 POST /api/leagues
 POST /api/leagues/join
 GET  /api/leagues/:id/ranking
+PATCH /api/leagues/:id
+DELETE /api/leagues/:id
+GET  /api/plans
 
 POST /api/admin/matches
 PUT  /api/admin/matches/:id/result
@@ -69,8 +73,6 @@ POST /api/admin/recalculate
 POST /api/admin/import-worldcup-calendar
 GET  /api/cron/update-results
 
-POST /api/entry/create-checkout
-POST /api/entry/confirm
 POST /api/entry/events
 ```
 
@@ -226,10 +228,10 @@ WOMPI_PRIVATE_KEY="prv_test_..."
 WOMPI_EVENTS_SECRET="test_events_..."
 WOMPI_INTEGRITY_SECRET="test_integrity_..."
 WOMPI_ENVIRONMENT="sandbox"
-PRIZE_AMOUNT_COP="1000000"
+NEXT_PUBLIC_SALES_WHATSAPP="573008588571"
 ```
 
-`PRIZE_AMOUNT_COP="1000000"` documenta el premio visible de 1.000.000 COP.
+La página `/planes` usa `NEXT_PUBLIC_SALES_WHATSAPP` para preparar la solicitud comercial de cada sala.
 
 Configura en Wompi la URL de eventos:
 

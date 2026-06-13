@@ -35,6 +35,9 @@ export type RankingEntry = {
   name: string;
   points: number;
   predictions: number;
+  exactScores?: number;
+  currentStreak?: number;
+  weeklyPoints?: number;
 };
 
 export type LeagueMember = RankingEntry & {
@@ -50,6 +53,11 @@ export type League = {
   ownerId: string;
   competitionId?: string | null;
   maxParticipants: number;
+  status?: "ACTIVE" | "EXPIRED" | "SUSPENDED" | "CLOSED";
+  expiresAt?: string | null;
+  description?: string | null;
+  rules?: string | null;
+  planId?: string | null;
   paymentStatus?: string;
   paymentAmountInCents?: number;
   paidAt?: string | null;
@@ -60,6 +68,25 @@ export type League = {
     country: string | null;
   } | null;
   memberships?: { id: string; userId: string; role: "MEMBER" | "ADMIN" }[];
+  plan?: {
+    id: string;
+    slug: string;
+    name: string;
+    participantLimit: number | null;
+    durationDays: number;
+    priceInCents: number;
+    benefits: string[];
+  } | null;
+};
+
+export type RoomPlan = {
+  id: string;
+  slug: string;
+  name: string;
+  participantLimit: number | null;
+  durationDays: number;
+  priceInCents: number;
+  benefits: string[];
 };
 
 export type Competition = {
