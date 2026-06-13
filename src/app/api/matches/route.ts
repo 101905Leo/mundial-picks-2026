@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   const includeHidden = request.nextUrl.searchParams.get("includeHidden") === "true" && user?.role === "ADMIN";
 
   const matches = await prisma.match.findMany({
-    where: includeHidden ? {} : { isPublished: true },
+    where: includeHidden ? {} : { isPublished: true, roomId: null },
     orderBy: { startsAt: "asc" },
     include: {
       predictions: user

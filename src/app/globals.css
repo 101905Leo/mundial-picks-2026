@@ -1263,6 +1263,73 @@ button {
   text-transform: uppercase;
 }
 
+.room-list {
+  align-items: stretch;
+  display: grid;
+  gap: 8px;
+}
+
+.room-list .tab {
+  align-items: flex-start;
+  display: grid;
+  gap: 3px;
+  text-align: left;
+}
+
+.room-list .tab span {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.room-first-match {
+  background: rgba(5, 7, 13, 0.48);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 11px;
+}
+
+.room-first-match summary {
+  color: var(--gold-soft);
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.room-first-match[open] {
+  display: grid;
+  gap: 10px;
+}
+
+.room-nav {
+  position: sticky;
+  top: 8px;
+  z-index: 5;
+}
+
+.room-picks-board {
+  width: 100%;
+}
+
+.room-stat-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.room-stat-grid article {
+  display: grid;
+  gap: 10px;
+}
+
+.room-stat-grid span {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.room-stat-grid strong {
+  color: var(--gold-soft);
+  font-size: clamp(2rem, 5vw, 3.6rem);
+}
+
 .room-management .inline-form {
   align-items: end;
   grid-template-columns: minmax(220px, 1fr) auto auto;
@@ -1451,6 +1518,12 @@ button {
   overflow-wrap: anywhere;
 }
 
+.league-chat-message audio {
+  margin-top: 9px;
+  max-width: 100%;
+  width: 340px;
+}
+
 .league-chat-form {
   display: grid;
   gap: 10px;
@@ -1464,6 +1537,10 @@ button {
   color: var(--ink);
   min-height: 44px;
   padding: 0 12px;
+}
+
+.voice-button {
+  justify-self: start;
 }
 
 .competition-page {
@@ -1512,6 +1589,11 @@ button {
 
 .competition-card > strong.competition-active {
   color: #9bf0c0;
+}
+
+.competition-create .inline-form {
+  align-items: end;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
 }
 
 .live-external-notice {
@@ -2640,6 +2722,7 @@ button {
   .league-room-grid,
   .league-play-grid,
   .competition-grid,
+  .room-stat-grid,
   .room-promo,
   .public-room-promo,
   .scorer-grid,
@@ -2655,7 +2738,8 @@ button {
   }
 
   .room-management .inline-form,
-  .admin-action-grid {
+  .admin-action-grid,
+  .competition-create .inline-form {
     grid-template-columns: 1fr;
   }
 

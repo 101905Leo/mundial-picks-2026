@@ -92,7 +92,13 @@ export async function updateWorldCupResultsFromApiFootball() {
     throw new Error("La API de resultados no devolvio partidos validos");
   }
   if (data.errors && Object.keys(data.errors).length > 0) {
-    throw new Error(`API-Football reporto: ${JSON.stringify(data.errors)}`);
+    const serializedErrors = JSON.stringify(data.errors);
+    if (serializedErrors.includes("Free plans do not have access to this season")) {
+      throw new Error(
+        "API-Football no permite consultar la temporada 2026 con el plan gratuito. El horario no cambia esta restriccion: debes activar un plan con acceso a 2026 o configurar otro proveedor de resultados.",
+      );
+    }
+    throw new Error(`API-Football reporto: ${serializedErrors}`);
   }
 
   const matches = await prisma.match.findMany();

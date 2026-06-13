@@ -1,16 +1,20 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import { LivePanel } from "@/components/live-panel";
+import { MatchCard } from "@/components/match-card";
 import { RankingTable } from "@/components/ranking-table";
-import type { League, LeagueMember, RankingEntry, User } from "@/components/types";
+import type { Competition, League, LeagueMember, Match, RankingEntry, User } from "@/components/types";
 
-type Props = {
-  user: User;
-};
+type Props = { user: User };
+type RoomView = "picks" | "ranking" | "statistics" | "live" | "chat" | "participants";
 
 type LeagueMessage = {
   id: string;
   body: string;
+  audioData: string | null;
+  audioMime: string | null;
+  audioDuration: number | null;
   createdAt: string;
   user: { id: string; name: string; role: "USER" | "ADMIN" };
 };
@@ -27,37 +31,73 @@ type RoomPrediction = {
     awayTeam: string;
     startsAt: string;
     status: "SCHEDULED" | "LIVE" | "FINISHED";
-    homeScore: number | null;
-    awayScore: number | null;
   };
 };
 
 export function LeaguePanel({ user }: Props) {
   const [leagues, setLeagues] = useState<League[]>([]);
+  const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [selectedLeague, setSelectedLeague] = useState<League | null>(null);
+  const [roomView, setRoomView] = useState<RoomView>("picks");
+  const [matches, setMatches] = useState<Match[]>([]);
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
   const [members, setMembers] = useState<LeagueMember[]>([]);
   const [chatMessages, setChatMessages] = useState<LeagueMessage[]>([]);
   const [predictions, setPredictions] = useState<RoomPrediction[]>([]);
   const [message, setMessage] = useState("");
-  const globalMembers = members.filter((member) => member.entryPaidAt).length;
-  const roomOnlyMembers = members.length - globalMembers;
+  const [recording, setRecording] = useState(false);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const recordingStartedAtRef = useRef(0);
+  const recordingTimerRef = useRef<number | null>(null);
   const isOwner = selectedLeague?.ownerId === user.id;
 
   async function loadLeagues() {
-    const response = await fetch("/api/leagues");
-    const data = await response.json();
+    const [roomsResponse, competitionsResponse] = await Promise.all([
+      fetch("/api/leagues"),
+      fetch("/api/competitions"),
+    ]);
+    const roomsData = await roomsResponse.json();
 
-    if (!response.ok) {
-      setMessage(data.error ?? "No se pudieron cargar tus salas");
+    if (!roomsResponse.ok) {
+      setMessage(roomsData.error ?? "No se pudieron cargar tus salas");
       return;
     }
 
-    setLeagues(data.leagues ?? []);
+    setLeagues(roomsData.leagues ?? []);
     setSelectedLeague((current) => {
-      if (!current) return data.leagues?.[0] ?? null;
-      return data.leagues?.find((league: League) => league.id === current.id) ?? data.leagues?.[0] ?? null;
+      if (!current) return roomsData.leagues?.[0] ?? null;
+      return roomsData.leagues?.find((league: League) => league.id === current.id) ?? roomsData.leagues?.[0] ?? null;
     });
+
+    if (competitionsResponse.ok) {
+      const competitionsData = await competitionsResponse.json();
+      setCompetitions(competitionsData.competitions ?? []);
+    }
+  }
+
+  async function loadRoom() {
+    if (!selectedLeague) return;
+
+    const [rankingResponse, predictionsResponse, matchesResponse] = await Promise.all([
+      fetch(`/api/leagues/${selectedLeague.id}/ranking`),
+      fetch(`/api/leagues/${selectedLeague.id}/predictions`),
+      fetch(`/api/leagues/${selectedLeague.id}/matches`),
+    ]);
+
+    if (rankingResponse.ok) {
+      const data = await rankingResponse.json();
+      setRanking(data.ranking ?? []);
+      setMembers(data.members ?? []);
+      setSelectedLeague((current) => (current?.id === data.league.id ? { ...current, ...data.league } : current));
+    }
+    if (predictionsResponse.ok) {
+      const data = await predictionsResponse.json();
+      setPredictions(data.predictions ?? []);
+    }
+    if (matchesResponse.ok) {
+      const data = await matchesResponse.json();
+      setMatches(data.matches ?? []);
+    }
   }
 
   useEffect(() => {
@@ -65,32 +105,6 @@ export function LeaguePanel({ user }: Props) {
   }, []);
 
   useEffect(() => {
-    async function loadRoom() {
-      if (!selectedLeague) {
-        setRanking([]);
-        setMembers([]);
-        setPredictions([]);
-        return;
-      }
-
-      const [rankingResponse, predictionsResponse] = await Promise.all([
-        fetch(`/api/leagues/${selectedLeague.id}/ranking`),
-        fetch(`/api/leagues/${selectedLeague.id}/predictions`),
-      ]);
-
-      if (rankingResponse.ok) {
-        const data = await rankingResponse.json();
-        setRanking(data.ranking ?? []);
-        setMembers(data.members ?? []);
-        setSelectedLeague((current) => (current?.id === data.league.id ? { ...current, ...data.league } : current));
-      }
-
-      if (predictionsResponse.ok) {
-        const data = await predictionsResponse.json();
-        setPredictions(data.predictions ?? []);
-      }
-    }
-
     loadRoom();
   }, [selectedLeague?.id]);
 
@@ -118,13 +132,23 @@ export function LeaguePanel({ user }: Props) {
 
   async function createLeague(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setMessage("");
     const form = event.currentTarget;
     const formData = new FormData(form);
+    const startsAt = String(formData.get("startsAt") ?? "");
+    const homeTeam = String(formData.get("homeTeam") ?? "").trim();
+    const awayTeam = String(formData.get("awayTeam") ?? "").trim();
+    const firstMatch = startsAt && homeTeam && awayTeam
+      ? { homeTeam, awayTeam, startsAt: new Date(startsAt).toISOString() }
+      : undefined;
     const response = await fetch("/api/leagues", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: String(formData.get("name")) }),
+      body: JSON.stringify({
+        name: String(formData.get("name")),
+        competitionId: String(formData.get("competitionId")),
+        maxParticipants: Number(formData.get("maxParticipants")),
+        firstMatch,
+      }),
     });
     const data = await response.json();
 
@@ -133,23 +157,15 @@ export function LeaguePanel({ user }: Props) {
       return;
     }
 
-    setMessage("Sala creada. Usa el botón Copiar invitación para compartirla.");
+    setMessage("Sala creada. El código se generó según el cupo seleccionado.");
     setLeagues((current) => [data.league, ...current.filter((league) => league.id !== data.league.id)]);
     setSelectedLeague(data.league);
+    setRoomView("picks");
     form.reset();
-  }
-
-  async function copyInvitation() {
-    if (!selectedLeague) return;
-
-    const invitation = `Únete a mi sala "${selectedLeague.name}" en Mundial Picks: https://www.mundialpicks.online. Código de acceso: ${selectedLeague.inviteCode}`;
-    await navigator.clipboard.writeText(invitation);
-    setMessage("Invitación copiada. Ya puedes enviarla por WhatsApp.");
   }
 
   async function joinLeague(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setMessage("");
     const form = event.currentTarget;
     const formData = new FormData(form);
     const response = await fetch("/api/leagues/join", {
@@ -165,15 +181,22 @@ export function LeaguePanel({ user }: Props) {
     }
 
     setMessage(`Entraste a la sala ${data.league.name}`);
-    setLeagues((current) => [data.league, ...current.filter((league) => league.id !== data.league.id)]);
+    await loadLeagues();
     setSelectedLeague(data.league);
+    setRoomView("picks");
     form.reset();
+  }
+
+  async function copyInvitation() {
+    if (!selectedLeague) return;
+    const invitation = `Únete a "${selectedLeague.name}" en Mundial Picks: https://www.mundialpicks.online. Código: ${selectedLeague.inviteCode}`;
+    await navigator.clipboard.writeText(invitation);
+    setMessage("Invitación copiada para compartir.");
   }
 
   async function renameLeague(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selectedLeague) return;
-
     const formData = new FormData(event.currentTarget);
     const response = await fetch(`/api/leagues/${selectedLeague.id}`, {
       method: "PATCH",
@@ -181,113 +204,178 @@ export function LeaguePanel({ user }: Props) {
       body: JSON.stringify({ name: String(formData.get("name")) }),
     });
     const data = await response.json();
-
     if (!response.ok) {
       setMessage(data.error ?? "No se pudo cambiar el nombre");
       return;
     }
-
     setMessage("Nombre de la sala actualizado");
-    setSelectedLeague(data.league);
     await loadLeagues();
   }
 
   async function removeMember(member: LeagueMember) {
     if (!selectedLeague || !window.confirm(`¿Retirar a ${member.name} de esta sala?`)) return;
-
     const response = await fetch(`/api/leagues/${selectedLeague.id}/members/${member.id}`, { method: "DELETE" });
     const data = await response.json();
-    if (!response.ok) {
-      setMessage(data.error ?? "No se pudo retirar al participante");
-      return;
-    }
-
-    setMessage(`${data.removed.name} fue retirado de la sala`);
-    setMembers((current) => current.filter((item) => item.id !== member.id));
-    setRanking((current) => current.filter((item) => item.id !== member.id));
+    setMessage(response.ok ? `${data.removed.name} fue retirado` : data.error ?? "No se pudo retirar");
+    if (response.ok) await loadRoom();
   }
 
   async function deleteRoom() {
-    if (!selectedLeague || !window.confirm(`¿Eliminar definitivamente la sala "${selectedLeague.name}"?`)) return;
-
+    if (!selectedLeague || !window.confirm(`¿Eliminar definitivamente "${selectedLeague.name}"?`)) return;
     const response = await fetch(`/api/leagues/${selectedLeague.id}`, { method: "DELETE" });
     const data = await response.json();
     if (!response.ok) {
       setMessage(data.error ?? "No se pudo eliminar la sala");
       return;
     }
-
     setMessage(`Sala eliminada: ${data.deleted.name}`);
     setSelectedLeague(null);
     await loadLeagues();
   }
 
-  async function sendChatMessage(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function postMessage(payload: { body?: string; audioData?: string; audioMime?: string; audioDuration?: number }) {
     if (!selectedLeague) return;
-
-    const form = event.currentTarget;
-    const formData = new FormData(form);
     const response = await fetch(`/api/leagues/${selectedLeague.id}/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ body: String(formData.get("message") ?? "") }),
+      body: JSON.stringify(payload),
     });
     const data = await response.json();
-
     if (!response.ok) {
       setMessage(data.error ?? "No se pudo enviar el mensaje");
       return;
     }
-
     setChatMessages((current) => [...current, data.message].slice(-100));
+  }
+
+  async function sendChatMessage(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    await postMessage({ body: String(formData.get("message") ?? "") });
     form.reset();
   }
+
+  async function startRecording() {
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      setMessage("Este navegador no permite grabar notas de voz.");
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks: BlobPart[] = [];
+      recorderRef.current = recorder;
+      recordingStartedAtRef.current = Date.now();
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size) chunks.push(event.data);
+      };
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((track) => track.stop());
+        const duration = Math.max(1, Math.min(30, Math.round((Date.now() - recordingStartedAtRef.current) / 1000)));
+        const blob = new Blob(chunks, { type: recorder.mimeType || "audio/webm" });
+
+        if (blob.size > 360_000) {
+          setMessage("La nota de voz es muy pesada. Graba una más corta.");
+          return;
+        }
+
+        const audioData = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result));
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(blob);
+        });
+        await postMessage({ audioData, audioMime: blob.type, audioDuration: duration });
+      };
+
+      recorder.start();
+      setRecording(true);
+      recordingTimerRef.current = window.setTimeout(() => stopRecording(), 30_000);
+    } catch {
+      setMessage("No se obtuvo permiso para usar el micrófono.");
+    }
+  }
+
+  function stopRecording() {
+    if (recordingTimerRef.current) window.clearTimeout(recordingTimerRef.current);
+    if (recorderRef.current?.state === "recording") recorderRef.current.stop();
+    setRecording(false);
+  }
+
+  const liveMatches = matches.filter((match) => match.status === "LIVE");
+  const totalPicks = members.reduce((sum, member) => sum + member.predictions, 0);
+  const finishedMatches = matches.filter((match) => match.status === "FINISHED").length;
 
   return (
     <div className="grid">
       <section className="room-promo panel">
         <div>
-          <span className="market-kicker">Tu grupo, tus reglas, la misma emoción</span>
-          <h2>Crea una sala con amigos o compañeros de trabajo</h2>
-          <p>Compitan en un ranking privado, conversen y revisen los picks cerrados de todos con transparencia.</p>
+          <span className="market-kicker">El centro de la competencia</span>
+          <h2>Entra a una sala y juega todo desde allí</h2>
+          <p>Cada sala reúne sus picks, ranking, estadísticas, partidos en vivo, chat y participantes.</p>
         </div>
-        <a className="button primary" href="https://goallive.online" rel="noreferrer" target="_blank">
-          Ver partidos en GoalLive
-        </a>
+        <a className="button primary" href="https://goallive.online" rel="noreferrer" target="_blank">Ver partidos</a>
       </section>
 
       <div className="grid three-columns room-entry-grid">
-        <form className="panel form" onSubmit={createLeague}>
+        <form className="panel form room-create-form" onSubmit={createLeague}>
           <h3>Crear sala</h3>
           <div className="form-row">
-            <label htmlFor="league-name">Nombre de la sala</label>
+            <label htmlFor="league-name">Nombre</label>
             <input id="league-name" name="name" minLength={3} placeholder="Nombre para tu grupo" required />
           </div>
-          <button className="button primary" type="submit">Crear sala</button>
+          <div className="form-row">
+            <label htmlFor="competitionId">Liga</label>
+            <select id="competitionId" name="competitionId" required>
+              <option value="">Selecciona una liga</option>
+              {competitions.map((competition) => (
+                <option key={competition.id} value={competition.id}>{competition.name} · {competition.season}</option>
+              ))}
+            </select>
+          </div>
+          <div className="form-row">
+            <label htmlFor="maxParticipants">Cupo de participantes</label>
+            <input id="maxParticipants" name="maxParticipants" type="number" min={2} max={200} defaultValue={20} required />
+          </div>
+          <details className="room-first-match">
+            <summary>Crear primer partido (opcional)</summary>
+            <div className="form-row"><label htmlFor="room-home">Local</label><input id="room-home" name="homeTeam" /></div>
+            <div className="form-row"><label htmlFor="room-away">Visitante</label><input id="room-away" name="awayTeam" /></div>
+            <div className="form-row"><label htmlFor="room-start">Inicio</label><input id="room-start" name="startsAt" type="datetime-local" /></div>
+          </details>
+          <button className="button primary" type="submit">Crear sala y código</button>
         </form>
+
         <form className="panel form" onSubmit={joinLeague}>
           <h3>Entrar a una sala</h3>
           <div className="form-row">
-            <label htmlFor="invite-code">Código de invitación</label>
-            <input id="invite-code" name="inviteCode" maxLength={16} minLength={4} placeholder="ABC123" required />
+            <label htmlFor="invite-code">Código</label>
+            <input id="invite-code" name="inviteCode" maxLength={16} minLength={4} placeholder="MP20ABCD" required />
           </div>
           <button className="button secondary" type="submit">Entrar</button>
         </form>
+
         <div className="panel">
           <h3>Tus salas</h3>
-          <div className="tabs">
+          <div className="tabs room-list">
             {leagues.map((league) => (
               <button
                 className={`tab ${selectedLeague?.id === league.id ? "active" : ""}`}
                 key={league.id}
-                onClick={() => setSelectedLeague(league)}
+                onClick={() => {
+                  setSelectedLeague(league);
+                  setRoomView("picks");
+                }}
                 type="button"
               >
-                {league.name}
+                <strong>{league.name}</strong>
+                <span>{league.competition?.name ?? "Competición"}</span>
               </button>
             ))}
-            {!leagues.length ? <div className="empty">Todavía no perteneces a una sala.</div> : null}
+            {!leagues.length ? <div className="empty">Crea una sala o entra con un código.</div> : null}
           </div>
         </div>
       </div>
@@ -298,9 +386,9 @@ export function LeaguePanel({ user }: Props) {
         <section className="league-room">
           <div className="panel league-room-hero">
             <div>
-              <span className="market-kicker">Sala privada</span>
+              <span className="market-kicker">{selectedLeague.competition?.name ?? "Sala privada"}</span>
               <h2>{selectedLeague.name}</h2>
-              <p className="muted">Ranking, chat y pronósticos cerrados exclusivamente para sus integrantes.</p>
+              <p className="muted">{members.length}/{selectedLeague.maxParticipants} participantes · {matches.length} partidos</p>
             </div>
             {isOwner ? (
               <div className="room-owner-actions">
@@ -310,117 +398,135 @@ export function LeaguePanel({ user }: Props) {
             ) : null}
           </div>
 
-          {isOwner ? (
-            <section className="panel room-management">
-              <form className="inline-form" onSubmit={renameLeague}>
-                <div className="form-row">
-                  <label htmlFor="rename-league">Nombre de la sala</label>
-                  <input id="rename-league" name="name" defaultValue={selectedLeague.name} minLength={3} required />
+          <nav className="admin-nav room-nav" aria-label="Secciones de la sala">
+            {([
+              ["picks", "Picks"],
+              ["ranking", "Ranking"],
+              ["statistics", "Estadísticas"],
+              ["live", "En vivo"],
+              ["chat", "Chat"],
+              ["participants", "Participantes"],
+            ] as Array<[RoomView, string]>).map(([view, label]) => (
+              <button className={`tab ${roomView === view ? "active" : ""}`} key={view} onClick={() => setRoomView(view)} type="button">
+                {label}
+              </button>
+            ))}
+          </nav>
+
+          {roomView === "picks" ? (
+            <div className="grid">
+              <section className="panel market-board room-picks-board">
+                <div className="section-title">
+                  <div><span className="market-kicker">Tus pronósticos</span><h3>Partidos de la sala</h3></div>
                 </div>
-                <button className="button secondary" type="submit">Guardar nombre</button>
-                <button className="button danger" onClick={deleteRoom} type="button">Eliminar sala</button>
-              </form>
+                <div className="market-list">
+                  {matches.map((match) => (
+                    <MatchCard
+                      key={match.id}
+                      match={match}
+                      signedIn
+                      canPredict
+                      disabledMessage=""
+                      onSaved={loadRoom}
+                      roomId={selectedLeague.id}
+                    />
+                  ))}
+                  {!matches.length ? <div className="empty">Esta liga todavía no tiene partidos publicados.</div> : null}
+                </div>
+              </section>
+              <section className="panel room-predictions">
+                <div className="section-title">
+                  <div><span className="market-kicker">Transparencia en vivo</span><h3>Picks del partido que se está jugando</h3></div>
+                </div>
+                <div className="room-prediction-list">
+                  {predictions.map((prediction) => (
+                    <article className="room-prediction" key={prediction.id}>
+                      <div><strong>{prediction.user.name}</strong><span>{prediction.match.homeTeam} vs {prediction.match.awayTeam}</span></div>
+                      <strong>{prediction.homeScore} - {prediction.awayScore}</strong>
+                      <span>{prediction.points} pts</span>
+                    </article>
+                  ))}
+                  {!predictions.length ? <div className="empty">Solo aparecerán picks mientras haya un partido en juego.</div> : null}
+                </div>
+              </section>
+            </div>
+          ) : null}
+
+          {roomView === "ranking" ? (
+            <section className="panel room-ranking">
+              <div className="section-title"><div><span className="market-kicker">Clasificación privada</span><h3>Ranking de la sala</h3></div></div>
+              <RankingTable ranking={ranking} />
             </section>
           ) : null}
 
-          <div className="league-room-grid">
-            <section className="panel">
-              <div className="section-title">
-                <div>
-                  <span className="market-kicker">Participantes</span>
-                  <h3>{members.length} usuarios</h3>
-                </div>
-              </div>
-              <div className="league-room-stats">
-                <span><strong>{members.length}</strong>En sala</span>
-                <span><strong>{roomOnlyMembers}</strong>Solo sala</span>
-              </div>
-              <div className="league-member-list">
-                {members.map((member) => (
-                  <article className="league-member" key={member.id}>
-                    <div>
-                      <strong>{member.name}</strong>
-                      <span>{member.predictions} picks guardados</span>
-                    </div>
-                    <div className="room-member-actions">
-                      <span className={member.entryPaidAt ? "member-status active" : "member-status pending"}>
-                        {member.entryPaidAt ? "Global" : "Solo sala"}
-                      </span>
-                      {isOwner && member.id !== user.id ? (
-                        <button className="button danger compact-button" onClick={() => removeMember(member)} type="button">
-                          Retirar
-                        </button>
-                      ) : null}
-                    </div>
-                  </article>
-                ))}
-              </div>
+          {roomView === "statistics" ? (
+            <section className="room-stat-grid">
+              <article className="panel"><span>Participantes</span><strong>{members.length}</strong></article>
+              <article className="panel"><span>Picks guardados</span><strong>{totalPicks}</strong></article>
+              <article className="panel"><span>Partidos finalizados</span><strong>{finishedMatches}</strong></article>
+              <article className="panel"><span>Partidos en vivo</span><strong>{liveMatches.length}</strong></article>
             </section>
+          ) : null}
 
-            <section className="panel room-predictions">
-              <div className="section-title">
-                <div>
-                  <span className="market-kicker">Transparencia</span>
-                  <h3>Picks de los participantes</h3>
-                </div>
-              </div>
-              <p className="muted">Los pronósticos aparecen aquí únicamente cuando el partido ya cerró.</p>
-              <div className="room-prediction-list">
-                {predictions.map((prediction) => (
-                  <article className="room-prediction" key={prediction.id}>
-                    <div>
-                      <strong>{prediction.user.name}</strong>
-                      <span>{prediction.match.homeTeam} vs {prediction.match.awayTeam}</span>
-                    </div>
-                    <strong>{prediction.homeScore} - {prediction.awayScore}</strong>
-                    <span>{prediction.points} pts</span>
-                  </article>
-                ))}
-                {!predictions.length ? <div className="empty">Los picks se mostrarán cuando cierre el primer partido.</div> : null}
-              </div>
-            </section>
-          </div>
+          {roomView === "live" ? <LivePanel matches={matches} /> : null}
 
-          <div className="league-play-grid">
-            <section className="panel room-ranking">
-              <div className="section-title">
-                <div>
-                  <span className="market-kicker">Ranking privado</span>
-                  <h3>Clasificación de la sala</h3>
-                </div>
-              </div>
-              <div className="room-ranking-scroll">
-                <RankingTable ranking={ranking} />
-              </div>
-            </section>
-
+          {roomView === "chat" ? (
             <section className="panel league-chat">
-              <div className="section-title">
-                <div>
-                  <span className="market-kicker">Chat público</span>
-                  <h3>Conversación de la sala</h3>
-                </div>
-                <span className="muted">{chatMessages.length} mensajes</span>
-              </div>
+              <div className="section-title"><div><span className="market-kicker">Chat público</span><h3>Conversación de la sala</h3></div></div>
               <div className="league-chat-messages" aria-live="polite">
                 {chatMessages.map((chatMessage) => (
                   <article className="league-chat-message" key={chatMessage.id}>
                     <div>
                       <strong>{chatMessage.user.name}</strong>
-                      {chatMessage.user.role === "ADMIN" ? <span>Admin</span> : null}
                       <time>{new Date(chatMessage.createdAt).toLocaleString("es", { dateStyle: "short", timeStyle: "short" })}</time>
                     </div>
-                    <p>{chatMessage.body}</p>
+                    {chatMessage.body ? <p>{chatMessage.body}</p> : null}
+                    {chatMessage.audioData ? (
+                      <audio controls preload="none" src={chatMessage.audioData}>
+                        Tu navegador no puede reproducir esta nota de voz.
+                      </audio>
+                    ) : null}
                   </article>
                 ))}
-                {!chatMessages.length ? <div className="empty">Todavía no hay mensajes. Inicia la conversación.</div> : null}
+                {!chatMessages.length ? <div className="empty">Todavía no hay mensajes.</div> : null}
               </div>
               <form className="league-chat-form" onSubmit={sendChatMessage}>
-                <input maxLength={500} name="message" placeholder="Escribe un mensaje para la sala..." required />
+                <input maxLength={500} name="message" placeholder="Escribe un mensaje..." required />
                 <button className="button primary" type="submit">Enviar</button>
               </form>
+              <button className={`button ${recording ? "danger" : "secondary"} voice-button`} onClick={recording ? stopRecording : startRecording} type="button">
+                {recording ? "Detener y enviar nota" : "Grabar nota de voz"}
+              </button>
             </section>
-          </div>
+          ) : null}
+
+          {roomView === "participants" ? (
+            <div className="league-room-grid">
+              <section className="panel">
+                <div className="section-title"><div><span className="market-kicker">Integrantes</span><h3>{members.length} participantes</h3></div></div>
+                <div className="league-member-list">
+                  {members.map((member) => (
+                    <article className="league-member" key={member.id}>
+                      <div><strong>{member.name}</strong><span>{member.predictions} picks · {member.points} puntos</span></div>
+                      {isOwner && member.id !== user.id ? (
+                        <button className="button danger compact-button" onClick={() => removeMember(member)} type="button">Retirar</button>
+                      ) : null}
+                    </article>
+                  ))}
+                </div>
+              </section>
+              {isOwner ? (
+                <section className="panel room-management">
+                  <form className="form" onSubmit={renameLeague}>
+                    <h3>Administrar sala</h3>
+                    <div className="form-row"><label htmlFor="rename-league">Nombre</label><input id="rename-league" name="name" defaultValue={selectedLeague.name} minLength={3} required /></div>
+                    <button className="button secondary" type="submit">Guardar nombre</button>
+                    <button className="button danger" onClick={deleteRoom} type="button">Eliminar sala</button>
+                  </form>
+                </section>
+              ) : null}
+            </div>
+          ) : null}
         </section>
       ) : null}
     </div>

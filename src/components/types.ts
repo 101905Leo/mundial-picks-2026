@@ -47,5 +47,21 @@ export type League = {
   name: string;
   inviteCode: string;
   ownerId: string;
+  competitionId?: string | null;
+  maxParticipants: number;
+  competition?: {
+    id: string;
+    name: string;
+    season: string;
+    country: string | null;
+  } | null;
   memberships?: { id: string }[];
+};
+
+export type Competition = {
+  id: string;
+  slug: string;
+  name: string;
+  country: string | null;
+  season: string;
 };

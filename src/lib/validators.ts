@@ -61,6 +61,15 @@ export const predictionSchema = resultSchema.extend({
 
 export const leagueSchema = z.object({
   name: z.string().min(3).max(80),
+  competitionId: z.string().min(1).optional(),
+  maxParticipants: z.number().int().min(2).max(200).optional(),
+  firstMatch: z
+    .object({
+      homeTeam: z.string().trim().min(2),
+      awayTeam: z.string().trim().min(2),
+      startsAt: z.string().datetime(),
+    })
+    .optional(),
 });
 
 export const joinLeagueSchema = z.object({

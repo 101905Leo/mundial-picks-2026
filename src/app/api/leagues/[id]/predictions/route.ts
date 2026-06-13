@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
-import { isPickClosed } from "@/lib/pick-lock";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { user, response } = await requireUser(request);
@@ -10,7 +9,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const { id } = await params;
   const membership = await prisma.leagueMembership.findUnique({
     where: { userId_leagueId: { userId: user!.id, leagueId: id } },
-    select: { id: true },
+    select: { id: true, league: { select: { competitionId: true } } },
   });
 
   if (!membership) {
@@ -24,7 +23,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const memberIds = roomMembers.map((member) => member.userId);
 
   const predictions = await prisma.prediction.findMany({
-    where: { userId: { in: memberIds } },
+    where: {
+      userId: { in: memberIds },
+      match: {
+        OR: [
+          { roomId: id },
+          { roomId: null, competitionId: membership.league.competitionId },
+        ],
+      },
+    },
     orderBy: [{ match: { startsAt: "desc" } }, { user: { name: "asc" } }],
     select: {
       id: true,
@@ -46,9 +53,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     },
   });
 
-  const visiblePredictions = predictions.filter(
-    ({ match }) => match.status !== "SCHEDULED" || isPickClosed(match.startsAt),
-  );
+  const now = new Date();
+  const visiblePredictions = predictions.filter(({ match }) => {
+    if (match.status === "LIVE") return true;
+    if (match.status === "FINISHED" || match.startsAt > now) return false;
+
+    const estimatedEnd = new Date(match.startsAt.getTime() + 3 * 60 * 60 * 1000);
+    return estimatedEnd > now;
+  });
 
   return Response.json({ predictions: visiblePredictions });
 }

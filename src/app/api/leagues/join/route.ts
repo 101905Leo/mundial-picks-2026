@@ -19,7 +19,16 @@ export async function POST(request: NextRequest) {
   });
 
   if (!league) {
-    return Response.json({ error: "Liga no encontrada" }, { status: 404 });
+    return Response.json({ error: "Sala no encontrada" }, { status: 404 });
+  }
+
+  const existingMembership = await prisma.leagueMembership.findUnique({
+    where: { userId_leagueId: { userId: user!.id, leagueId: league.id } },
+  });
+  const participants = await prisma.leagueMembership.count({ where: { leagueId: league.id } });
+
+  if (!existingMembership && participants >= league.maxParticipants) {
+    return Response.json({ error: "Esta sala ya completo su cupo de participantes" }, { status: 409 });
   }
 
   const membership = await prisma.leagueMembership.upsert({

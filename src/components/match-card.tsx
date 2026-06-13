@@ -11,9 +11,10 @@ type Props = {
   canPredict: boolean;
   disabledMessage: string;
   onSaved: () => void;
+  roomId?: string;
 };
 
-export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSaved }: Props) {
+export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSaved, roomId }: Props) {
   const prediction = match.predictions?.[0];
   const [message, setMessage] = useState("");
   const startsAt = new Date(match.startsAt);
@@ -34,6 +35,7 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         matchId: match.id,
+        roomId,
         homeScore: Number(formData.get("homeScore")),
         awayScore: Number(formData.get("awayScore")),
       }),

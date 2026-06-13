@@ -4,7 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 
 const messageSchema = z.object({
-  body: z.string().trim().min(1, "Escribe un mensaje").max(500, "El mensaje es demasiado largo"),
+  body: z.string().trim().max(500, "El mensaje es demasiado largo").default(""),
+  audioData: z.string().max(500_000, "La nota de voz es demasiado larga").optional(),
+  audioMime: z.string().max(80).optional(),
+  audioDuration: z.number().int().min(1).max(30).optional(),
+}).refine((value) => value.body.length > 0 || Boolean(value.audioData), {
+  message: "Escribe un mensaje o graba una nota de voz",
 });
 
 async function canAccessLeague(userId: string, leagueId: string) {
@@ -30,6 +35,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     select: {
       id: true,
       body: true,
+      audioData: true,
+      audioMime: true,
+      audioDuration: true,
       createdAt: true,
       user: { select: { id: true, name: true, role: true } },
     },
@@ -57,10 +65,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       leagueId: id,
       userId: user!.id,
       body: parsed.data.body,
+      audioData: parsed.data.audioData,
+      audioMime: parsed.data.audioMime,
+      audioDuration: parsed.data.audioDuration,
     },
     select: {
       id: true,
       body: true,
+      audioData: true,
+      audioMime: true,
+      audioDuration: true,
       createdAt: true,
       user: { select: { id: true, name: true, role: true } },
     },

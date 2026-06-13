@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const result = await updateResultsAndRecalculate();
+    const result = await updateResultsAndRecalculate({ enforceSchedule: true });
     return Response.json({
       ok: true,
       ranAt: new Date().toISOString(),

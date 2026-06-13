@@ -3,13 +3,14 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { leagueSchema } from "@/lib/validators";
 
-function inviteCode() {
-  return Math.random().toString(36).slice(2, 8).toUpperCase();
+function inviteCode(maxParticipants: number) {
+  const capacity = String(maxParticipants).padStart(2, "0");
+  return `MP${capacity}${Math.random().toString(36).slice(2, 6)}`.toUpperCase();
 }
 
-async function uniqueInviteCode() {
+async function uniqueInviteCode(maxParticipants: number) {
   for (let attempt = 0; attempt < 8; attempt += 1) {
-    const code = inviteCode();
+    const code = inviteCode(maxParticipants);
     const existingLeague = await prisma.league.findUnique({ where: { inviteCode: code }, select: { id: true } });
 
     if (!existingLeague) return code;
@@ -24,7 +25,10 @@ export async function GET(request: NextRequest) {
 
   const leagues = await prisma.league.findMany({
     where: { memberships: { some: { userId: user!.id } } },
-    include: { memberships: { select: { id: true } } },
+    include: {
+      memberships: { select: { id: true } },
+      competition: { select: { id: true, name: true, season: true, country: true } },
+    },
     orderBy: { createdAt: "desc" },
   });
 
@@ -43,15 +47,50 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const league = await prisma.league.create({
-      data: {
-        name: parsed.data.name,
-        inviteCode: await uniqueInviteCode(),
-        ownerId: user!.id,
-        memberships: {
-          create: { userId: user!.id },
+    const maxParticipants = parsed.data.maxParticipants ?? 20;
+    const competition =
+      (parsed.data.competitionId
+        ? await prisma.competition.findUnique({ where: { id: parsed.data.competitionId } })
+        : await prisma.competition.findUnique({ where: { slug: "mundial-2026" } })) ??
+      (await prisma.competition.findFirst({ where: { isActive: true } }));
+
+    if (!competition) {
+      return Response.json({ error: "No hay una liga disponible para crear la sala" }, { status: 409 });
+    }
+
+    const league = await prisma.$transaction(async (tx) => {
+      const createdLeague = await tx.league.create({
+        data: {
+          name: parsed.data.name,
+          inviteCode: await uniqueInviteCode(maxParticipants),
+          ownerId: user!.id,
+          competitionId: competition.id,
+          maxParticipants,
+          memberships: {
+            create: { userId: user!.id },
+          },
         },
-      },
+        include: {
+          competition: { select: { id: true, name: true, season: true, country: true } },
+          memberships: { select: { id: true } },
+        },
+      });
+
+      if (parsed.data.firstMatch) {
+        await tx.match.create({
+          data: {
+            homeTeam: parsed.data.firstMatch.homeTeam,
+            awayTeam: parsed.data.firstMatch.awayTeam,
+            startsAt: new Date(parsed.data.firstMatch.startsAt),
+            isPublished: true,
+            competitionId: competition.id,
+            roomId: createdLeague.id,
+            group: `Sala ${createdLeague.name}`,
+          },
+        });
+      }
+
+      return createdLeague;
     });
 
     return Response.json({ league }, { status: 201 });

@@ -10,6 +10,7 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json();
   const parsed = predictionSchema.safeParse(body);
+  const roomId = typeof body.roomId === "string" ? body.roomId : "";
 
   if (!parsed.success) {
     return Response.json({ error: "Prediccion invalida" }, { status: 400 });
@@ -18,6 +19,24 @@ export async function POST(request: NextRequest) {
   const match = await prisma.match.findUnique({ where: { id: parsed.data.matchId } });
   if (!match) {
     return Response.json({ error: "Partido no encontrado" }, { status: 404 });
+  }
+
+  if (roomId) {
+    const roomAccess = await prisma.league.findFirst({
+      where: {
+        id: roomId,
+        memberships: { some: { userId: user!.id } },
+      },
+      select: { id: true, competitionId: true },
+    });
+
+    const matchBelongsToRoom =
+      roomAccess &&
+      (match.roomId === roomAccess.id || (match.roomId === null && match.competitionId === roomAccess.competitionId));
+
+    if (!matchBelongsToRoom) {
+      return Response.json({ error: "Este partido no pertenece a tu sala" }, { status: 403 });
+    }
   }
 
   const now = new Date();

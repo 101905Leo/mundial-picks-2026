@@ -64,6 +64,7 @@ export function MundialPicksApp() {
     async function boot() {
       try {
         const sessionUser = await loadSession();
+        if (sessionUser) setActiveView("rooms");
         await loadData(sessionUser);
       } catch (error) {
         console.error("Initial app load failed", error);
@@ -466,7 +467,7 @@ export function MundialPicksApp() {
               <LeaguePanel user={user} />
             ) : null}
 
-            {user && activeView === "leagues" ? <CompetitionPanel /> : null}
+            {user && activeView === "leagues" ? <CompetitionPanel user={user} /> : null}
 
             {user && activeView === "facts" ? <FormidableFacts /> : null}
 
