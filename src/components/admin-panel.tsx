@@ -24,7 +24,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
   const [message, setMessage] = useState("");
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [usersLoaded, setUsersLoaded] = useState(false);
-  const [adminView, setAdminView] = useState<"matches" | "users" | "security">("matches");
+  const [adminView, setAdminView] = useState<"overview" | "matches" | "users" | "security">("overview");
   const [selectedPasswordUserId, setSelectedPasswordUserId] = useState("");
   const publishedMatches = matches.filter((match) => match.isPublished).length;
   const finishedMatches = matches.filter((match) => match.status === "FINISHED").length;
@@ -496,20 +496,9 @@ export function AdminPanel({ matches, onChanged }: Props) {
   return (
     <section className="panel">
       <div className="section-title">
-        <h2>Panel administrador</h2>
-        <div className="top-actions">
-          <button className="button secondary" onClick={importWorldCupCalendar} type="button">
-            Cargar calendario Mundial 2026
-          </button>
-          <button className="button primary" onClick={updateResults} type="button">
-            Actualizar resultados reales
-          </button>
-          <button className="button secondary" onClick={recalculate} type="button">
-            Recalcular puntos
-          </button>
-          <button className="button secondary" onClick={testWhatsApp} type="button">
-            Probar WhatsApp
-          </button>
+        <div>
+          <span className="market-kicker">Control general</span>
+          <h2>Panel administrador</h2>
         </div>
       </div>
       {message ? <div className="notice">{message}</div> : null}
@@ -534,6 +523,13 @@ export function AdminPanel({ matches, onChanged }: Props) {
         </article>
       </div>
       <div className="admin-nav" aria-label="Secciones del administrador">
+        <button
+          className={`tab ${adminView === "overview" ? "active" : ""}`}
+          onClick={() => setAdminView("overview")}
+          type="button"
+        >
+          Resumen
+        </button>
         <button
           className={`tab ${adminView === "matches" ? "active" : ""}`}
           onClick={() => setAdminView("matches")}
@@ -560,6 +556,42 @@ export function AdminPanel({ matches, onChanged }: Props) {
         </button>
       </div>
       <div className="grid two-columns">
+        {adminView === "overview" ? (
+          <>
+            <section className="form admin-quick-actions">
+              <div className="section-title">
+                <div>
+                  <span className="market-kicker">Operación diaria</span>
+                  <h3>Acciones rápidas</h3>
+                </div>
+              </div>
+              <div className="admin-action-grid">
+                <button className="button primary" onClick={updateResults} type="button">
+                  Actualizar resultados
+                </button>
+                <button className="button secondary" onClick={recalculate} type="button">
+                  Recalcular puntos
+                </button>
+                <button className="button secondary" onClick={importWorldCupCalendar} type="button">
+                  Cargar calendario
+                </button>
+                <button className="button secondary" onClick={testWhatsApp} type="button">
+                  Probar WhatsApp
+                </button>
+              </div>
+            </section>
+            <section className="form admin-guide">
+              <span className="market-kicker">Estado del sistema</span>
+              <h3>Orden recomendado</h3>
+              <ol>
+                <li>Publica únicamente los partidos que quieres mostrar.</li>
+                <li>La actualización automática consulta resultados cada 15 minutos.</li>
+                <li>Usa la actualización manual solo para comprobar o corregir.</li>
+                <li>Activa usuarios cuando confirmes el pago de inscripción.</li>
+              </ol>
+            </section>
+          </>
+        ) : null}
         {adminView === "matches" ? (
           <>
             <section className="form publish-manager">

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AdminPanel } from "@/components/admin-panel";
 import { AuthPanel } from "@/components/auth-panel";
+import { CompetitionPanel } from "@/components/competition-panel";
 import { Countdown } from "@/components/countdown";
 import { EntryPanel } from "@/components/entry-panel";
 import { FormidableFacts } from "@/components/formidable-facts";
@@ -19,7 +20,9 @@ export function MundialPicksApp() {
   const [user, setUser] = useState<User | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
-  const [activeView, setActiveView] = useState<"picks" | "ranking" | "facts" | "statistics" | "live" | "leagues" | "admin">("picks");
+  const [activeView, setActiveView] = useState<
+    "picks" | "ranking" | "facts" | "statistics" | "live" | "rooms" | "leagues" | "admin"
+  >("picks");
   const [loading, setLoading] = useState(true);
 
   async function loadSession() {
@@ -227,6 +230,20 @@ export function MundialPicksApp() {
                     </div>
                   </section>
 
+                  <section className="landing-card public-room-promo">
+                    <div>
+                      <span className="market-kicker">Más divertido en grupo</span>
+                      <h2>Crea tu propia sala privada</h2>
+                      <p>
+                        Invita amigos o compañeros de trabajo, armen su ranking independiente y comparen los picks
+                        cerrados de todos.
+                      </p>
+                    </div>
+                    <a className="button primary" href="https://goallive.online" rel="noreferrer" target="_blank">
+                      Ver partidos en GoalLive
+                    </a>
+                  </section>
+
                   <section className="landing-card">
                     <div className="section-title">
                       <h2>Sistema de puntos</h2>
@@ -271,7 +288,7 @@ export function MundialPicksApp() {
                   <AuthPanel
                     onAuth={async (sessionUser, options) => {
                       setUser(sessionUser);
-                      if (options?.joinedLeague) setActiveView("leagues");
+                      if (options?.joinedLeague) setActiveView("rooms");
                       await loadData(sessionUser);
                     }}
                   />
@@ -338,11 +355,14 @@ export function MundialPicksApp() {
                   En vivo
                 </button>
                 <button
+                  className={`tab ${activeView === "rooms" ? "active" : ""}`}
+                  onClick={() => setActiveView("rooms")}
+                >
+                  Salas
+                </button>
+                <button
                   className={`tab ${activeView === "leagues" ? "active" : ""}`}
-                  onClick={async () => {
-                    setActiveView("leagues");
-                    await loadData();
-                  }}
+                  onClick={() => setActiveView("leagues")}
                 >
                   Ligas
                 </button>
@@ -442,9 +462,11 @@ export function MundialPicksApp() {
               <GlobalRankingPanel ranking={ranking} user={user} onOpenPicks={() => setActiveView("picks")} />
             ) : null}
 
-            {user && activeView === "leagues" ? (
-              <LeaguePanel signedIn={Boolean(user)} />
+            {user && activeView === "rooms" ? (
+              <LeaguePanel user={user} />
             ) : null}
+
+            {user && activeView === "leagues" ? <CompetitionPanel /> : null}
 
             {user && activeView === "facts" ? <FormidableFacts /> : null}
 

@@ -38,6 +38,10 @@ function timeoutSignal(ms: number) {
 function safeErrorMessage(details: string) {
   try {
     const parsed = JSON.parse(details) as { error?: { message?: string; code?: number; error_data?: { details?: string } } };
+    if (parsed.error?.code === 190) {
+      return "El token de Meta vencio, fue revocado o pertenece a otra app. Genera uno nuevo y actualiza WHATSAPP_ACCESS_TOKEN en Vercel. (#190)";
+    }
+
     const message = parsed.error?.error_data?.details || parsed.error?.message;
     const code = parsed.error?.code ? ` (#${parsed.error.code})` : "";
 
@@ -60,7 +64,12 @@ export async function notifyWhatsAppUsers(body: string) {
       ? [{ phone: config.notifyOnlyPhone, name: "Mundial Picks" }]
       : (
           await prisma.user.findMany({
-            where: { isActive: true },
+            where: {
+              OR: [
+                { isActive: true },
+                { leagues: { some: {} } },
+              ],
+            },
             select: { phone: true, name: true },
           })
         ).map((user) => ({ phone: user.phone, name: user.name }));

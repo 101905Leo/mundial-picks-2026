@@ -46,5 +46,6 @@ export type League = {
   id: string;
   name: string;
   inviteCode: string;
+  ownerId: string;
   memberships?: { id: string }[];
 };

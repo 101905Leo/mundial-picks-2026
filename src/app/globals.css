@@ -1210,7 +1210,7 @@ button {
     linear-gradient(180deg, rgba(18, 24, 37, 0.98), rgba(8, 11, 18, 0.98));
   display: grid;
   gap: 16px;
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 300px);
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 
 .league-room-hero h2 {
@@ -1220,32 +1220,111 @@ button {
   margin: 7px 0;
 }
 
-.league-code-box {
-  background: rgba(5, 7, 13, 0.66);
-  border: 1px solid rgba(244, 189, 79, 0.26);
-  border-radius: 8px;
-  display: grid;
-  gap: 8px;
-  padding: 14px;
-}
-
-.league-code-box span {
-  color: var(--muted);
-  font-size: 0.82rem;
-  font-weight: 800;
-}
-
-.league-code-box strong {
-  color: var(--gold-soft);
-  font-family: Impact, "Arial Black", Haettenschweiler, sans-serif;
-  font-size: 2rem;
-  letter-spacing: 0;
-}
-
 .league-room-grid {
   display: grid;
   gap: 14px;
-  grid-template-columns: minmax(260px, 0.72fr) minmax(0, 1.28fr);
+  grid-template-columns: minmax(260px, 0.78fr) minmax(0, 1.22fr);
+}
+
+.room-promo,
+.public-room-promo {
+  align-items: center;
+  background:
+    linear-gradient(105deg, rgba(42, 117, 255, 0.18), rgba(244, 189, 79, 0.12) 55%, rgba(226, 30, 55, 0.12)),
+    rgba(10, 14, 23, 0.98);
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.room-promo h2,
+.public-room-promo h2 {
+  color: #fff;
+  margin: 6px 0;
+}
+
+.room-promo p,
+.public-room-promo p {
+  color: var(--muted);
+  margin: 0;
+}
+
+.room-owner-actions {
+  align-items: flex-end;
+  display: grid;
+  gap: 9px;
+  justify-items: end;
+}
+
+.room-owner-actions span {
+  color: var(--gold-soft);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.room-management .inline-form {
+  align-items: end;
+  grid-template-columns: minmax(220px, 1fr) auto auto;
+}
+
+.room-member-actions {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.compact-button {
+  min-height: 32px;
+  padding: 6px 9px;
+}
+
+.room-prediction-list {
+  display: grid;
+  gap: 8px;
+  max-height: 350px;
+  overflow: auto;
+}
+
+.room-prediction {
+  align-items: center;
+  background: rgba(5, 7, 13, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  padding: 10px 12px;
+}
+
+.room-prediction div {
+  display: grid;
+  gap: 3px;
+}
+
+.room-prediction div strong {
+  color: #fff;
+}
+
+.room-prediction span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.room-prediction > strong {
+  color: var(--gold-soft);
+  font-size: 1.2rem;
+}
+
+.league-play-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+}
+
+.room-ranking-scroll {
+  max-height: 450px;
+  overflow: auto;
 }
 
 .league-room-stats {
@@ -1385,6 +1464,61 @@ button {
   color: var(--ink);
   min-height: 44px;
   padding: 0 12px;
+}
+
+.competition-page {
+  display: grid;
+  gap: 14px;
+}
+
+.competition-header h2 {
+  color: #fff;
+  font-size: 2rem;
+  margin: 6px 0;
+}
+
+.competition-header p,
+.competition-card p {
+  color: var(--muted);
+}
+
+.competition-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.competition-card {
+  display: grid;
+  gap: 8px;
+}
+
+.competition-card > span {
+  color: var(--gold-soft);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.competition-card h3,
+.competition-card p {
+  margin: 0;
+}
+
+.competition-card > strong {
+  color: var(--muted);
+  justify-self: start;
+}
+
+.competition-card > strong.competition-active {
+  color: #9bf0c0;
+}
+
+.live-external-notice {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
 }
 
 .statistics-page {
@@ -1956,6 +2090,31 @@ button {
   min-width: 132px;
 }
 
+.admin-quick-actions,
+.admin-guide {
+  min-height: 230px;
+}
+
+.admin-action-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-action-grid .button {
+  min-height: 64px;
+  white-space: normal;
+}
+
+.admin-guide ol {
+  color: var(--muted);
+  display: grid;
+  gap: 12px;
+  line-height: 1.45;
+  margin: 14px 0 0;
+  padding-left: 22px;
+}
+
 .publish-manager {
   align-self: start;
   grid-column: auto;
@@ -2479,6 +2638,10 @@ button {
   .landing-match,
   .league-room-hero,
   .league-room-grid,
+  .league-play-grid,
+  .competition-grid,
+  .room-promo,
+  .public-room-promo,
   .scorer-grid,
   .standings-grid,
   .ranking-hero,
@@ -2489,6 +2652,20 @@ button {
 
   .league-chat-form {
     grid-template-columns: 1fr;
+  }
+
+  .room-management .inline-form,
+  .admin-action-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .room-owner-actions {
+    justify-items: start;
+  }
+
+  .live-external-notice {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .statistics-header {

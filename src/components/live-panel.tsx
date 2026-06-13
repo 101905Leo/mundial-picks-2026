@@ -14,6 +14,7 @@ function statusLabel(status: Match["status"]) {
 }
 
 export function LivePanel({ matches }: Props) {
+  const externalLiveUrl = "https://goallive.online";
   const liveMatches = matches.filter((match) => match.status === "LIVE");
   const nextMatches = matches.filter((match) => match.status === "SCHEDULED").slice(0, 6);
   const finishedMatches = matches.filter((match) => match.status === "FINISHED").slice(-6).reverse();
@@ -24,13 +25,16 @@ export function LivePanel({ matches }: Props) {
       <div className="section-title">
         <div>
           <span className="market-kicker">Centro en vivo</span>
-          <h2>Partidos, marcador y transmisión oficial</h2>
+          <h2>Partidos, marcadores y opciones para verlos</h2>
         </div>
         <span className="live-count">{liveMatches.length} en vivo</span>
       </div>
 
-      <div className="live-notice">
-        La app no transmite video directamente. Usa el botón de transmisión oficial cuando el administrador agregue el enlace autorizado.
+      <div className="live-notice live-external-notice">
+        <span>La app no transmite video directamente. GoalLive es un sitio externo e independiente.</span>
+        <a className="button primary" href={externalLiveUrl} rel="noreferrer" target="_blank">
+          Abrir GoalLive
+        </a>
       </div>
 
       <div className="live-list">
@@ -63,7 +67,9 @@ export function LivePanel({ matches }: Props) {
                   Ver transmisión oficial
                 </a>
               ) : (
-                <span className="live-missing-link">Enlace oficial pendiente</span>
+                <a className="button secondary" href={externalLiveUrl} rel="noreferrer" target="_blank">
+                  Ver en GoalLive (sitio externo)
+                </a>
               )}
             </article>
           ))
