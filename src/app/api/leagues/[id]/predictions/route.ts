@@ -23,42 +23,68 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   });
   const memberIds = roomMembers.map((member) => member.userId);
 
-  const predictions = await prisma.prediction.findMany({
+  const roomMatches = await prisma.match.findMany({
     where: {
-      userId: { in: memberIds },
-      match: {
-        isPublished: true,
-        ...roomMatchScopeWhere(membership.league),
-      },
+      isPublished: true,
+      ...roomMatchScopeWhere(membership.league),
     },
-    orderBy: [{ match: { startsAt: "desc" } }, { user: { name: "asc" } }],
     select: {
       id: true,
+      homeTeam: true,
+      awayTeam: true,
+      startsAt: true,
+      status: true,
+      isPublished: true,
       homeScore: true,
       awayScore: true,
-      points: true,
-      user: { select: { id: true, name: true } },
-      match: {
-        select: {
-          id: true,
-          homeTeam: true,
-          awayTeam: true,
-          startsAt: true,
-          status: true,
-          isPublished: true,
-          homeScore: true,
-          awayScore: true,
-        },
-      },
     },
+    orderBy: { startsAt: "asc" },
   });
 
   const now = new Date();
-  const liveWindowStart = new Date(now.getTime() - 4 * 60 * 60 * 1000);
-  const visiblePredictions = predictions.filter(({ match }) => {
+  const liveWindowStart = new Date(now.getTime() - 8 * 60 * 60 * 1000);
+  const openMatches = roomMatches.filter((match) => match.status !== "FINISHED");
+  const activeMatches = openMatches.filter((match) => {
+    const hasPartialScore = match.homeScore !== null && match.awayScore !== null;
     const looksInPlayByTime = match.startsAt <= now && match.startsAt >= liveWindowStart;
-    return match.isPublished && (match.status === "LIVE" || (looksInPlayByTime && match.status !== "FINISHED"));
+    return match.status === "LIVE" || hasPartialScore || looksInPlayByTime;
   });
+  const nearestOpenMatches = [...openMatches].sort(
+    (left, right) =>
+      Math.abs(left.startsAt.getTime() - now.getTime()) -
+      Math.abs(right.startsAt.getTime() - now.getTime()),
+  );
+  const visibleMatches = activeMatches.length ? activeMatches : nearestOpenMatches.slice(0, 1);
+  const visibleMatchIds = visibleMatches.map((match) => match.id);
 
-  return Response.json({ predictions: visiblePredictions });
+  const visiblePredictions = visibleMatchIds.length
+    ? await prisma.prediction.findMany({
+        where: {
+          userId: { in: memberIds },
+          matchId: { in: visibleMatchIds },
+        },
+        orderBy: [{ match: { startsAt: "asc" } }, { user: { name: "asc" } }],
+        select: {
+          id: true,
+          homeScore: true,
+          awayScore: true,
+          points: true,
+          user: { select: { id: true, name: true } },
+          match: {
+            select: {
+              id: true,
+              homeTeam: true,
+              awayTeam: true,
+              startsAt: true,
+              status: true,
+              isPublished: true,
+              homeScore: true,
+              awayScore: true,
+            },
+          },
+        },
+      })
+    : [];
+
+  return Response.json({ matches: visibleMatches, predictions: visiblePredictions });
 }

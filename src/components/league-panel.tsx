@@ -41,6 +41,16 @@ type RoomPrediction = {
   };
 };
 
+type RoomPredictionMatch = {
+  id: string;
+  homeTeam: string;
+  awayTeam: string;
+  startsAt: string;
+  status: "SCHEDULED" | "LIVE" | "FINISHED";
+  homeScore: number | null;
+  awayScore: number | null;
+};
+
 export function LeaguePanel({ user }: Props) {
   const [leagues, setLeagues] = useState<League[]>([]);
   const [competitions, setCompetitions] = useState<Competition[]>([]);
@@ -51,6 +61,7 @@ export function LeaguePanel({ user }: Props) {
   const [members, setMembers] = useState<LeagueMember[]>([]);
   const [chatMessages, setChatMessages] = useState<LeagueMessage[]>([]);
   const [predictions, setPredictions] = useState<RoomPrediction[]>([]);
+  const [predictionMatches, setPredictionMatches] = useState<RoomPredictionMatch[]>([]);
   const [groupInfo, setGroupInfo] = useState<GroupInfo | null>(null);
   const [message, setMessage] = useState("");
   const [syncError, setSyncError] = useState("");
@@ -109,6 +120,7 @@ export function LeaguePanel({ user }: Props) {
       setSelectedLeague((current) => (current?.id === data.league.id ? { ...current, ...data.league } : current));
       const predictionsData = await predictionsResponse.json();
       setPredictions(predictionsData.predictions ?? []);
+      setPredictionMatches(predictionsData.matches ?? []);
       const matchesData = await matchesResponse.json();
       setMatches(matchesData.matches ?? []);
       setSyncError("");
@@ -340,6 +352,17 @@ export function LeaguePanel({ user }: Props) {
   const savedPicks = matches.flatMap((match) =>
     (match.predictions ?? []).map((prediction) => ({ match, prediction })),
   );
+  const predictionMatchLabel = predictionMatches.length
+    ? predictionMatches
+        .map((match) => {
+          const score =
+            match.homeScore !== null && match.awayScore !== null
+              ? ` ${match.homeScore}-${match.awayScore}`
+              : "";
+          return `${match.homeTeam}${score} ${match.awayTeam}`;
+        })
+        .join(" · ")
+    : "";
   const userRankingIndex = ranking.findIndex((entry) => entry.id === user.id);
   const userRanking = userRankingIndex >= 0 ? ranking[userRankingIndex] : null;
   const leader = ranking[0] ?? null;
@@ -560,7 +583,10 @@ export function LeaguePanel({ user }: Props) {
               </section>
               <section className="panel room-predictions">
                 <div className="section-title">
-                  <div><h3>Picks del partido que se está jugando</h3></div>
+                  <div>
+                    <h3>Picks del partido que se está jugando</h3>
+                    {predictionMatchLabel ? <span>{predictionMatchLabel}</span> : null}
+                  </div>
                 </div>
                 <div className="room-prediction-list">
                   {predictions.map((prediction) => (
@@ -570,7 +596,13 @@ export function LeaguePanel({ user }: Props) {
                       <span>{prediction.points} pts</span>
                     </article>
                   ))}
-                  {!predictions.length ? <div className="empty">Solo aparecerán picks mientras haya un partido en juego.</div> : null}
+                  {!predictions.length ? (
+                    <div className="empty">
+                      {predictionMatchLabel
+                        ? "Este partido está publicado, pero todavía no hay picks guardados para mostrar."
+                        : "Publica o abre un partido de esta sala para mostrar los picks en vivo."}
+                    </div>
+                  ) : null}
                 </div>
               </section>
             </div>
