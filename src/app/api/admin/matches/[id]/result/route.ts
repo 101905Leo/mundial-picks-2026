@@ -38,6 +38,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             { homeScore: prediction.homeScore, awayScore: prediction.awayScore },
             { homeScore: match.homeScore!, awayScore: match.awayScore! },
           ),
+          manualPoints: null,
         },
       }),
     ),

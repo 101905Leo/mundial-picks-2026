@@ -499,6 +499,37 @@ export function AdminPanel({ matches, onChanged }: Props) {
     onChanged();
   }
 
+  async function closeMatch(match: Match) {
+    setMessage("");
+
+    if (match.homeScore === null || match.awayScore === null) {
+      setMessage(`Primero carga marcador parcial para ${match.homeTeam} vs ${match.awayTeam}.`);
+      return;
+    }
+
+    const confirmed = window.confirm(`Cerrar ${match.homeTeam} ${match.homeScore}-${match.awayScore} ${match.awayTeam}?`);
+    if (!confirmed) return;
+
+    const response = await fetch(`/api/admin/matches/${match.id}/result`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        homeScore: match.homeScore,
+        awayScore: match.awayScore,
+        isFinal: true,
+      }),
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      setMessage(data.error ?? "No se pudo cerrar el partido");
+      return;
+    }
+
+    setMessage(`Partido cerrado: ${data.match.homeTeam} ${data.match.homeScore}-${data.match.awayScore} ${data.match.awayTeam}`);
+    onChanged();
+  }
+
   return (
     <section className="panel">
       <div className="section-title">
@@ -649,6 +680,14 @@ export function AdminPanel({ matches, onChanged }: Props) {
                         type="button"
                       >
                         Ocultar
+                      </button>
+                      <button
+                        className="button danger"
+                        disabled={match.status === "FINISHED"}
+                        onClick={() => closeMatch(match)}
+                        type="button"
+                      >
+                        Cerrar
                       </button>
                     </div>
                   </article>

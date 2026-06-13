@@ -21,12 +21,11 @@ export async function recalculateFinishedMatchPoints() {
           where: { id: prediction.id },
           data: {
             lockedAt: match.status === "FINISHED" ? prediction.lockedAt ?? new Date() : prediction.lockedAt,
-            points:
-              prediction.manualPoints ??
-              calculatePredictionPoints(
-                { homeScore: prediction.homeScore, awayScore: prediction.awayScore },
-                { homeScore: match.homeScore!, awayScore: match.awayScore! },
-              ),
+            points: calculatePredictionPoints(
+              { homeScore: prediction.homeScore, awayScore: prediction.awayScore },
+              { homeScore: match.homeScore!, awayScore: match.awayScore! },
+            ),
+            manualPoints: null,
           },
         });
       }),
