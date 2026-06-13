@@ -113,8 +113,8 @@ export function AuthPanel({ onAuth }: Props) {
         {mode === "register" ? (
           <div className="form-row">
             <label htmlFor="inviteCode">Codigo de sala</label>
-            <input id="inviteCode" name="inviteCode" maxLength={16} minLength={4} placeholder="MP20ABCD" required />
-            <small>Solo se solicita una vez. Después entrarás automáticamente a tu sala.</small>
+            <input id="inviteCode" name="inviteCode" maxLength={16} placeholder="Opcional: MP20ABCD" />
+            <small>Si ingresas un codigo, después entrarás automáticamente a esa sala.</small>
           </div>
         ) : null}
         {mode === "login" ? (

@@ -6,7 +6,7 @@ import { registerSchema } from "@/lib/validators";
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const parsed = registerSchema.safeParse(body);
-  const inviteCode = parsed.success ? parsed.data.inviteCode.toUpperCase() : "";
+  const inviteCode = parsed.success ? (parsed.data.inviteCode ?? "").trim().toUpperCase() : "";
 
   if (!parsed.success) {
     const error = parsed.error.issues[0]?.message ?? "Datos de registro invalidos";
@@ -21,15 +21,17 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Ese numero de WhatsApp ya esta registrado" }, { status: 409 });
   }
 
-  const league = await prisma.league.findUnique({ where: { inviteCode } });
+  const league = inviteCode ? await prisma.league.findUnique({ where: { inviteCode } }) : null;
 
-  if (!league) {
+  if (inviteCode && !league) {
     return Response.json({ error: "Codigo de sala no encontrado" }, { status: 404 });
   }
 
-  const participants = await prisma.leagueMembership.count({ where: { leagueId: league.id } });
-  if (participants >= league.maxParticipants) {
-    return Response.json({ error: "Esta sala ya completo su cupo de participantes" }, { status: 409 });
+  if (league) {
+    const participants = await prisma.leagueMembership.count({ where: { leagueId: league.id } });
+    if (participants >= league.maxParticipants) {
+      return Response.json({ error: "Esta sala ya completo su cupo de participantes" }, { status: 409 });
+    }
   }
 
   const user = await prisma.user.create({
@@ -38,12 +40,12 @@ export async function POST(request: NextRequest) {
       phone: parsed.data.phone,
       passwordHash: await hashPassword(parsed.data.password),
       isActive: false,
-      leagues: { create: { leagueId: league.id } },
+      ...(league ? { leagues: { create: { leagueId: league.id } } } : {}),
     },
     select: { id: true, name: true, phone: true, role: true, isActive: true, entryPaidAt: true },
   });
 
-  const sessionUser = { ...user, hasLeagueAccess: true };
+  const sessionUser = { ...user, hasLeagueAccess: Boolean(league) };
 
   await setAuthCookie(signToken(sessionUser));
 

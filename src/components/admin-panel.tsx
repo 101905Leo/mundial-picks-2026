@@ -79,6 +79,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
     setMessage("");
     const formData = new FormData(event.currentTarget);
     const matchId = String(formData.get("matchId"));
+    const isFinal = formData.get("resultAction") === "final";
 
     const response = await fetch(`/api/admin/matches/${matchId}/result`, {
       method: "PUT",
@@ -86,7 +87,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
       body: JSON.stringify({
         homeScore: Number(formData.get("homeScore")),
         awayScore: Number(formData.get("awayScore")),
-        isFinal: formData.get("resultType") === "final",
+        isFinal,
       }),
     });
 
@@ -97,9 +98,9 @@ export function AdminPanel({ matches, onChanged }: Props) {
     }
 
     setMessage(
-      formData.get("resultType") === "final"
+      isFinal
         ? "Resultado final guardado y puntos recalculados"
-        : "Marcador parcial guardado. El partido continúa en vivo.",
+        : "Marcador parcial guardado y puntos actualizados en vivo.",
     );
     onChanged();
   }
@@ -714,7 +715,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
               <div className="form-row">
                 <label htmlFor="matchId">Partido</label>
                 <select id="matchId" name="matchId" required>
-                  {matches.map((match) => (
+                  {matches.filter((match) => match.status !== "FINISHED").map((match) => (
                     <option key={match.id} value={match.id}>
                       {match.homeTeam} vs {match.awayTeam} {match.isPublished ? "" : "(oculto)"}
                     </option>
@@ -731,16 +732,20 @@ export function AdminPanel({ matches, onChanged }: Props) {
                   <input id="resultAway" name="awayScore" type="number" min={0} required />
                 </div>
               </div>
-              <div className="form-row">
-                <label htmlFor="resultType">Estado del marcador</label>
-                <select id="resultType" name="resultType" defaultValue="partial" required>
-                  <option value="partial">Marcador parcial · partido en vivo</option>
-                  <option value="final">Resultado final · cerrar y calcular puntos</option>
-                </select>
+              <div className="inline-form">
+                <button className="button primary" name="resultAction" type="submit" value="partial">
+                  Actualizar parcial
+                </button>
+                <button className="button danger" name="resultAction" type="submit" value="final">
+                  Cerrar partido
+                </button>
               </div>
-              <button className="button primary" type="submit">
-                Guardar marcador
-              </button>
+              <small className="muted">
+                El parcial deja el partido en vivo y actualiza puntos provisionales. Cerrar partido deja el resultado final.
+              </small>
+              {!matches.some((match) => match.status !== "FINISHED") ? (
+                <div className="empty">No hay partidos abiertos para actualizar.</div>
+              ) : null}
             </form>
             <form className="form" onSubmit={deleteMatch}>
               <h3>Eliminar partido</h3>

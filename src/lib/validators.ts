@@ -26,7 +26,7 @@ export const credentialsSchema = z.object({
 
 export const registerSchema = credentialsSchema.extend({
   name: z.string().trim().min(2).max(80),
-  inviteCode: z.string().trim().min(4, "Ingresa el codigo de la sala").max(16),
+  inviteCode: z.string().trim().max(16).optional(),
 });
 
 export const changePasswordSchema = z.object({
