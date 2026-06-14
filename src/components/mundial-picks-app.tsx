@@ -7,7 +7,6 @@ import { Countdown } from "@/components/countdown";
 import { FormidableFacts } from "@/components/formidable-facts";
 import { GlobalRankingPanel } from "@/components/global-ranking-panel";
 import { LeaguePanel } from "@/components/league-panel";
-import { LivePanel } from "@/components/live-panel";
 import { MatchCard } from "@/components/match-card";
 import { RankingTable } from "@/components/ranking-table";
 import { WorldCupNewsTicker } from "@/components/worldcup-news-panel";
@@ -18,7 +17,7 @@ export function MundialPicksApp() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
   const [activeView, setActiveView] = useState<
-    "picks" | "ranking" | "facts" | "live" | "rooms" | "admin"
+    "picks" | "ranking" | "facts" | "rooms" | "admin" | "adminRooms"
   >("rooms");
   const [loading, setLoading] = useState(true);
 
@@ -65,7 +64,10 @@ export function MundialPicksApp() {
     async function boot() {
       try {
         const sessionUser = await loadSession();
-        if (sessionUser) setActiveView(sessionUser.role === "ADMIN" ? "admin" : "rooms");
+        if (sessionUser) {
+          const adminRoute = window.location.pathname === "/salas-usuario";
+          setActiveView(sessionUser.role === "ADMIN" ? (adminRoute ? "adminRooms" : "admin") : "rooms");
+        }
         await loadData(sessionUser);
       } catch (error) {
         console.error("Initial app load failed", error);
@@ -332,7 +334,13 @@ export function MundialPicksApp() {
                   <AuthPanel
                     onAuth={async (sessionUser, options) => {
                       setUser(sessionUser);
-                      setActiveView(sessionUser.role === "ADMIN" ? "admin" : "rooms");
+                      setActiveView(
+                        sessionUser.role === "ADMIN"
+                          ? window.location.pathname === "/salas-usuario"
+                            ? "adminRooms"
+                            : "admin"
+                          : "rooms",
+                      );
                       await loadData(sessionUser);
                     }}
                   />
@@ -361,16 +369,20 @@ export function MundialPicksApp() {
                       className={`tab ${activeView === "admin" ? "active" : ""}`}
                       onClick={async () => {
                         setActiveView("admin");
+                        window.history.pushState(null, "", "/");
                         await loadAdminMatches();
                       }}
                     >
                       Panel administrador
                     </button>
                     <button
-                      className={`tab ${activeView === "rooms" ? "active" : ""}`}
-                      onClick={() => setActiveView("rooms")}
+                      className={`tab ${activeView === "adminRooms" ? "active" : ""}`}
+                      onClick={() => {
+                        setActiveView("adminRooms");
+                        window.history.pushState(null, "", "/salas-usuario");
+                      }}
                     >
-                      Salas
+                      Salas-usuario
                     </button>
                   </>
                 ) : (
@@ -472,12 +484,13 @@ export function MundialPicksApp() {
 
             {user && activeView === "facts" ? <FormidableFacts /> : null}
 
-            {user && activeView === "live" ? (
-              <LivePanel matches={matches} />
-            ) : null}
-
-            {user?.role === "ADMIN" && activeView === "admin" ? (
-              <AdminPanel matches={matches} onChanged={loadAdminMatches} />
+            {user?.role === "ADMIN" && (activeView === "admin" || activeView === "adminRooms") ? (
+              <AdminPanel
+                key={activeView}
+                initialView={activeView === "adminRooms" ? "rooms" : "overview"}
+                matches={matches}
+                onChanged={loadAdminMatches}
+              />
             ) : null}
           </>
         )}

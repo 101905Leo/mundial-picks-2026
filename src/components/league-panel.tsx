@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import { LivePanel } from "@/components/live-panel";
 import { MatchCard } from "@/components/match-card";
 import { RankingTable } from "@/components/ranking-table";
 import { FormidableFacts } from "@/components/formidable-facts";
@@ -9,7 +8,7 @@ import { StatisticsPanel } from "@/components/statistics-panel";
 import type { League, LeagueMember, Match, RankingEntry, User } from "@/components/types";
 
 type Props = { user: User };
-type RoomView = "picks" | "facts" | "ranking" | "statistics" | "live" | "participants";
+type RoomView = "picks" | "facts" | "ranking" | "statistics" | "participants";
 
 type LeagueMessage = {
   id: string;
@@ -389,9 +388,9 @@ export function LeaguePanel({ user }: Props) {
     <div className="grid">
       {!selectedLeague && !isSuperAdmin ? <section className="room-promo panel">
         <div>
-          <span className="market-kicker">El centro de la competencia</span>
-          <h2>Entra a una sala y juega todo desde allí</h2>
-          <p>Cada sala reúne sus picks, ranking, estadísticas, partidos en vivo, chat y participantes.</p>
+            <span className="market-kicker">El centro de la competencia</span>
+            <h2>Entra a una sala y juega todo desde allí</h2>
+          <p>Cada sala reúne sus picks, ranking, estadísticas, chat y participantes.</p>
         </div>
         <a className="button primary" href="https://goallive.online" rel="noreferrer" target="_blank">Ver partidos</a>
       </section> : null}
@@ -400,7 +399,7 @@ export function LeaguePanel({ user }: Props) {
         {isSuperAdmin ? (
           <section className="panel form room-command-center">
             <span className="market-kicker">Super usuario</span>
-            <h3>Selecciona una sala para administrarla</h3>
+            <h3>Salas-usuario</h3>
             <p className="muted">Los cambios se aplican solo a la sala que elijas. Cada sala conserva sus participantes, normas, ranking y chat propios.</p>
             <div className="form-row">
               <label htmlFor="room-selector">Sala</label>
@@ -509,26 +508,6 @@ export function LeaguePanel({ user }: Props) {
                 <span>Estado: {selectedLeague.status === "ACTIVE" ? "Activa" : selectedLeague.status === "CLOSED" ? "Cerrada" : selectedLeague.status ?? "Activa"}</span>
                 {selectedLeague.expiresAt ? <span>Vence: {new Date(selectedLeague.expiresAt).toLocaleDateString("es")}</span> : null}
               </div>
-              {isSuperAdmin ? (
-                <div className="form-row room-switcher">
-                  <label htmlFor="active-room-selector">Cambiar sala</label>
-                  <select
-                    id="active-room-selector"
-                    onChange={(event) => {
-                      const league = leagues.find((item) => item.id === event.target.value) ?? selectedLeague;
-                      setSelectedLeague(league);
-                      setRoomView("participants");
-                    }}
-                    value={selectedLeague.id}
-                  >
-                    {selectableLeagues.map((league) => (
-                      <option key={league.id} value={league.id}>
-                        {league.name} · {league.inviteCode} · {league.status ?? "ACTIVE"}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ) : null}
             </div>
             {canEditRoomInfo ? (
               <div className="room-owner-actions">
@@ -577,7 +556,6 @@ export function LeaguePanel({ user }: Props) {
               ["facts", "Datos"],
               ["ranking", "Ranking"],
               ["statistics", "Estadísticas"],
-              ["live", "En vivo"],
               ["participants", "Participantes"],
             ] as Array<[RoomView, string]>).map(([view, label]) => (
               <button className={`tab ${roomView === view ? "active" : ""}`} key={view} onClick={() => setRoomView(view)} type="button">
@@ -590,6 +568,31 @@ export function LeaguePanel({ user }: Props) {
             <div className="room-main-content">
           {roomView === "picks" ? (
             <div className="grid">
+              <section className="panel room-live-inline">
+                <div className="section-title">
+                  <div>
+                    <span className="market-kicker">Picks en vivo</span>
+                    <h3>Picks del partido que se está jugando</h3>
+                    {predictionMatchLabel ? <span>{predictionMatchLabel}</span> : null}
+                  </div>
+                </div>
+                <div className="room-prediction-list">
+                  {predictions.map((prediction) => (
+                    <article className="room-prediction" key={prediction.id}>
+                      <div><strong>{prediction.user.name}</strong><span>{prediction.match.homeTeam} vs {prediction.match.awayTeam}</span></div>
+                      <strong>{prediction.homeScore} - {prediction.awayScore}</strong>
+                      <span>{prediction.points} pts</span>
+                    </article>
+                  ))}
+                  {!predictions.length ? (
+                    <div className="empty">
+                      {predictionMatchLabel
+                        ? "Este partido está publicado, pero todavía no hay picks guardados para mostrar."
+                        : "Cuando haya un partido publicado en vivo, sus picks aparecerán aquí sin abrir otra pestaña."}
+                    </div>
+                  ) : null}
+                </div>
+              </section>
               <section className="panel market-board room-picks-board">
                 <div className="section-title">
                   <div><span className="market-kicker">Tus pronósticos</span><h3>Partidos de la sala</h3></div>
@@ -625,30 +628,6 @@ export function LeaguePanel({ user }: Props) {
                     </article>
                   ))}
                   {!savedPicks.length ? <div className="empty">Todavía no has guardado picks en esta sala.</div> : null}
-                </div>
-              </section>
-              <section className="panel room-predictions">
-                <div className="section-title">
-                  <div>
-                    <h3>Picks del partido que se está jugando</h3>
-                    {predictionMatchLabel ? <span>{predictionMatchLabel}</span> : null}
-                  </div>
-                </div>
-                <div className="room-prediction-list">
-                  {predictions.map((prediction) => (
-                    <article className="room-prediction" key={prediction.id}>
-                      <div><strong>{prediction.user.name}</strong><span>{prediction.match.homeTeam} vs {prediction.match.awayTeam}</span></div>
-                      <strong>{prediction.homeScore} - {prediction.awayScore}</strong>
-                      <span>{prediction.points} pts</span>
-                    </article>
-                  ))}
-                  {!predictions.length ? (
-                    <div className="empty">
-                      {predictionMatchLabel
-                        ? "Este partido está publicado, pero todavía no hay picks guardados para mostrar."
-                        : "Publica o abre un partido de esta sala para mostrar los picks en vivo."}
-                    </div>
-                  ) : null}
                 </div>
               </section>
             </div>
@@ -695,8 +674,6 @@ export function LeaguePanel({ user }: Props) {
               <StatisticsPanel roomId={selectedLeague.id} />
             </div>
           ) : null}
-
-          {roomView === "live" ? <LivePanel matches={matches} /> : null}
 
           {roomView === "participants" ? (
             <div className="league-room-grid">

@@ -18,7 +18,10 @@ type AdminUser = {
 type Props = {
   matches: Match[];
   onChanged: () => void;
+  initialView?: AdminView;
 };
+
+type AdminView = "overview" | "matches" | "users" | "rooms" | "security";
 
 type AdminRoom = {
   id: string;
@@ -144,11 +147,11 @@ function datetimeLocalValue(value: string | null) {
   return offsetDate.toISOString().slice(0, 16);
 }
 
-export function AdminPanel({ matches, onChanged }: Props) {
+export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props) {
   const [message, setMessage] = useState("");
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [usersLoaded, setUsersLoaded] = useState(false);
-  const [adminView, setAdminView] = useState<"overview" | "matches" | "users" | "rooms" | "security">("rooms");
+  const [adminView, setAdminView] = useState<AdminView>(initialView);
   const [selectedPasswordUserId, setSelectedPasswordUserId] = useState("");
   const [adminRooms, setAdminRooms] = useState<AdminRoom[]>([]);
   const [competitions, setCompetitions] = useState<Competition[]>([]);
@@ -156,6 +159,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
   const [roomSummary, setRoomSummary] = useState<RoomSummary>({ total: 0, activeRooms: 0, expiredRooms: 0, incomeInCents: 0 });
   const [selectedAdminRoomId, setSelectedAdminRoomId] = useState("");
   const [selectedSettingsRoomId, setSelectedSettingsRoomId] = useState("");
+  const [selectedRoomUserId, setSelectedRoomUserId] = useState("");
   const [roomDashboard, setRoomDashboard] = useState<AdminRoomDashboard | null>(null);
   const [roomDashboardLoading, setRoomDashboardLoading] = useState(false);
   const [selectedPublishDate, setSelectedPublishDate] = useState("");
@@ -187,8 +191,13 @@ export function AdminPanel({ matches, onChanged }: Props) {
   const selectedRoom =
     adminRooms.find((room) => room.id === selectedSettingsRoomId) ??
     adminRooms.find((room) => room.id === selectedAdminRoomId) ??
-    adminRooms[0] ??
     null;
+  const selectedRoomParticipant =
+    roomDashboard?.participants.find((participant) => participant.id === selectedRoomUserId) ?? null;
+  const selectedRoomRanking =
+    roomDashboard?.ranking.find((entry) => entry.id === selectedRoomUserId) ?? null;
+  const selectedRoomUserPredictions =
+    roomDashboard?.predictions.filter((prediction) => prediction.user.id === selectedRoomUserId) ?? [];
 
   async function loadUsers() {
     const response = await fetch("/api/admin/users");
@@ -220,10 +229,10 @@ export function AdminPanel({ matches, onChanged }: Props) {
     setAdminRooms(loadedRooms);
     setRoomSummary(roomsData.summary ?? { total: 0, activeRooms: 0, expiredRooms: 0, incomeInCents: 0 });
     setSelectedSettingsRoomId((current) =>
-      current && loadedRooms.some((room) => room.id === current) ? current : loadedRooms[0]?.id ?? "",
+      current && loadedRooms.some((room) => room.id === current) ? current : "",
     );
     setSelectedAdminRoomId((current) =>
-      current && loadedRooms.some((room) => room.id === current) ? current : loadedRooms[0]?.id ?? "",
+      current && loadedRooms.some((room) => room.id === current) ? current : "",
     );
     if (competitionsResponse.ok) {
       const competitionsData = await competitionsResponse.json();
@@ -239,6 +248,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
   async function loadRoomDashboard(roomId = selectedRoom?.id ?? "") {
     if (!roomId) {
       setRoomDashboard(null);
+      setSelectedRoomUserId("");
       return;
     }
 
@@ -254,6 +264,9 @@ export function AdminPanel({ matches, onChanged }: Props) {
     }
 
     setRoomDashboard(data);
+    setSelectedRoomUserId((current) =>
+      current && data.participants?.some((participant: { id: string }) => participant.id === current) ? current : "",
+    );
   }
 
   useEffect(() => {
@@ -261,8 +274,17 @@ export function AdminPanel({ matches, onChanged }: Props) {
   }, []);
 
   useEffect(() => {
+    if (adminView === "rooms" && !usersLoaded) {
+      loadUsers();
+    }
+  }, [adminView, usersLoaded]);
+
+  useEffect(() => {
     if (adminView === "rooms" && selectedRoom?.id) {
       loadRoomDashboard(selectedRoom.id);
+    } else if (adminView === "rooms" && !selectedRoom?.id) {
+      setRoomDashboard(null);
+      setSelectedRoomUserId("");
     }
   }, [adminView, selectedRoom?.id]);
 
@@ -354,6 +376,65 @@ export function AdminPanel({ matches, onChanged }: Props) {
     setMessage(`${data.membership.user.name} ahora es ${data.membership.role === "ADMIN" ? "administrador" : "participante"} en ${data.room}.`);
     await loadRooms();
     await loadRoomDashboard(String(formData.get("adminRoomId")));
+  }
+
+  async function updateSelectedRoomParticipantRole(role: "MEMBER" | "ADMIN") {
+    if (!selectedRoom || !selectedRoomParticipant) {
+      setMessage("Selecciona una sala y un participante");
+      return;
+    }
+
+    const response = await fetch("/api/admin/rooms", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        leagueId: selectedRoom.id,
+        userId: selectedRoomParticipant.id,
+        role,
+      }),
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      setMessage(data.error ?? "No se pudo cambiar el rol del participante");
+      return;
+    }
+
+    setMessage(`${data.membership.user.name} actualizado dentro de ${data.room}.`);
+    await loadRooms();
+    await loadRoomDashboard(selectedRoom.id);
+  }
+
+  async function updateSelectedRoomParticipantStatus(isActive: boolean) {
+    if (!selectedRoom || !selectedRoomParticipant) {
+      setMessage("Selecciona una sala y un participante");
+      return;
+    }
+
+    await updateUserStatus(selectedRoomParticipant.id, isActive);
+    await loadRoomDashboard(selectedRoom.id);
+  }
+
+  async function removeSelectedRoomParticipant() {
+    if (!selectedRoom || !selectedRoomParticipant) {
+      setMessage("Selecciona una sala y un participante");
+      return;
+    }
+
+    if (!window.confirm(`¿Retirar a ${selectedRoomParticipant.name} de ${selectedRoom.name}?`)) return;
+
+    const response = await fetch(`/api/leagues/${selectedRoom.id}/members/${selectedRoomParticipant.id}`, { method: "DELETE" });
+    const data = await response.json();
+
+    if (!response.ok) {
+      setMessage(data.error ?? "No se pudo retirar el participante de esta sala");
+      return;
+    }
+
+    setMessage(`${data.removed.name} fue retirado de ${selectedRoom.name}.`);
+    setSelectedRoomUserId("");
+    await loadRooms();
+    await loadRoomDashboard(selectedRoom.id);
   }
 
   async function updateRoomSettings(event: FormEvent<HTMLFormElement>) {
@@ -1074,7 +1155,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
           }}
           type="button"
         >
-          Salas
+          Salas-usuario
         </button>
         <button
           className={`tab ${adminView === "security" ? "active" : ""}`}
@@ -1755,8 +1836,8 @@ export function AdminPanel({ matches, onChanged }: Props) {
               <div className="section-title">
                 <div>
                   <span className="market-kicker">Super usuario</span>
-                  <h3>Administración global de salas</h3>
-                  <p className="muted">Elige una sala y administra sus datos sin entrar como admin de sala.</p>
+                  <h3>Salas-usuario</h3>
+                  <p className="muted">Elige una sala y luego un participante. Todo lo que cambies aplica solo dentro de esa sala.</p>
                 </div>
                 <div className="inline-actions">
                   <button className="button secondary" onClick={loadRooms} type="button">Actualizar salas</button>
@@ -1772,8 +1853,10 @@ export function AdminPanel({ matches, onChanged }: Props) {
                 <select
                   id="superAdminRoomSelector"
                   onChange={(event) => {
-                    setSelectedSettingsRoomId(event.target.value);
-                    setSelectedAdminRoomId(event.target.value);
+                    const roomId = event.target.value;
+                    setSelectedSettingsRoomId(roomId);
+                    setSelectedAdminRoomId(roomId);
+                    setSelectedRoomUserId("");
                   }}
                   value={selectedRoom?.id ?? ""}
                 >
@@ -1827,6 +1910,114 @@ export function AdminPanel({ matches, onChanged }: Props) {
                           <article><span>Chat</span><strong>{roomDashboard.summary.messages}</strong></article>
                         </div>
 
+                        <section className="admin-room-user-tools">
+                          <div className="section-title">
+                            <div>
+                              <span className="market-kicker">Salas-usuario</span>
+                              <h3>Usuario dentro de esta sala</h3>
+                              <p className="muted">Selecciona un participante para revisar sus picks, puntos y permisos solo en {selectedRoom.name}.</p>
+                            </div>
+                          </div>
+                          <div className="form-row">
+                            <label htmlFor="selectedRoomUserId">Participante</label>
+                            <select
+                              id="selectedRoomUserId"
+                              onChange={(event) => setSelectedRoomUserId(event.target.value)}
+                              value={selectedRoomUserId}
+                            >
+                              <option value="">Selecciona participante</option>
+                              {roomDashboard.participants.map((participant) => (
+                                <option key={participant.id} value={participant.id}>
+                                  {participant.name} · {participant.phone} · {participant.role === "ADMIN" ? "Admin sala" : "Participante"}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          {selectedRoomParticipant ? (
+                            <div className="admin-room-user-card">
+                              <div className="admin-room-user-header">
+                                <div>
+                                  <strong>{selectedRoomParticipant.name}</strong>
+                                  <span>{selectedRoomParticipant.phone}</span>
+                                </div>
+                                <div className="admin-user-badges">
+                                  <span>{selectedRoomParticipant.isActive ? "Activo" : "Inactivo"}</span>
+                                  <span>{selectedRoomParticipant.role === "ADMIN" ? "Admin sala" : "Participante"}</span>
+                                </div>
+                              </div>
+                              <div className="admin-room-summary compact">
+                                <article><span>Puntos</span><strong>{selectedRoomRanking?.points ?? 0}</strong></article>
+                                <article><span>Picks</span><strong>{selectedRoomRanking?.predictions ?? selectedRoomUserPredictions.length}</strong></article>
+                                <article><span>Exactos</span><strong>{selectedRoomRanking?.exactScores ?? 0}</strong></article>
+                              </div>
+                              <div className="admin-user-actions">
+                                <button
+                                  className="button secondary"
+                                  disabled={selectedRoomParticipant.isActive}
+                                  onClick={() => updateSelectedRoomParticipantStatus(true)}
+                                  type="button"
+                                >
+                                  Activar usuario
+                                </button>
+                                <button
+                                  className="button danger"
+                                  disabled={!selectedRoomParticipant.isActive}
+                                  onClick={() => updateSelectedRoomParticipantStatus(false)}
+                                  type="button"
+                                >
+                                  Desactivar usuario
+                                </button>
+                                <button
+                                  className="button secondary"
+                                  disabled={selectedRoomParticipant.role === "ADMIN"}
+                                  onClick={() => updateSelectedRoomParticipantRole("ADMIN")}
+                                  type="button"
+                                >
+                                  Hacer admin de sala
+                                </button>
+                                <button
+                                  className="button secondary"
+                                  disabled={selectedRoomParticipant.role === "MEMBER"}
+                                  onClick={() => updateSelectedRoomParticipantRole("MEMBER")}
+                                  type="button"
+                                >
+                                  Dejar participante
+                                </button>
+                                <button
+                                  className="button secondary"
+                                  onClick={() => {
+                                    setSelectedPasswordUserId(selectedRoomParticipant.id);
+                                    setAdminView("users");
+                                    setMessage(`Listo para cambiar la contrasena de ${selectedRoomParticipant.name}`);
+                                  }}
+                                  type="button"
+                                >
+                                  Cambiar clave
+                                </button>
+                                <button className="button danger" onClick={removeSelectedRoomParticipant} type="button">
+                                  Retirar de sala
+                                </button>
+                              </div>
+                              <div className="admin-room-section">
+                                <h3>Picks de este usuario en la sala</h3>
+                                <div className="admin-room-list compact">
+                                  {selectedRoomUserPredictions.map((prediction) => (
+                                    <article key={prediction.id}>
+                                      <strong>{prediction.match.homeTeam} vs {prediction.match.awayTeam}</strong>
+                                      <span>
+                                        Pick {prediction.homeScore}-{prediction.awayScore} · {prediction.points} pts · {prediction.match.status}
+                                      </span>
+                                    </article>
+                                  ))}
+                                </div>
+                                {!selectedRoomUserPredictions.length ? <div className="empty">Este usuario todavía no tiene picks guardados en esta sala.</div> : null}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="empty">Selecciona un participante para ver su tablero dentro de esta sala.</div>
+                          )}
+                        </section>
+
                         <div className="admin-room-grid">
                           <section className="admin-room-section">
                             <h3>Ranking de esta sala</h3>
@@ -1856,8 +2047,13 @@ export function AdminPanel({ matches, onChanged }: Props) {
                             <div className="admin-room-list">
                               {roomDashboard.participants.map((participant) => (
                                 <article key={participant.id}>
-                                  <strong>{participant.name}</strong>
-                                  <span>{participant.phone} · {participant.role === "ADMIN" ? "Admin sala" : "Participante"} · {participant.isActive ? "Activo" : "Inactivo"}</span>
+                                  <div>
+                                    <strong>{participant.name}</strong>
+                                    <span>{participant.phone} · {participant.role === "ADMIN" ? "Admin sala" : "Participante"} · {participant.isActive ? "Activo" : "Inactivo"}</span>
+                                  </div>
+                                  <button className="button secondary compact-button" onClick={() => setSelectedRoomUserId(participant.id)} type="button">
+                                    Ver usuario
+                                  </button>
                                 </article>
                               ))}
                             </div>
@@ -2008,7 +2204,11 @@ export function AdminPanel({ matches, onChanged }: Props) {
                   </div>
                 </div>
               ) : (
-                <div className="empty">Todavía no hay salas creadas.</div>
+                <div className="empty">
+                  {adminRooms.length
+                    ? "Selecciona una sala para cargar su tablero. El super usuario no entra a ninguna sala automáticamente."
+                    : "Todavía no hay salas creadas."}
+                </div>
               )}
             </section>
 

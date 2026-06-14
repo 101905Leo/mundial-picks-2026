@@ -6,17 +6,17 @@
   --ink: #f8fafc;
   --muted: #aab4c8;
   --line: rgba(255, 255, 255, 0.1);
-  --primary: #2f6bff;
+  --primary: #1453ff;
   --primary-dark: #07111f;
   --red: #e21e37;
-  --gold: #f4bd4f;
-  --gold-soft: #ffe5a3;
-  --premium-blue: #2f6bff;
-  --premium-blue-soft: #bfdbfe;
-  --premium-blue-glow: rgba(47, 107, 255, 0.32);
-  --premium-cyan: #38bdf8;
+  --gold: #ffcc5c;
+  --gold-soft: #ffe7a8;
+  --premium-blue: #1453ff;
+  --premium-blue-soft: #d7e6ff;
+  --premium-blue-glow: rgba(20, 83, 255, 0.36);
+  --premium-cyan: #5ddcff;
   --blue: var(--premium-blue);
-  --premium-gradient: linear-gradient(135deg, var(--premium-blue), var(--premium-cyan));
+  --premium-gradient: linear-gradient(135deg, #1453ff 0%, #2aa8ff 58%, #ffcc5c 100%);
   --premium-panel: linear-gradient(145deg, rgba(31, 38, 55, 0.94), rgba(8, 12, 20, 0.96));
   --shadow: 0 18px 60px rgba(0, 0, 0, 0.38);
 }
@@ -29,7 +29,7 @@ body {
   margin: 0;
   background:
     radial-gradient(circle at 78% 0%, rgba(244, 189, 79, 0.16), transparent 32%),
-    radial-gradient(circle at 10% 18%, rgba(47, 107, 255, 0.16), transparent 30%),
+    radial-gradient(circle at 10% 18%, rgba(20, 83, 255, 0.18), transparent 30%),
     linear-gradient(180deg, #05070d 0%, #0a0d15 46%, #05070d 100%);
   color: var(--ink);
   font-family:
@@ -3242,6 +3242,10 @@ button {
   grid-template-columns: repeat(6, minmax(110px, 1fr));
 }
 
+.admin-room-summary.compact {
+  grid-template-columns: repeat(3, minmax(100px, 1fr));
+}
+
 .admin-room-summary article {
   background: rgba(18, 24, 37, 0.88);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -3261,6 +3265,45 @@ button {
   display: block;
   font-size: 1.5rem;
   margin-top: 4px;
+}
+
+.admin-room-user-tools {
+  background:
+    radial-gradient(circle at 8% 0%, rgba(93, 220, 255, 0.14), transparent 34%),
+    linear-gradient(135deg, rgba(20, 83, 255, 0.14), rgba(255, 204, 92, 0.055));
+  border: 1px solid rgba(93, 220, 255, 0.16);
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+}
+
+.admin-room-user-card {
+  background: rgba(5, 7, 13, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+}
+
+.admin-room-user-header {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.admin-room-user-header strong {
+  color: #fff;
+  display: block;
+  font-size: 1.1rem;
+}
+
+.admin-room-user-header span {
+  color: var(--muted);
+  display: block;
+  margin-top: 3px;
 }
 
 .admin-room-grid {
@@ -3296,6 +3339,8 @@ button {
   background: rgba(5, 7, 13, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 8px;
+  display: grid;
+  gap: 8px;
   padding: 10px;
 }
 
