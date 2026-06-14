@@ -1,34 +1,5 @@
 import { prisma } from "@/lib/prisma";
 
-type ApiResponse<T> = {
-  errors?: Record<string, string> | string[];
-  response?: T[];
-};
-
-type TopScorerItem = {
-  player?: { id?: number; name?: string; photo?: string };
-  statistics?: Array<{
-    team?: { name?: string; logo?: string };
-    games?: { appearances?: number | null };
-    goals?: { total?: number | null; assists?: number | null };
-  }>;
-};
-
-type StandingRow = {
-  rank?: number;
-  team?: { id?: number; name?: string; logo?: string };
-  points?: number;
-  goalsDiff?: number;
-  group?: string;
-  all?: {
-    played?: number;
-    win?: number;
-    draw?: number;
-    lose?: number;
-    goals?: { for?: number; against?: number };
-  };
-};
-
 type LocalTeamStats = {
   team: string;
   group: string;
@@ -41,34 +12,6 @@ type LocalTeamStats = {
   goalDifference: number;
   points: number;
 };
-
-function apiConfig() {
-  return {
-    key: process.env.API_FOOTBALL_KEY,
-    league: process.env.API_FOOTBALL_LEAGUE_ID || "1",
-    season: process.env.API_FOOTBALL_SEASON || "2026",
-  };
-}
-
-async function apiFootball<T>(path: string) {
-  const config = apiConfig();
-  if (!config.key) return [] as T[];
-
-  const url = new URL(`https://v3.football.api-sports.io/${path}`);
-  url.searchParams.set("league", config.league);
-  url.searchParams.set("season", config.season);
-
-  const response = await fetch(url, {
-    next: { revalidate: 900 },
-    headers: { "x-apisports-key": config.key },
-  });
-
-  if (!response.ok) throw new Error(`API-Football respondio ${response.status}`);
-
-  const data = (await response.json()) as ApiResponse<T>;
-  if (!Array.isArray(data.response)) return [];
-  return data.response;
-}
 
 function recordMatch(stats: Map<string, LocalTeamStats>, team: string, group: string, goalsFor: number, goalsAgainst: number) {
   const current =
@@ -122,14 +65,13 @@ function suggestedGoals(attacker?: LocalTeamStats, defender?: LocalTeamStats) {
 }
 
 type StatisticsOptions = {
-  roomId?: string | null;
+  roomId: string;
 };
 
-async function localStatisticsFallback(options: StatisticsOptions = {}) {
-  const matchScope = options.roomId ? { roomId: options.roomId } : { roomId: null };
+async function roomStatistics(options: StatisticsOptions) {
   const [scoredMatches, upcomingMatches] = await Promise.all([
     prisma.match.findMany({
-      where: { ...matchScope, homeScore: { not: null }, awayScore: { not: null } },
+      where: { roomId: options.roomId, homeScore: { not: null }, awayScore: { not: null } },
       select: {
         homeTeam: true,
         awayTeam: true,
@@ -142,7 +84,7 @@ async function localStatisticsFallback(options: StatisticsOptions = {}) {
     }),
     prisma.match.findMany({
       where: {
-        ...matchScope,
+        roomId: options.roomId,
         isPublished: true,
         homeScore: null,
         awayScore: null,
@@ -220,61 +162,17 @@ async function localStatisticsFallback(options: StatisticsOptions = {}) {
   };
 }
 
-export async function getWorldCupStatistics(options: StatisticsOptions = {}) {
-  const useOfficialApi = !options.roomId;
-  const [topScorersResult, standingsResult, localResult] = await Promise.allSettled([
-    useOfficialApi ? apiFootball<TopScorerItem>("players/topscorers") : Promise.resolve([]),
-    useOfficialApi ? apiFootball<{ league?: { standings?: StandingRow[][] } }>("standings") : Promise.resolve([]),
-    localStatisticsFallback(options),
-  ]);
-
-  const topScorers =
-    topScorersResult.status === "fulfilled"
-      ? topScorersResult.value.slice(0, 12).map((item) => {
-          const stats = item.statistics?.[0];
-          return {
-            id: item.player?.id ?? 0,
-            name: item.player?.name ?? "Jugador",
-            photo: item.player?.photo ?? "",
-            team: stats?.team?.name ?? "",
-            teamLogo: stats?.team?.logo ?? "",
-            goals: stats?.goals?.total ?? 0,
-            assists: stats?.goals?.assists ?? 0,
-            appearances: stats?.games?.appearances ?? 0,
-          };
-        })
-      : [];
-
-  const apiGroups =
-    standingsResult.status === "fulfilled"
-      ? (standingsResult.value[0]?.league?.standings ?? []).map((rows) =>
-          rows.map((row) => ({
-            rank: row.rank ?? 0,
-            team: row.team?.name ?? "Seleccion",
-            teamLogo: row.team?.logo ?? "",
-            group: row.group ?? "",
-            played: row.all?.played ?? 0,
-            won: row.all?.win ?? 0,
-            drawn: row.all?.draw ?? 0,
-            lost: row.all?.lose ?? 0,
-            goalsFor: row.all?.goals?.for ?? 0,
-            goalsAgainst: row.all?.goals?.against ?? 0,
-            goalDifference: row.goalsDiff ?? 0,
-            points: row.points ?? 0,
-          })),
-        )
-      : [];
-  const local = localResult.status === "fulfilled" ? localResult.value : null;
-  const groups = apiGroups.length ? apiGroups : local?.localGroups ?? [];
+export async function getWorldCupStatistics(options: StatisticsOptions) {
+  const local = await roomStatistics(options);
 
   return {
-    topScorers,
-    groups,
-    localTeamStats: local?.localTeamStats ?? [],
-    predictionSuggestions: local?.predictionSuggestions ?? [],
-    localMatchesCount: local?.localMatchesCount ?? 0,
+    topScorers: [],
+    groups: local.localGroups,
+    localTeamStats: local.localTeamStats,
+    predictionSuggestions: local.predictionSuggestions,
+    localMatchesCount: local.localMatchesCount,
     updatedAt: new Date().toISOString(),
-    configured: Boolean(apiConfig().key),
-    source: options.roomId ? "room-local" : apiGroups.length || topScorers.length ? "api-football" : "local",
+    configured: true,
+    source: "room-local",
   };
 }

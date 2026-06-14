@@ -9,19 +9,21 @@ export async function GET(request: NextRequest) {
   try {
     const roomId = request.nextUrl.searchParams.get("roomId");
 
-    if (roomId) {
-      const { user, response } = await requireUser(request);
-      if (response) return response;
+    if (!roomId) {
+      return Response.json({ error: "Selecciona una sala para consultar estadísticas." }, { status: 400 });
+    }
 
-      if (user!.role !== "ADMIN") {
-        const membership = await prisma.leagueMembership.findFirst({
-          where: { leagueId: roomId, userId: user!.id },
-          select: { id: true },
-        });
+    const { user, response } = await requireUser(request);
+    if (response) return response;
 
-        if (!membership) {
-          return Response.json({ error: "No tienes acceso a esta sala" }, { status: 403 });
-        }
+    if (user!.role !== "ADMIN") {
+      const membership = await prisma.leagueMembership.findFirst({
+        where: { leagueId: roomId, userId: user!.id },
+        select: { id: true },
+      });
+
+      if (!membership) {
+        return Response.json({ error: "No tienes acceso a esta sala" }, { status: 403 });
       }
     }
 

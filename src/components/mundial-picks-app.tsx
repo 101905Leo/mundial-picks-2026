@@ -10,7 +10,6 @@ import { LeaguePanel } from "@/components/league-panel";
 import { LivePanel } from "@/components/live-panel";
 import { MatchCard } from "@/components/match-card";
 import { RankingTable } from "@/components/ranking-table";
-import { StatisticsPanel } from "@/components/statistics-panel";
 import { WorldCupNewsTicker } from "@/components/worldcup-news-panel";
 import type { Match, RankingEntry, User } from "@/components/types";
 
@@ -19,7 +18,7 @@ export function MundialPicksApp() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
   const [activeView, setActiveView] = useState<
-    "picks" | "ranking" | "facts" | "statistics" | "live" | "rooms" | "admin"
+    "picks" | "ranking" | "facts" | "live" | "rooms" | "admin"
   >("rooms");
   const [loading, setLoading] = useState(true);
 
@@ -462,8 +461,6 @@ export function MundialPicksApp() {
             ) : null}
 
             {user && activeView === "facts" ? <FormidableFacts /> : null}
-
-            {user && activeView === "statistics" ? <StatisticsPanel /> : null}
 
             {user && activeView === "live" ? (
               <LivePanel matches={matches} />

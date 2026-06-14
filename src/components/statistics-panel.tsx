@@ -49,7 +49,7 @@ type PredictionSuggestion = {
 };
 
 type Props = {
-  roomId?: string;
+  roomId: string;
 };
 
 export function StatisticsPanel({ roomId }: Props) {
@@ -75,15 +75,9 @@ export function StatisticsPanel({ roomId }: Props) {
     setTeamStats(data.localTeamStats ?? []);
     setSuggestions(data.predictionSuggestions ?? []);
     setMessage(
-      data.source === "local"
-        ? data.localMatchesCount > 0
-          ? "Mostrando estadísticas calculadas con los marcadores cargados en Mundial Picks."
-          : "Aún no hay suficientes marcadores cargados para calcular estadísticas locales."
-        : data.source === "room-local"
-          ? data.localMatchesCount > 0
-            ? "Mostrando estadísticas calculadas solo con los partidos de esta sala."
-            : "Esta sala aún no tiene suficientes marcadores cargados para calcular estadísticas."
-        : "",
+      data.localMatchesCount > 0
+        ? "Mostrando estadísticas calculadas solo con los partidos de esta sala."
+        : "Esta sala aún no tiene suficientes marcadores cargados para calcular estadísticas.",
     );
   }
 
@@ -95,13 +89,9 @@ export function StatisticsPanel({ roomId }: Props) {
     <div className="statistics-page">
       <section className="panel statistics-header">
         <div>
-          <span className="market-kicker">{roomId ? "Sala privada" : "Copa Mundial 2026"}</span>
-          <h2>{roomId ? "Estadísticas de la sala" : "Estadísticas de la competición"}</h2>
-          <p className="muted">
-            {roomId
-              ? "Rendimiento, tabla y sugerencias calculadas únicamente con los partidos de esta sala."
-              : "Goleadores, asistencias y posiciones de los grupos."}
-          </p>
+          <span className="market-kicker">Sala privada</span>
+          <h2>Estadísticas de la sala</h2>
+          <p className="muted">Rendimiento, tabla y sugerencias calculadas únicamente con los partidos de esta sala.</p>
         </div>
         <button className="button secondary" onClick={loadStatistics} type="button">
           Actualizar
@@ -113,7 +103,7 @@ export function StatisticsPanel({ roomId }: Props) {
       <section className="panel">
         <div className="section-title">
           <h2>Pronósticos sugeridos</h2>
-          <span className="muted">Modelo base con estadísticas locales</span>
+          <span className="muted">Modelo base con datos de esta sala</span>
         </div>
         <div className="suggestion-grid">
           {suggestions.map((suggestion) => (
@@ -135,7 +125,7 @@ export function StatisticsPanel({ roomId }: Props) {
       <section className="panel">
         <div className="section-title">
           <h2>Goleadores</h2>
-          {!scorers.length ? <span className="muted">Requiere fuente oficial de jugadores</span> : null}
+          {!scorers.length ? <span className="muted">No disponible en estadísticas de sala</span> : null}
         </div>
         <div className="scorer-grid">
           {scorers.map((player, index) => (
@@ -192,7 +182,7 @@ export function StatisticsPanel({ roomId }: Props) {
               ))}
             </article>
           ))}
-          {!groups.length && !message ? <div className="empty">Las tablas apareceran cuando se publiquen resultados oficiales.</div> : null}
+          {!groups.length && !message ? <div className="empty">Las tablas aparecerán cuando esta sala tenga resultados cargados.</div> : null}
         </div>
       </section>
     </div>
