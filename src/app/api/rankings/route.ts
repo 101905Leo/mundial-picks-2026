@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
-import { calculatePredictionPoints } from "@/lib/scoring";
+import { visiblePredictionPoints } from "@/lib/prediction-points";
 import type { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -27,26 +27,14 @@ export async function GET(request: NextRequest) {
     },
   });
 
-  const predictionPoints = (prediction: (typeof users)[number]["predictions"][number]) => {
-    if (prediction.manualPoints !== null) return prediction.manualPoints;
-    if (
-      (prediction.match.status === "LIVE" || prediction.match.status === "FINISHED") &&
-      prediction.match.homeScore !== null &&
-      prediction.match.awayScore !== null
-    ) {
-      return calculatePredictionPoints(
-        { homeScore: prediction.homeScore, awayScore: prediction.awayScore },
-        { homeScore: prediction.match.homeScore, awayScore: prediction.match.awayScore },
-      );
-    }
-    return prediction.points;
-  };
-
   const ranking = users
     .map((user) => ({
       id: user.id,
       name: user.name,
-      points: user.predictions.reduce((sum, prediction) => sum + predictionPoints(prediction), 0),
+      points: user.predictions.reduce(
+        (sum, prediction) => sum + visiblePredictionPoints(prediction, prediction.match),
+        0,
+      ),
       predictions: user.predictions.length,
     }))
     .sort((a, b) => b.points - a.points || b.predictions - a.predictions);

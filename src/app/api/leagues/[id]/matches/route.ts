@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { roomMatchScopeWhere } from "@/lib/room-match-scope";
+import { visiblePredictionPoints } from "@/lib/prediction-points";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { user, response } = await requireUser(request);
@@ -26,10 +27,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     include: {
       predictions: {
         where: { userId: user!.id },
-        select: { id: true, homeScore: true, awayScore: true, points: true },
+        select: { id: true, homeScore: true, awayScore: true, points: true, manualPoints: true },
       },
     },
   });
 
-  return Response.json({ matches });
+  return Response.json({
+    matches: matches.map((match) => ({
+      ...match,
+      predictions: match.predictions.map((prediction) => ({
+        ...prediction,
+        points: visiblePredictionPoints(prediction, match),
+      })),
+    })),
+  });
 }

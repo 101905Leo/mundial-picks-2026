@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, requireAdmin } from "@/lib/auth";
 import { registerSchema } from "@/lib/validators";
+import { visiblePredictionPoints } from "@/lib/prediction-points";
 
 export async function GET(request: NextRequest) {
   const { response } = await requireAdmin(request);
@@ -19,6 +20,10 @@ export async function GET(request: NextRequest) {
       predictions: {
         select: {
           points: true,
+          manualPoints: true,
+          homeScore: true,
+          awayScore: true,
+          match: { select: { status: true, homeScore: true, awayScore: true } },
         },
       },
       _count: {
@@ -38,7 +43,10 @@ export async function GET(request: NextRequest) {
       isActive: user.isActive,
       entryPaidAt: user.entryPaidAt,
       picksCount: user._count.predictions,
-      points: user.predictions.reduce((sum, prediction) => sum + prediction.points, 0),
+      points: user.predictions.reduce(
+        (sum, prediction) => sum + visiblePredictionPoints(prediction, prediction.match),
+        0,
+      ),
     })),
   });
 }

@@ -90,9 +90,6 @@ export async function requireUser(request: NextRequest) {
 export async function requireAdmin(request: NextRequest) {
   const result = await requireUser(request);
   if (result.response) return result;
-  if (!result.user?.isActive) {
-    return { user: null, response: Response.json({ error: "Administrador desactivado" }, { status: 403 }) };
-  }
   if (result.user?.role !== "ADMIN") {
     return { user: null, response: Response.json({ error: "Solo administradores" }, { status: 403 }) };
   }
