@@ -24,41 +24,38 @@ export async function POST(request: NextRequest) {
   let joinedLeague = null;
 
   if (inviteCode) {
-    if (user.role === "ADMIN") {
-      return Response.json(
-        { error: "El super administrador no se une a salas como participante. Ingresa desde el panel administrador." },
-        { status: 403 },
-      );
-    }
-
     const league = await prisma.league.findUnique({ where: { inviteCode } });
 
     if (!league) {
       return Response.json({ error: "Codigo de sala no encontrado" }, { status: 404 });
     }
 
-    if (!league.paidAt || !["APPROVED", "TRIAL", "MANUAL"].includes(league.paymentStatus)) {
-      return Response.json({ error: "La sala todavía no ha confirmado el pago de su cupo" }, { status: 403 });
-    }
-    if (league.status !== "ACTIVE" || (league.expiresAt && league.expiresAt <= new Date())) {
-      return Response.json({ error: "La sala está vencida, suspendida o cerrada" }, { status: 403 });
-    }
+    if (user.role === "ADMIN") {
+      joinedLeague = league;
+    } else {
+      if (!league.paidAt || !["APPROVED", "TRIAL", "MANUAL"].includes(league.paymentStatus)) {
+        return Response.json({ error: "La sala todavía no ha confirmado el pago de su cupo" }, { status: 403 });
+      }
+      if (league.status !== "ACTIVE" || (league.expiresAt && league.expiresAt <= new Date())) {
+        return Response.json({ error: "La sala está vencida, suspendida o cerrada" }, { status: 403 });
+      }
 
-    const existingMembership = await prisma.leagueMembership.findUnique({
-      where: { userId_leagueId: { userId: user.id, leagueId: league.id } },
-    });
-    const participants = await prisma.leagueMembership.count({ where: { leagueId: league.id } });
-    if (!existingMembership && participants >= league.maxParticipants) {
-      return Response.json({ error: "Esta sala ya completo su cupo de participantes" }, { status: 409 });
+      const existingMembership = await prisma.leagueMembership.findUnique({
+        where: { userId_leagueId: { userId: user.id, leagueId: league.id } },
+      });
+      const participants = await prisma.leagueMembership.count({ where: { leagueId: league.id } });
+      if (!existingMembership && participants >= league.maxParticipants) {
+        return Response.json({ error: "Esta sala ya completo su cupo de participantes" }, { status: 409 });
+      }
+
+      await prisma.leagueMembership.upsert({
+        where: { userId_leagueId: { userId: user.id, leagueId: league.id } },
+        update: {},
+        create: { userId: user.id, leagueId: league.id },
+      });
+
+      joinedLeague = league;
     }
-
-    await prisma.leagueMembership.upsert({
-      where: { userId_leagueId: { userId: user.id, leagueId: league.id } },
-      update: {},
-      create: { userId: user.id, leagueId: league.id },
-    });
-
-    joinedLeague = league;
   }
 
   const leagueCount = await prisma.leagueMembership.count({ where: { userId: user.id } });

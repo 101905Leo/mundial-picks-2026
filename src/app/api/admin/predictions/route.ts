@@ -48,7 +48,7 @@ export async function PUT(request: NextRequest) {
   }
 
   if (user.role === "ADMIN") {
-    return Response.json({ error: "El super administrador no compite. Solo puedes modificar picks de participantes." }, { status: 403 });
+    return Response.json({ error: "Modo espectador: solo puedes modificar picks de participantes." }, { status: 403 });
   }
 
   const calculatedPoints =
@@ -124,7 +124,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   if (prediction.user.role === "ADMIN") {
-    return Response.json({ error: "El super administrador no compite. Solo puedes ajustar puntos de participantes." }, { status: 403 });
+    return Response.json({ error: "Modo espectador: solo puedes ajustar puntos de participantes." }, { status: 403 });
   }
 
   const updatedPrediction = await prisma.prediction.update({

@@ -370,7 +370,7 @@ export function LeaguePanel({ user }: Props) {
     !roomHasExpired &&
     roomIsActivated;
   const roomDisabledMessage = isSuperAdmin
-    ? "El super administrador administra la sala; no participa como competidor."
+    ? "Modo espectador: administra la sala sin participar en la competencia."
     : roomHasExpired
       ? "Esta sala está vencida."
       : selectedLeague?.status === "SUSPENDED"

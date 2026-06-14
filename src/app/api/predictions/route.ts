@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
 
   if (user!.role === "ADMIN") {
     return Response.json(
-      { error: "El super administrador no compite. Usa el panel admin para corregir picks de participantes." },
+      { error: "Modo espectador: usa el panel admin para corregir picks de participantes." },
       { status: 403 },
     );
   }

@@ -147,7 +147,7 @@ export function MundialPicksApp() {
   const canPredict = Boolean(user && user.role !== "ADMIN" && user.hasLeagueAccess);
   const pickDisabledMessage =
     user?.role === "ADMIN"
-      ? "El super administrador solo administra salas; no compite ni guarda picks."
+      ? "Modo espectador: puedes administrar salas, pero no guardar picks propios."
       : user && !user.hasLeagueAccess
       ? "Entra a una sala con código para guardar picks."
       : "Tu acceso de sala permite guardar picks.";
