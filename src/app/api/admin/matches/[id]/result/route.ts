@@ -59,8 +59,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }),
   );
 
-  const roomMatchesSynced = match.roomId === null ? await syncRoomResultsFromGlobal() : 0;
-  const roomPredictionsRecalculated = roomMatchesSynced > 0 ? await recalculateFinishedMatchPoints() : 0;
+  const roomSync = match.roomId === null
+    ? await syncRoomResultsFromGlobal()
+    : { matched: 0, updated: 0, alreadySynced: 0 };
+  const roomPredictionsRecalculated = roomSync.updated > 0 ? await recalculateFinishedMatchPoints() : 0;
 
   await notifyWhatsAppUsers(
     parsed.data.isFinal
@@ -68,5 +70,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       : `Marcador parcial: ${match.homeTeam} ${match.homeScore}-${match.awayScore} ${match.awayTeam}. Puntos actualizados en vivo.`,
   );
 
-  return Response.json({ match, roomMatchesSynced, roomPredictionsRecalculated });
+  return Response.json({
+    match,
+    roomMatchesSynced: roomSync.updated,
+    roomMatchesMatched: roomSync.matched,
+    roomMatchesAlreadySynced: roomSync.alreadySynced,
+    roomPredictionsRecalculated,
+  });
 }

@@ -26,6 +26,8 @@ export async function updateResultsAndRecalculate(options: { enforceSchedule?: b
       updated: 0,
       updatedMatches: [],
       roomMatchesSynced: 0,
+      roomMatchesMatched: 0,
+      roomMatchesAlreadySynced: 0,
       predictionsUpdated: 0,
       skipped: true,
       source: "Fuera del horario automatico de 14:00 a 00:59 America/Bogota",
@@ -68,9 +70,12 @@ export async function updateResultsAndRecalculate(options: { enforceSchedule?: b
     updated: 0,
     updatedMatches: [],
     roomMatchesSynced: 0,
+    roomMatchesMatched: 0,
+    roomMatchesAlreadySynced: 0,
     source: "Sin proveedor de resultados configurado",
   };
-  const roomMatchesSynced = await syncRoomResultsFromGlobal();
+  const roomSync = await syncRoomResultsFromGlobal();
+  const roomMatchesSynced = roomSync.updated;
   const predictionsUpdated = await recalculateFinishedMatchPoints();
 
   if (resolvedResult.updatedMatches.length > 0 || roomMatchesSynced > 0) {
@@ -91,6 +96,8 @@ export async function updateResultsAndRecalculate(options: { enforceSchedule?: b
   return {
     ...resolvedResult,
     roomMatchesSynced,
+    roomMatchesMatched: roomSync.matched,
+    roomMatchesAlreadySynced: roomSync.alreadySynced,
     predictionsUpdated,
   };
 }

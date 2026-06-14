@@ -2754,6 +2754,10 @@ button {
   color: var(--muted);
 }
 
+.room-command-center {
+  grid-column: 1 / -1;
+}
+
 .admin-user-badges {
   display: flex;
   flex-wrap: wrap;

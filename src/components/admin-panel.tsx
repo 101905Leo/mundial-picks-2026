@@ -108,6 +108,11 @@ export function AdminPanel({ matches, onChanged }: Props) {
   const todayPublishDay = matchDays.find((day) => day.date === todayKey) ?? null;
   const nextPendingPublishDay = matchDays.find((day) => day.published < day.matches.length) ?? null;
   const selectedHiddenMatches = selectedPublishDay ? selectedPublishDay.matches.length - selectedPublishDay.published : 0;
+  const selectedRoom =
+    adminRooms.find((room) => room.id === selectedSettingsRoomId) ??
+    adminRooms.find((room) => room.id === selectedAdminRoomId) ??
+    adminRooms[0] ??
+    null;
 
   async function loadUsers() {
     const response = await fetch("/api/admin/users");
@@ -135,8 +140,15 @@ export function AdminPanel({ matches, onChanged }: Props) {
       return;
     }
 
-    setAdminRooms(roomsData.rooms ?? []);
+    const loadedRooms = (roomsData.rooms ?? []) as AdminRoom[];
+    setAdminRooms(loadedRooms);
     setRoomSummary(roomsData.summary ?? { total: 0, activeRooms: 0, expiredRooms: 0, incomeInCents: 0 });
+    setSelectedSettingsRoomId((current) =>
+      current && loadedRooms.some((room) => room.id === current) ? current : loadedRooms[0]?.id ?? "",
+    );
+    setSelectedAdminRoomId((current) =>
+      current && loadedRooms.some((room) => room.id === current) ? current : loadedRooms[0]?.id ?? "",
+    );
     if (competitionsResponse.ok) {
       const competitionsData = await competitionsResponse.json();
       setCompetitions(competitionsData.competitions ?? []);
@@ -276,6 +288,12 @@ export function AdminPanel({ matches, onChanged }: Props) {
     if (response.ok) await loadRooms();
   }
 
+  async function copyRoomInvitation(room: AdminRoom) {
+    const invitation = `Únete a "${room.name}" en Mundial Picks: https://www.mundialpicks.online. Código: ${room.inviteCode}`;
+    await navigator.clipboard.writeText(invitation);
+    setMessage(`Invitación copiada para ${room.name}`);
+  }
+
   async function createMatch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
@@ -329,7 +347,11 @@ export function AdminPanel({ matches, onChanged }: Props) {
       return;
     }
 
-    const syncNote = data.roomMatchesSynced ? ` Salas sincronizadas: ${data.roomMatchesSynced}.` : "";
+    const syncNote = data.roomMatchesSynced
+      ? ` Salas sincronizadas: ${data.roomMatchesSynced}.`
+      : data.roomMatchesAlreadySynced
+        ? ` Salas ya estaban sincronizadas: ${data.roomMatchesAlreadySynced}.`
+        : "";
     setMessage(
       isFinal
         ? `Resultado final guardado y puntos recalculados.${syncNote}`
@@ -419,8 +441,16 @@ export function AdminPanel({ matches, onChanged }: Props) {
       return;
     }
 
+    const unchangedNote =
+      data.updated === 0 && data.matched > 0
+        ? ` ${data.matched} partido(s) ya estaban al día en el calendario principal.`
+        : "";
+    const roomNote =
+      data.roomMatchesAlreadySynced > 0
+        ? ` Salas ya sincronizadas: ${data.roomMatchesAlreadySynced}.`
+        : "";
     setMessage(
-      `API recibio: ${data.received ?? 0}. Relacionados: ${data.matched ?? 0}. Resultados revisados: ${data.checked}. Partidos actualizados: ${data.updated}. Salas sincronizadas: ${data.roomMatchesSynced ?? 0}. Picks recalculados: ${data.predictionsUpdated}.`,
+      `API recibió: ${data.received ?? 0}. Relacionados: ${data.matched ?? 0}. Resultados revisados: ${data.checked}. Partidos actualizados: ${data.updated}. Salas revisadas: ${data.roomMatchesMatched ?? 0}. Salas sincronizadas: ${data.roomMatchesSynced ?? 0}.${unchangedNote}${roomNote} Picks recalculados: ${data.predictionsUpdated}.`,
     );
     onChanged();
   }
@@ -1576,6 +1606,59 @@ export function AdminPanel({ matches, onChanged }: Props) {
         ) : null}
         {adminView === "rooms" ? (
           <>
+            <section className="form room-command-center">
+              <div className="section-title">
+                <div>
+                  <span className="market-kicker">Super usuario</span>
+                  <h3>Administración global de salas</h3>
+                  <p className="muted">Elige una sala y administra sus datos sin entrar como admin de sala.</p>
+                </div>
+                <button className="button secondary" onClick={loadRooms} type="button">Actualizar salas</button>
+              </div>
+              <div className="form-row">
+                <label htmlFor="superAdminRoomSelector">Sala creada</label>
+                <select
+                  id="superAdminRoomSelector"
+                  onChange={(event) => {
+                    setSelectedSettingsRoomId(event.target.value);
+                    setSelectedAdminRoomId(event.target.value);
+                  }}
+                  value={selectedRoom?.id ?? ""}
+                >
+                  <option value="">Selecciona sala</option>
+                  {adminRooms.map((room) => (
+                    <option key={room.id} value={room.id}>
+                      {room.name} · {room.inviteCode} · {room.status}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {selectedRoom ? (
+                <div className="admin-user-card active">
+                  <div>
+                    <strong>{selectedRoom.name}</strong>
+                    <span>{selectedRoom.competition?.name ?? "Sin liga"} · Código {selectedRoom.inviteCode}</span>
+                  </div>
+                  <div className="admin-user-stats">
+                    <span><strong>{selectedRoom.memberships.length}/{selectedRoom.maxParticipants}</strong>Cupo</span>
+                    <span><strong>{selectedRoom.memberships.filter((membership) => membership.role === "ADMIN").length}</strong>Admins sala</span>
+                    <span><strong>{selectedRoom.owner.name}</strong>Propietario</span>
+                  </div>
+                  <div className="admin-user-badges">
+                    <span>{selectedRoom.paymentStatus === "TRIAL" ? "Prueba gratis" : selectedRoom.paidAt ? "Pagada" : "Pago pendiente"}</span>
+                    <span>{selectedRoom.status === "ACTIVE" ? "Activa" : selectedRoom.status === "EXPIRED" ? "Vencida" : selectedRoom.status === "SUSPENDED" ? "Suspendida" : "Cerrada"}</span>
+                    {selectedRoom.expiresAt ? <span>Vence: {new Date(selectedRoom.expiresAt).toLocaleDateString("es")}</span> : null}
+                  </div>
+                  <div className="admin-user-actions">
+                    <button className="button secondary" onClick={() => copyRoomInvitation(selectedRoom)} type="button">Copiar invitación</button>
+                    <button className="button danger" onClick={() => deleteAdminRoom(selectedRoom)} type="button">Eliminar sala</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="empty">Todavía no hay salas creadas.</div>
+              )}
+            </section>
+
             <form className="form" onSubmit={createManualRoom}>
               <span className="market-kicker">Alta administrativa</span>
               <h3>Crear sala manualmente</h3>
