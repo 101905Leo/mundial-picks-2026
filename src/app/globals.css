@@ -1422,6 +1422,10 @@ button {
   z-index: 5;
 }
 
+.room-mobile-drawer {
+  display: none;
+}
+
 .room-main-layout {
   align-items: start;
   display: grid;
@@ -3347,6 +3351,18 @@ button {
   color: var(--gold-soft);
 }
 
+.room-selected-card-lean {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
+.room-selected-title {
+  min-width: 0;
+}
+
+.room-selected-title span {
+  max-width: 100%;
+}
+
 .admin-room-dashboard {
   background: rgba(5, 7, 13, 0.38);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -3480,6 +3496,59 @@ button {
 .room-match-admin,
 .room-match-admin-list {
   align-self: start;
+}
+
+.league-hub,
+.admin-advanced-calendar,
+.room-admin-utilities {
+  grid-column: 1 / -1;
+}
+
+.competition-compact-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+.competition-compact-card {
+  align-items: center;
+  background:
+    linear-gradient(135deg, rgba(47, 107, 255, 0.14), rgba(56, 189, 248, 0.08)),
+    rgba(5, 7, 13, 0.58);
+  border: 1px solid rgba(93, 220, 255, 0.16);
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+}
+
+.competition-compact-card strong {
+  color: #fff;
+  display: block;
+}
+
+.competition-compact-card span,
+.competition-compact-card small {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.admin-advanced-calendar {
+  background: rgba(5, 7, 13, 0.42);
+}
+
+.admin-advanced-calendar-grid {
+  margin-top: 14px;
+}
+
+.room-admin-utilities {
+  background: rgba(5, 7, 13, 0.4);
+}
+
+.room-admin-utilities > div {
+  margin-top: 14px;
 }
 
 .room-match-loader {
@@ -4123,8 +4192,7 @@ button {
   }
 
   .topbar .countdown-panel.compact {
-    justify-content: flex-start;
-    width: 100%;
+    display: none;
   }
 
   .two-columns,
@@ -4314,6 +4382,18 @@ button {
     width: 82px;
   }
 
+  .hero-band {
+    display: none;
+  }
+
+  .landing-side {
+    order: -1;
+  }
+
+  .landing-main {
+    order: 1;
+  }
+
   .app-shell.action-view .hero-band {
     display: none;
   }
@@ -4390,6 +4470,50 @@ button {
   .countdown-next-match {
     max-width: none;
     text-align: left;
+  }
+
+  .room-mobile-drawer {
+    background:
+      linear-gradient(135deg, rgba(47, 107, 255, 0.22), rgba(56, 189, 248, 0.12)),
+      rgba(8, 12, 20, 0.96);
+    border: 1px solid rgba(93, 220, 255, 0.18);
+    border-radius: 8px;
+    display: grid;
+    gap: 6px;
+    padding: 10px;
+    position: sticky;
+    top: 62px;
+    z-index: 8;
+  }
+
+  .room-mobile-drawer label {
+    color: var(--gold);
+    font-size: 0.72rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .league-room > .room-nav {
+    display: none;
+  }
+
+  .league-room-hero {
+    padding: 12px;
+  }
+
+  .league-room-hero h2 {
+    font-size: 1.35rem;
+    line-height: 1.05;
+  }
+
+  .room-status-line,
+  .room-information {
+    display: none;
+  }
+
+  .room-owner-actions,
+  .room-owner-actions .button {
+    width: 100%;
   }
 
   .market-columns {

@@ -439,7 +439,7 @@ export function LeaguePanel({ user }: Props) {
         : "La sala debe estar activa para guardar picks.";
   const roomTabs: Array<[RoomView, string]> = [
     ["picks", "Picks"],
-    ...(canEditRoomInfo ? ([["matches", "Partidos"]] as Array<[RoomView, string]>) : []),
+    ...(canEditRoomInfo ? ([["matches", "Ligas"]] as Array<[RoomView, string]>) : []),
     ["facts", "Datos"],
     ["ranking", "Ranking"],
     ["statistics", "Estadísticas"],
@@ -618,6 +618,21 @@ export function LeaguePanel({ user }: Props) {
             </section>
           ) : (
           <>
+          <div className="room-mobile-drawer">
+            <label htmlFor="roomMobileView">Sección de la sala</label>
+            <select
+              id="roomMobileView"
+              onChange={(event) => setRoomView(event.target.value as RoomView)}
+              value={roomView}
+            >
+              {roomTabs.map(([view, label]) => (
+                <option key={view} value={view}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <nav className="admin-nav room-nav" aria-label="Secciones de la sala">
             {roomTabs.map(([view, label]) => (
               <button className={`tab ${roomView === view ? "active" : ""}`} key={view} onClick={() => setRoomView(view)} type="button">
@@ -700,8 +715,8 @@ export function LeaguePanel({ user }: Props) {
               <section className="panel room-match-admin">
                 <div className="section-title">
                   <div>
-                    <span className="market-kicker">Calendario de la sala</span>
-                    <h3>Cargar liga y publicar partidos</h3>
+                    <span className="market-kicker">Ligas de la sala</span>
+                    <h3>Cargar calendario y publicar partidos</h3>
                   </div>
                 </div>
                 <form className="room-match-loader" onSubmit={importCompetitionMatches}>

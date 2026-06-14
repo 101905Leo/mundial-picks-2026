@@ -1153,14 +1153,14 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
           onClick={() => setAdminView("overview")}
           type="button"
         >
-          Resumen
+          Inicio
         </button>
         <button
           className={`tab ${adminView === "matches" ? "active" : ""}`}
           onClick={() => setAdminView("matches")}
           type="button"
         >
-          Partidos
+          Ligas
         </button>
         <button
           className={`tab ${adminView === "users" ? "active" : ""}`}
@@ -1325,11 +1325,41 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
         ) : null}
         {adminView === "matches" ? (
           <>
+            <section className="form league-hub admin-room-section-wide">
+              <div className="section-title">
+                <div>
+                  <span className="market-kicker">Biblioteca base</span>
+                  <h3>Ligas disponibles para las salas</h3>
+                  <p className="muted">
+                    El super usuario administra aquí las ligas base. Cada sala copia su propio calendario desde una liga y luego publica sus partidos sin afectar a las demás.
+                  </p>
+                </div>
+                <button className="button primary" onClick={importWorldCupCalendar} type="button">
+                  Cargar Mundial 2026
+                </button>
+              </div>
+              <div className="competition-compact-grid">
+                {competitions.map((competition) => (
+                  <article className="competition-compact-card" key={competition.id}>
+                    <div>
+                      <strong>{competition.name}</strong>
+                      <span>{competition.season}</span>
+                    </div>
+                    <small>Disponible para salas</small>
+                  </article>
+                ))}
+                {!competitions.length ? <div className="empty">Todavía no hay ligas base cargadas.</div> : null}
+              </div>
+            </section>
+
+            <details className="admin-room-section admin-room-section-wide admin-advanced-calendar">
+              <summary>Calendario base y herramientas avanzadas</summary>
+              <div className="grid two-columns admin-advanced-calendar-grid">
             <section className="form publish-manager">
               <div className="section-title publish-manager-title">
                 <div>
                   <span className="market-kicker">Control de calendario</span>
-                  <h3>Publicar partidos</h3>
+                  <h3>Calendario base</h3>
                 </div>
                 <span className="muted">
                   {publishedMatches}/{matches.length} publicados
@@ -1613,6 +1643,8 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
                 Eliminar partido
               </button>
             </form>
+              </div>
+            </details>
           </>
         ) : null}
         {adminView === "users" ? (
@@ -1927,15 +1959,15 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
                 <button className="button secondary" onClick={loadRooms} type="button">Actualizar salas</button>
               </div>
               {selectedRoom ? (
-                <div className="room-selected-card">
-                  <div>
+                <>
+                <div className="room-selected-card room-selected-card-lean">
+                  <div className="room-selected-title">
                     <strong>{selectedRoom.name}</strong>
-                    <span>{selectedRoom.competition?.name ?? "Sin liga"} · Código {selectedRoom.inviteCode}</span>
-                  </div>
-                  <div className="admin-user-stats">
-                    <span><strong>{selectedRoomMemberships.length}/{selectedRoom.maxParticipants}</strong>Cupo</span>
-                    <span><strong>{selectedRoomMemberships.filter((membership) => membership.role === "ADMIN").length}</strong>Admins sala</span>
-                    <span><strong>{selectedRoom.owner.name}</strong>Propietario</span>
+                    <span>
+                      {selectedRoom.competition?.name ?? "Sin liga"} · Código {selectedRoom.inviteCode} ·
+                      {" "}{selectedRoomMemberships.length}/{selectedRoom.maxParticipants} participantes ·
+                      {" "}Propietario: {selectedRoom.owner.name}
+                    </span>
                   </div>
                   <div className="admin-user-badges">
                     <span>{selectedRoom.paymentStatus === "TRIAL" ? "Prueba gratis" : selectedRoom.paidAt ? "Pagada" : "Pago pendiente"}</span>
@@ -1947,6 +1979,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
                     <button className="button primary" onClick={() => syncSelectedRoomResults(selectedRoom)} type="button">Sincronizar resultados de esta sala</button>
                     <button className="button danger" onClick={() => deleteAdminRoom(selectedRoom)} type="button">Eliminar sala</button>
                   </div>
+                </div>
                   <section className="admin-room-dashboard compact">
                     <div className="room-dashboard-bar">
                       <span className="market-kicker">Tablero de {selectedRoom.name}</span>
@@ -2182,7 +2215,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
                             <div className="room-panel-preview">
                               <nav className="admin-nav room-nav preview" aria-label="Vista de sala">
                                 <span className="tab active">Picks</span>
-                                <span className="tab">Partidos</span>
+                                <span className="tab">Ligas</span>
                                 <span className="tab">Ranking</span>
                                 <span className="tab">Estadísticas</span>
                                 <span className="tab">Participantes</span>
@@ -2263,7 +2296,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
                           </details>
 
                           <details className="admin-room-section" open>
-                            <summary>Partidos de la sala</summary>
+                            <summary>Calendario de la sala</summary>
                             <div className="admin-room-list admin-room-match-list">
                               {roomDashboard.matches.map((match) => (
                                 <article key={match.id}>
@@ -2414,7 +2447,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
                       </form>
                     </details>
                   </div>
-                </div>
+                </>
               ) : (
                 <div className="empty">
                   {adminRooms.length
@@ -2424,6 +2457,9 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
               )}
             </section>
 
+            <details className="admin-room-section admin-room-section-wide room-admin-utilities">
+              <summary>Crear o activar salas</summary>
+              <div className="grid two-columns">
             <form className="form" onSubmit={createManualRoom}>
               <span className="market-kicker">Alta administrativa</span>
               <h3>Crear sala manualmente</h3>
@@ -2501,6 +2537,8 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
               </div>
               <button className="button primary" type="submit">Crear prueba gratis de 10</button>
             </form>
+              </div>
+            </details>
 
           </>
         ) : null}
