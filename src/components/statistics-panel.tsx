@@ -48,7 +48,11 @@ type PredictionSuggestion = {
   reason: string;
 };
 
-export function StatisticsPanel() {
+type Props = {
+  roomId?: string;
+};
+
+export function StatisticsPanel({ roomId }: Props) {
   const [scorers, setScorers] = useState<Scorer[]>([]);
   const [groups, setGroups] = useState<Standing[][]>([]);
   const [teamStats, setTeamStats] = useState<TeamStat[]>([]);
@@ -57,7 +61,8 @@ export function StatisticsPanel() {
 
   async function loadStatistics() {
     setMessage("Cargando estadisticas...");
-    const response = await fetch("/api/statistics");
+    const query = roomId ? `?roomId=${encodeURIComponent(roomId)}` : "";
+    const response = await fetch(`/api/statistics${query}`, { cache: "no-store" });
     const data = await response.json();
 
     if (!response.ok) {
@@ -74,21 +79,29 @@ export function StatisticsPanel() {
         ? data.localMatchesCount > 0
           ? "Mostrando estadísticas calculadas con los marcadores cargados en Mundial Picks."
           : "Aún no hay suficientes marcadores cargados para calcular estadísticas locales."
+        : data.source === "room-local"
+          ? data.localMatchesCount > 0
+            ? "Mostrando estadísticas calculadas solo con los partidos de esta sala."
+            : "Esta sala aún no tiene suficientes marcadores cargados para calcular estadísticas."
         : "",
     );
   }
 
   useEffect(() => {
     loadStatistics();
-  }, []);
+  }, [roomId]);
 
   return (
     <div className="statistics-page">
       <section className="panel statistics-header">
         <div>
-          <span className="market-kicker">Copa Mundial 2026</span>
-          <h2>Estadísticas de la competición</h2>
-          <p className="muted">Goleadores, asistencias y posiciones de los grupos.</p>
+          <span className="market-kicker">{roomId ? "Sala privada" : "Copa Mundial 2026"}</span>
+          <h2>{roomId ? "Estadísticas de la sala" : "Estadísticas de la competición"}</h2>
+          <p className="muted">
+            {roomId
+              ? "Rendimiento, tabla y sugerencias calculadas únicamente con los partidos de esta sala."
+              : "Goleadores, asistencias y posiciones de los grupos."}
+          </p>
         </div>
         <button className="button secondary" onClick={loadStatistics} type="button">
           Actualizar

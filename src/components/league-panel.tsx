@@ -689,7 +689,7 @@ export function LeaguePanel({ user }: Props) {
                 <article className="panel"><span>Partidos finalizados</span><strong>{finishedMatches}</strong></article>
                 <article className="panel"><span>Partidos en vivo</span><strong>{liveMatches.length}</strong></article>
               </section>
-              <StatisticsPanel />
+              <StatisticsPanel roomId={selectedLeague.id} />
             </div>
           ) : null}
 

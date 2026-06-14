@@ -121,10 +121,15 @@ function suggestedGoals(attacker?: LocalTeamStats, defender?: LocalTeamStats) {
   return Math.max(0, Math.min(4, Math.round((attackAverage + defenseAverage) / 2)));
 }
 
-async function localStatisticsFallback() {
+type StatisticsOptions = {
+  roomId?: string | null;
+};
+
+async function localStatisticsFallback(options: StatisticsOptions = {}) {
+  const matchScope = options.roomId ? { roomId: options.roomId } : { roomId: null };
   const [scoredMatches, upcomingMatches] = await Promise.all([
     prisma.match.findMany({
-      where: { roomId: null, homeScore: { not: null }, awayScore: { not: null } },
+      where: { ...matchScope, homeScore: { not: null }, awayScore: { not: null } },
       select: {
         homeTeam: true,
         awayTeam: true,
@@ -137,7 +142,7 @@ async function localStatisticsFallback() {
     }),
     prisma.match.findMany({
       where: {
-        roomId: null,
+        ...matchScope,
         isPublished: true,
         homeScore: null,
         awayScore: null,
@@ -215,11 +220,12 @@ async function localStatisticsFallback() {
   };
 }
 
-export async function getWorldCupStatistics() {
+export async function getWorldCupStatistics(options: StatisticsOptions = {}) {
+  const useOfficialApi = !options.roomId;
   const [topScorersResult, standingsResult, localResult] = await Promise.allSettled([
-    apiFootball<TopScorerItem>("players/topscorers"),
-    apiFootball<{ league?: { standings?: StandingRow[][] } }>("standings"),
-    localStatisticsFallback(),
+    useOfficialApi ? apiFootball<TopScorerItem>("players/topscorers") : Promise.resolve([]),
+    useOfficialApi ? apiFootball<{ league?: { standings?: StandingRow[][] } }>("standings") : Promise.resolve([]),
+    localStatisticsFallback(options),
   ]);
 
   const topScorers =
@@ -269,6 +275,6 @@ export async function getWorldCupStatistics() {
     localMatchesCount: local?.localMatchesCount ?? 0,
     updatedAt: new Date().toISOString(),
     configured: Boolean(apiConfig().key),
-    source: apiGroups.length || topScorers.length ? "api-football" : "local",
+    source: options.roomId ? "room-local" : apiGroups.length || topScorers.length ? "api-football" : "local",
   };
 }
