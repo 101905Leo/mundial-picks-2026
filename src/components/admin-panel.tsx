@@ -82,6 +82,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
   const [roomSummary, setRoomSummary] = useState<RoomSummary>({ total: 0, activeRooms: 0, expiredRooms: 0, incomeInCents: 0 });
   const [selectedAdminRoomId, setSelectedAdminRoomId] = useState("");
   const [selectedSettingsRoomId, setSelectedSettingsRoomId] = useState("");
+  const [selectedPublishDate, setSelectedPublishDate] = useState("");
   const publishedMatches = matches.filter((match) => match.isPublished).length;
   const resultLoadedMatches = matches.filter((match) => match.homeScore !== null && match.awayScore !== null).length;
   const activeUsers = users.filter((user) => user.isActive).length;
@@ -102,6 +103,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
       if (match.isPublished) day.published += 1;
       return days;
     }, []);
+  const selectedPublishDay = matchDays.find((day) => day.date === selectedPublishDate) ?? matchDays[0] ?? null;
 
   async function loadUsers() {
     const response = await fetch("/api/admin/users");
@@ -145,6 +147,16 @@ export function AdminPanel({ matches, onChanged }: Props) {
   useEffect(() => {
     loadRooms();
   }, []);
+
+  useEffect(() => {
+    if (!matchDays.length) {
+      if (selectedPublishDate) setSelectedPublishDate("");
+      return;
+    }
+    if (!selectedPublishDate || !matchDays.some((day) => day.date === selectedPublishDate)) {
+      setSelectedPublishDate(matchDays[0].date);
+    }
+  }, [matches, selectedPublishDate]);
 
   async function createTrialRoom(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -999,37 +1011,49 @@ export function AdminPanel({ matches, onChanged }: Props) {
                 </button>
               </div>
               <div className="publish-day-list">
-                {matchDays.map((day) => (
-                  <section className="publish-day-card" key={day.date}>
-                    <div className="publish-day-header">
-                      <div>
-                        <span className="market-kicker">{day.date}</span>
-                        <h4>{day.label}</h4>
-                        <small>
-                          {day.published}/{day.matches.length} publicados
-                        </small>
+                {selectedPublishDay ? (
+                  <section className="publish-day-card">
+                    <div className="publish-date-picker">
+                      <div className="form-row">
+                        <label htmlFor="publish-date">Fecha a gestionar</label>
+                        <select
+                          id="publish-date"
+                          onChange={(event) => setSelectedPublishDate(event.target.value)}
+                          value={selectedPublishDay.date}
+                        >
+                          {matchDays.map((day) => (
+                            <option key={day.date} value={day.date}>
+                              {day.label} · {day.published}/{day.matches.length}
+                            </option>
+                          ))}
+                        </select>
                       </div>
-                      <div className="publish-day-actions">
-                        <button
-                          className="button primary"
-                          disabled={day.published === day.matches.length}
-                          onClick={() => publishDay(day.date, true)}
-                          type="button"
-                        >
-                          Publicar día
-                        </button>
-                        <button
-                          className="button secondary"
-                          disabled={day.published === 0}
-                          onClick={() => publishDay(day.date, false)}
-                          type="button"
-                        >
-                          Ocultar día
-                        </button>
+                      <div className="publish-day-summary">
+                        <span className="market-kicker">{selectedPublishDay.date}</span>
+                        <h4>{selectedPublishDay.label}</h4>
+                        <strong>{selectedPublishDay.published}/{selectedPublishDay.matches.length} publicados</strong>
                       </div>
                     </div>
+                    <div className="publish-day-actions">
+                      <button
+                        className="button primary"
+                        disabled={selectedPublishDay.published === selectedPublishDay.matches.length}
+                        onClick={() => publishDay(selectedPublishDay.date, true)}
+                        type="button"
+                      >
+                        Publicar esta fecha
+                      </button>
+                      <button
+                        className="button secondary"
+                        disabled={selectedPublishDay.published === 0}
+                        onClick={() => publishDay(selectedPublishDay.date, false)}
+                        type="button"
+                      >
+                        Ocultar esta fecha
+                      </button>
+                    </div>
                     <div className="publish-list compact">
-                      {day.matches.map((match) => (
+                      {selectedPublishDay.matches.map((match) => (
                         <article className={`publish-card ${match.isPublished ? "published" : ""}`} key={match.id}>
                           <div className="publish-teams">
                             <span>
@@ -1082,7 +1106,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
                       ))}
                     </div>
                   </section>
-                ))}
+                ) : null}
                 {!matchDays.length ? <div className="empty">Todavía no hay partidos cargados.</div> : null}
               </div>
             </section>

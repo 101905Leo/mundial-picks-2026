@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
       id: true,
       name: true,
       predictions: {
-        where: { match: { isPublished: true } },
+        where: { roomKey: "GLOBAL", match: { isPublished: true } },
         select: {
           points: true,
           manualPoints: true,

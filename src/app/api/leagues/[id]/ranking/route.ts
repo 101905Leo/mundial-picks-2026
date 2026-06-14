@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { matchBelongsToRoomScope } from "@/lib/room-match-scope";
 import { visiblePredictionPoints } from "@/lib/prediction-points";
+import { uniqueRoomPredictions } from "@/lib/room-predictions";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { user, response } = await requireUser(request);
@@ -34,6 +35,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                 select: {
                   points: true,
                   manualPoints: true,
+                  userId: true,
+                  matchId: true,
+                  leagueId: true,
+                  roomKey: true,
                   homeScore: true,
                   awayScore: true,
                   match: {
@@ -66,9 +71,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     .filter(({ user: member }) => member.role !== "ADMIN")
     .map(({ user: member, role }) => {
       const roomPredictions = member.predictions.filter(
-        ({ match }) => match.isPublished && matchBelongsToRoomScope(match, league),
+        ({ match, leagueId, roomKey }) =>
+          match.isPublished &&
+          matchBelongsToRoomScope(match, league) &&
+          (leagueId === league.id || (leagueId === null && roomKey === "GLOBAL")),
       );
-      const finishedPredictions = roomPredictions
+      const scopedPredictions = uniqueRoomPredictions(roomPredictions, league.id);
+      const finishedPredictions = scopedPredictions
         .filter(({ match }) => match.status === "FINISHED")
         .sort((a, b) => b.match.startsAt.getTime() - a.match.startsAt.getTime());
       let currentStreak = 0;
@@ -83,19 +92,19 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         isActive: member.isActive,
         entryPaidAt: member.entryPaidAt,
         roomRole: role,
-        points: roomPredictions.reduce(
+        points: scopedPredictions.reduce(
           (sum, prediction) => sum + visiblePredictionPoints(prediction, prediction.match),
           0,
         ),
-        predictions: roomPredictions.length,
-        exactScores: roomPredictions.filter(
+        predictions: scopedPredictions.length,
+        exactScores: scopedPredictions.filter(
           ({ homeScore, awayScore, match }) =>
             match.status === "FINISHED" &&
             homeScore === match.homeScore &&
             awayScore === match.awayScore,
         ).length,
         currentStreak,
-        weeklyPoints: roomPredictions
+        weeklyPoints: scopedPredictions
           .filter(({ match }) => match.startsAt >= weekStart)
           .reduce((sum, prediction) => sum + visiblePredictionPoints(prediction, prediction.match), 0),
       };

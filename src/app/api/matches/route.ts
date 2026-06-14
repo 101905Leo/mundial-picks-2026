@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     include: {
       predictions: user
         ? {
-            where: { userId: user.id },
+            where: { userId: user.id, roomKey: "GLOBAL" },
             select: { id: true, homeScore: true, awayScore: true, points: true, manualPoints: true },
           }
         : false,

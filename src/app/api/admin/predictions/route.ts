@@ -56,12 +56,14 @@ export async function PUT(request: NextRequest) {
       : 0;
 
   const prediction = await prisma.prediction.upsert({
-    where: { userId_matchId: { userId: user.id, matchId: match.id } },
+    where: { userId_matchId_roomKey: { userId: user.id, matchId: match.id, roomKey: "GLOBAL" } },
     update: {
       homeScore: parsed.data.homeScore,
       awayScore: parsed.data.awayScore,
       points: calculatedPoints,
       manualPoints: null,
+      leagueId: null,
+      roomKey: "GLOBAL",
       lockedAt:
         match.status === "FINISHED" || match.startsAt <= new Date()
           ? new Date()
@@ -70,6 +72,8 @@ export async function PUT(request: NextRequest) {
     create: {
       userId: user.id,
       matchId: match.id,
+      leagueId: null,
+      roomKey: "GLOBAL",
       homeScore: parsed.data.homeScore,
       awayScore: parsed.data.awayScore,
       points: calculatedPoints,
@@ -99,9 +103,10 @@ export async function PATCH(request: NextRequest) {
 
   const prediction = await prisma.prediction.findUnique({
     where: {
-      userId_matchId: {
+      userId_matchId_roomKey: {
         userId: parsed.data.userId,
         matchId: parsed.data.matchId,
+        roomKey: "GLOBAL",
       },
     },
     include: {
@@ -147,9 +152,10 @@ export async function DELETE(request: NextRequest) {
 
   const prediction = await prisma.prediction.findUnique({
     where: {
-      userId_matchId: {
+      userId_matchId_roomKey: {
         userId: parsed.data.userId,
         matchId: parsed.data.matchId,
+        roomKey: "GLOBAL",
       },
     },
     include: {

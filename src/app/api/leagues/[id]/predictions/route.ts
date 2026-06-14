@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { roomMatchScopeWhere } from "@/lib/room-match-scope";
 import { visiblePredictionPoints } from "@/lib/prediction-points";
+import { uniqueRoomPredictions } from "@/lib/room-predictions";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { user, response } = await requireUser(request);
@@ -63,10 +64,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         where: {
           userId: { in: memberIds },
           matchId: { in: visibleMatchIds },
+          OR: [{ leagueId: id }, { leagueId: null, roomKey: "GLOBAL" }],
         },
         orderBy: [{ match: { startsAt: "asc" } }, { user: { name: "asc" } }],
         select: {
           id: true,
+          userId: true,
+          matchId: true,
+          leagueId: true,
+          roomKey: true,
           homeScore: true,
           awayScore: true,
           points: true,
@@ -90,7 +96,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   return Response.json({
     matches: visibleMatches,
-    predictions: visiblePredictions.map((prediction) => ({
+    predictions: uniqueRoomPredictions(visiblePredictions, id).map((prediction) => ({
       ...prediction,
       points: visiblePredictionPoints(prediction, prediction.match),
     })),

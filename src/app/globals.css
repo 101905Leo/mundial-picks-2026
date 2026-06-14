@@ -2506,6 +2506,24 @@ button {
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
+.publish-date-picker {
+  align-items: end;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(220px, 1fr) minmax(180px, auto);
+}
+
+.publish-day-summary {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.publish-day-summary strong {
+  color: var(--gold);
+}
+
 .publish-day-header h4 {
   color: #fff;
   font-size: 1rem;
@@ -3275,6 +3293,7 @@ button {
   }
 
   .publish-day-header,
+  .publish-date-picker,
   .publish-day-actions {
     grid-template-columns: 1fr;
   }

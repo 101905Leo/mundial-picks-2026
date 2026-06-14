@@ -488,6 +488,7 @@ export function LeaguePanel({ user }: Props) {
             {canManageRoom ? (
               <div className="room-owner-actions">
                 <span>Administras esta sala</span>
+                <button className="button secondary" onClick={() => setRoomView("participants")} type="button">Editar sala</button>
                 <button className="button primary" onClick={copyInvitation} type="button">Copiar invitación</button>
                 <button className="button secondary" onClick={shareInvitation} type="button">Compartir por WhatsApp</button>
                 <button className="button secondary" onClick={() => setSelectedLeague(null)} type="button">Mis salas</button>

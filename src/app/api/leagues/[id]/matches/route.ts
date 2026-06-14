@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { roomMatchScopeWhere } from "@/lib/room-match-scope";
 import { visiblePredictionPoints } from "@/lib/prediction-points";
+import { pickRoomPrediction } from "@/lib/room-predictions";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { user, response } = await requireUser(request);
@@ -26,8 +27,20 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     orderBy: { startsAt: "asc" },
     include: {
       predictions: {
-        where: { userId: user!.id },
-        select: { id: true, homeScore: true, awayScore: true, points: true, manualPoints: true },
+        where: {
+          userId: user!.id,
+          OR: [{ leagueId: league.id }, { leagueId: null, roomKey: "GLOBAL" }],
+        },
+        select: {
+          id: true,
+          matchId: true,
+          leagueId: true,
+          roomKey: true,
+          homeScore: true,
+          awayScore: true,
+          points: true,
+          manualPoints: true,
+        },
       },
     },
   });
@@ -35,10 +48,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   return Response.json({
     matches: matches.map((match) => ({
       ...match,
-      predictions: match.predictions.map((prediction) => ({
-        ...prediction,
-        points: visiblePredictionPoints(prediction, match),
-      })),
+      predictions: (() => {
+        const prediction = pickRoomPrediction(match.predictions, league.id);
+        return prediction ? [{ ...prediction, points: visiblePredictionPoints(prediction, match) }] : [];
+      })(),
     })),
   });
 }

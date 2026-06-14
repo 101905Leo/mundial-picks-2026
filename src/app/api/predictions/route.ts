@@ -62,17 +62,21 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Debes entrar a una sala para guardar picks." }, { status: 403 });
   }
 
+  const roomKey = roomId || "GLOBAL";
   const prediction = await prisma.prediction.upsert({
-    where: { userId_matchId: { userId: user!.id, matchId: match.id } },
+    where: { userId_matchId_roomKey: { userId: user!.id, matchId: match.id, roomKey } },
     update: {
       homeScore: parsed.data.homeScore,
       awayScore: parsed.data.awayScore,
       points: 0,
       lockedAt: null,
+      leagueId: roomId || null,
     },
     create: {
       userId: user!.id,
       matchId: match.id,
+      leagueId: roomId || null,
+      roomKey,
       homeScore: parsed.data.homeScore,
       awayScore: parsed.data.awayScore,
     },
