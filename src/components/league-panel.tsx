@@ -358,6 +358,7 @@ export function LeaguePanel({ user }: Props) {
   const pointsBehindLeader = userRanking && leader ? Math.max(0, leader.points - userRanking.points) : 0;
   const roomHasExpired = Boolean(selectedLeague?.expiresAt && new Date(selectedLeague.expiresAt) <= new Date());
   const activeLeagues = leagues.filter(isActiveLeague);
+  const selectableLeagues = isSuperAdmin ? leagues : activeLeagues;
   const roomIsActivated = Boolean(
     selectedLeague?.paidAt ||
     ["APPROVED", "TRIAL", "MANUAL"].includes(selectedLeague?.paymentStatus ?? "") ||
@@ -383,7 +384,7 @@ export function LeaguePanel({ user }: Props) {
 
   return (
     <div className="grid">
-      {!selectedLeague ? <section className="room-promo panel">
+      {!selectedLeague && !isSuperAdmin ? <section className="room-promo panel">
         <div>
           <span className="market-kicker">El centro de la competencia</span>
           <h2>Entra a una sala y juega todo desde allí</h2>
@@ -392,18 +393,46 @@ export function LeaguePanel({ user }: Props) {
         <a className="button primary" href="https://goallive.online" rel="noreferrer" target="_blank">Ver partidos</a>
       </section> : null}
 
-      {!selectedLeague ? <div className="grid three-columns room-entry-grid">
-        <form className="panel form" onSubmit={joinLeague}>
-          <h3>Entrar a una sala</h3>
-          <div className="form-row">
-            <label htmlFor="invite-code">Código</label>
-            <input id="invite-code" name="inviteCode" maxLength={16} minLength={4} placeholder="MP20ABCD" required />
-          </div>
-          <button className="button secondary" type="submit">Entrar</button>
-        </form>
+      {!selectedLeague ? <div className={`grid ${isSuperAdmin ? "room-entry-grid" : "three-columns room-entry-grid"}`}>
+        {isSuperAdmin ? (
+          <section className="panel form room-command-center">
+            <span className="market-kicker">Super usuario</span>
+            <h3>Selecciona una sala para administrarla</h3>
+            <p className="muted">Los cambios se aplican solo a la sala que elijas. Cada sala conserva sus participantes, normas, ranking y chat propios.</p>
+            <div className="form-row">
+              <label htmlFor="room-selector">Sala</label>
+              <select
+                id="room-selector"
+                onChange={(event) => {
+                  const league = leagues.find((item) => item.id === event.target.value) ?? null;
+                  setSelectedLeague(league);
+                  setRoomView("participants");
+                }}
+                value=""
+              >
+                <option value="">Selecciona sala</option>
+                {selectableLeagues.map((league) => (
+                  <option key={league.id} value={league.id}>
+                    {league.name} · {league.inviteCode} · {league.status ?? "ACTIVE"}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {!selectableLeagues.length ? <div className="empty">Todavía no hay salas creadas.</div> : null}
+          </section>
+        ) : (
+          <form className="panel form" onSubmit={joinLeague}>
+            <h3>Entrar a una sala</h3>
+            <div className="form-row">
+              <label htmlFor="invite-code">Código</label>
+              <input id="invite-code" name="inviteCode" maxLength={16} minLength={4} placeholder="MP20ABCD" required />
+            </div>
+            <button className="button secondary" type="submit">Entrar</button>
+          </form>
+        )}
 
-        <div className="panel">
-          <h3>{isSuperAdmin ? "Todas las salas activas" : "Salas activas"}</h3>
+        {!isSuperAdmin ? <div className="panel">
+          <h3>Salas activas</h3>
           <div className="tabs room-list">
             {activeLeagues.map((league) => (
               <button
@@ -420,19 +449,17 @@ export function LeaguePanel({ user }: Props) {
               </button>
             ))}
             {!activeLeagues.length ? (
-              <div className="empty">
-                {isSuperAdmin ? "Todavía no hay salas activas." : "Entra con un código para activar una sala aquí."}
-              </div>
+              <div className="empty">Entra con un código para activar una sala aquí.</div>
             ) : null}
           </div>
-        </div>
+        </div> : null}
 
-        <div className="panel room-promo">
+        {!isSuperAdmin ? <div className="panel room-promo">
           <span className="market-kicker">Crear nueva sala</span>
           <h3>Las salas se crean desde planes o desde el super admin</h3>
           <p>Si quieres una sala para amigos, familia o empresa, elige un plan y la activamos con su código.</p>
           <a className="button primary" href="/planes">Ver planes de salas</a>
-        </div>
+        </div> : null}
       </div> : null}
 
       {message ? <div className="notice">{message}</div> : null}
@@ -452,6 +479,26 @@ export function LeaguePanel({ user }: Props) {
                 <span>Estado: {selectedLeague.status === "ACTIVE" ? "Activa" : selectedLeague.status === "CLOSED" ? "Cerrada" : selectedLeague.status ?? "Activa"}</span>
                 {selectedLeague.expiresAt ? <span>Vence: {new Date(selectedLeague.expiresAt).toLocaleDateString("es")}</span> : null}
               </div>
+              {isSuperAdmin ? (
+                <div className="form-row room-switcher">
+                  <label htmlFor="active-room-selector">Cambiar sala</label>
+                  <select
+                    id="active-room-selector"
+                    onChange={(event) => {
+                      const league = leagues.find((item) => item.id === event.target.value) ?? selectedLeague;
+                      setSelectedLeague(league);
+                      setRoomView("participants");
+                    }}
+                    value={selectedLeague.id}
+                  >
+                    {selectableLeagues.map((league) => (
+                      <option key={league.id} value={league.id}>
+                        {league.name} · {league.inviteCode} · {league.status ?? "ACTIVE"}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : null}
             </div>
             {canEditRoomInfo ? (
               <div className="room-owner-actions">

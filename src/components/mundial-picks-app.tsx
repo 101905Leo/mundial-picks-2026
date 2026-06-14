@@ -35,8 +35,9 @@ export function MundialPicksApp() {
 
   async function loadData(viewer: User | null = user) {
     const canViewGlobalRanking = Boolean(viewer);
+    const matchesUrl = viewer?.role === "ADMIN" ? "/api/matches?includeHidden=true" : "/api/matches";
     const [matchesResponse, rankingResponse] = await Promise.allSettled([
-      fetch("/api/matches"),
+      fetch(matchesUrl),
       canViewGlobalRanking ? fetch("/api/rankings") : Promise.resolve(null),
     ]);
 
