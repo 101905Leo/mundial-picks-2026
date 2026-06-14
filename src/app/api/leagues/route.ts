@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
   if (response) return response;
 
   const leagues = await prisma.league.findMany({
-    where: { memberships: { some: { userId: user!.id } } },
+    where: user!.role === "ADMIN" ? {} : { memberships: { some: { userId: user!.id } } },
     include: {
       memberships: { select: { id: true, userId: true, role: true } },
       competition: { select: { id: true, name: true, season: true, country: true } },

@@ -69,11 +69,14 @@ export function LeaguePanel({ user }: Props) {
   const [groupInfo, setGroupInfo] = useState<GroupInfo | null>(null);
   const [message, setMessage] = useState("");
   const [syncError, setSyncError] = useState("");
+  const isSuperAdmin = user.role === "ADMIN";
   const isOwner = selectedLeague?.ownerId === user.id;
-  const isRoomAdmin =
-    user.role === "ADMIN" ||
-    selectedLeague?.memberships?.some((membership) => membership.userId === user.id && membership.role === "ADMIN") === true;
-  const canManageRoom = Boolean(isOwner || isRoomAdmin);
+  const roomMembership = selectedLeague?.memberships?.find((membership) => membership.userId === user.id);
+  const isRoomAdmin = roomMembership?.role === "ADMIN";
+  const canEditRoomInfo = Boolean(isSuperAdmin || isOwner || isRoomAdmin);
+  const canModerateRoom = Boolean(isSuperAdmin || isOwner || isRoomAdmin);
+  const canCloseRoom = Boolean(isSuperAdmin || isOwner);
+  const canDeleteRoom = isSuperAdmin;
 
   async function loadLeagues() {
     const roomsResponse = await fetch("/api/leagues");
@@ -88,8 +91,8 @@ export function LeaguePanel({ user }: Props) {
     const loadedActiveLeagues = loadedLeagues.filter(isActiveLeague);
     setLeagues(loadedLeagues);
     setSelectedLeague((current) => {
-      if (!current) return loadedActiveLeagues[0] ?? loadedLeagues[0] ?? null;
-      return loadedLeagues.find((league) => league.id === current.id) ?? loadedActiveLeagues[0] ?? loadedLeagues[0] ?? null;
+      if (!current) return isSuperAdmin ? null : loadedActiveLeagues[0] ?? loadedLeagues[0] ?? null;
+      return loadedLeagues.find((league) => league.id === current.id) ?? (isSuperAdmin ? null : loadedActiveLeagues[0] ?? loadedLeagues[0] ?? null);
     });
   }
 
@@ -358,7 +361,7 @@ export function LeaguePanel({ user }: Props) {
   const roomIsActivated = Boolean(
     selectedLeague?.paidAt ||
     ["APPROVED", "TRIAL", "MANUAL"].includes(selectedLeague?.paymentStatus ?? "") ||
-    user.role === "ADMIN",
+    isSuperAdmin,
   );
   const roomCanPredict =
     (selectedLeague?.status ?? "ACTIVE") === "ACTIVE" &&
@@ -400,7 +403,7 @@ export function LeaguePanel({ user }: Props) {
         </form>
 
         <div className="panel">
-          <h3>Salas activas</h3>
+          <h3>{isSuperAdmin ? "Todas las salas activas" : "Salas activas"}</h3>
           <div className="tabs room-list">
             {activeLeagues.map((league) => (
               <button
@@ -416,7 +419,11 @@ export function LeaguePanel({ user }: Props) {
                 <span>{league.competition?.name ?? "Competición"}</span>
               </button>
             ))}
-            {!activeLeagues.length ? <div className="empty">Entra con un código para activar una sala aquí.</div> : null}
+            {!activeLeagues.length ? (
+              <div className="empty">
+                {isSuperAdmin ? "Todavía no hay salas activas." : "Entra con un código para activar una sala aquí."}
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -446,9 +453,9 @@ export function LeaguePanel({ user }: Props) {
                 {selectedLeague.expiresAt ? <span>Vence: {new Date(selectedLeague.expiresAt).toLocaleDateString("es")}</span> : null}
               </div>
             </div>
-            {canManageRoom ? (
+            {canEditRoomInfo ? (
               <div className="room-owner-actions">
-                <span>Administras esta sala</span>
+                <span>{isSuperAdmin ? "Super usuario: control global" : "Administras esta sala"}</span>
                 <button className="button secondary" onClick={() => setRoomView("participants")} type="button">Editar sala</button>
                 <button className="button primary" onClick={copyInvitation} type="button">Copiar invitación</button>
                 <button className="button secondary" onClick={shareInvitation} type="button">Compartir por WhatsApp</button>
@@ -622,7 +629,7 @@ export function LeaguePanel({ user }: Props) {
                   {members.map((member) => (
                     <article className="league-member" key={member.id}>
                       <div><strong>{member.name}</strong><span>{member.predictions} picks · {member.points} puntos</span></div>
-                      {canManageRoom && member.id !== user.id ? (
+                      {canModerateRoom && member.id !== user.id ? (
                         <button className="button danger compact-button" onClick={() => removeMember(member)} type="button">Retirar</button>
                       ) : null}
                       {member.roomRole === "ADMIN" ? <span className="market-kicker">Admin sala</span> : null}
@@ -630,16 +637,16 @@ export function LeaguePanel({ user }: Props) {
                   ))}
                 </div>
               </section>
-              {canManageRoom ? (
+              {canEditRoomInfo ? (
                 <section className="panel room-management">
                   <form className="form" onSubmit={updateLeague}>
-                    <h3>Administrar sala</h3>
+                    <h3>{isSuperAdmin ? "Control de super usuario" : "Administrar sala"}</h3>
                     <div className="form-row"><label htmlFor="rename-league">Nombre</label><input id="rename-league" name="name" defaultValue={selectedLeague.name} minLength={3} required /></div>
                     <div className="form-row"><label htmlFor="room-description">Descripción</label><textarea id="room-description" name="description" defaultValue={selectedLeague.description ?? ""} maxLength={500} rows={3} /></div>
                     <div className="form-row"><label htmlFor="room-rules">Reglas internas</label><textarea id="room-rules" name="rules" defaultValue={selectedLeague.rules ?? ""} maxLength={3000} rows={7} /></div>
                     <button className="button primary" type="submit">Guardar cambios</button>
-                    <button className="button secondary" onClick={closeRoom} type="button">Cerrar sala</button>
-                    {isOwner || user.role === "ADMIN" ? <button className="button danger" onClick={deleteRoom} type="button">Eliminar sala</button> : null}
+                    {canCloseRoom ? <button className="button secondary" onClick={closeRoom} type="button">Cerrar sala</button> : null}
+                    {canDeleteRoom ? <button className="button danger" onClick={deleteRoom} type="button">Eliminar sala</button> : null}
                   </form>
                 </section>
               ) : null}

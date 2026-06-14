@@ -11,12 +11,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const { id } = await params;
   const league = await prisma.league.findFirst({
-    where: { id, memberships: { some: { userId: user!.id } } },
+    where: user!.role === "ADMIN" ? { id } : { id, memberships: { some: { userId: user!.id } } },
     select: { id: true, competitionId: true },
   });
 
   if (!league) {
-    return Response.json({ error: "No perteneces a esta sala" }, { status: 403 });
+    return Response.json({ error: user!.role === "ADMIN" ? "Sala no encontrada" : "No perteneces a esta sala" }, { status: user!.role === "ADMIN" ? 404 : 403 });
   }
 
   const ownPublishedMatches = await prisma.match.count({

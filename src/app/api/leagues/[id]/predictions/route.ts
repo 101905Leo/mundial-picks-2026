@@ -10,12 +10,22 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (response) return response;
 
   const { id } = await params;
-  const membership = await prisma.leagueMembership.findUnique({
-    where: { userId_leagueId: { userId: user!.id, leagueId: id } },
-    select: { id: true, league: { select: { id: true, competitionId: true } } },
+  const league = await prisma.league.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      competitionId: true,
+      memberships: {
+        where: { userId: user!.id },
+        select: { id: true },
+      },
+    },
   });
 
-  if (!membership) {
+  if (!league) {
+    return Response.json({ error: "Sala no encontrada" }, { status: 404 });
+  }
+  if (user!.role !== "ADMIN" && league.memberships.length === 0) {
     return Response.json({ error: "No perteneces a esta sala" }, { status: 403 });
   }
 
@@ -26,11 +36,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const memberIds = roomMembers.map((member) => member.userId);
 
   const ownPublishedMatches = await prisma.match.count({
-    where: { isPublished: true, ...roomOwnedMatchWhere(membership.league) },
+    where: { isPublished: true, ...roomOwnedMatchWhere(league) },
   });
   const matchScope = ownPublishedMatches > 0
-    ? roomOwnedMatchWhere(membership.league)
-    : roomGlobalFallbackMatchWhere(membership.league);
+    ? roomOwnedMatchWhere(league)
+    : roomGlobalFallbackMatchWhere(league);
 
   const roomMatches = await prisma.match.findMany({
     where: {

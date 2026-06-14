@@ -7,7 +7,15 @@ const messageSchema = z.object({
   body: z.string().trim().min(1, "Escribe un mensaje").max(500, "El mensaje es demasiado largo"),
 });
 
-async function canAccessLeague(userId: string, leagueId: string) {
+async function getLeagueAccess(userId: string, userRole: "USER" | "ADMIN", leagueId: string) {
+  if (userRole === "ADMIN") {
+    const league = await prisma.league.findUnique({
+      where: { id: leagueId },
+      select: { status: true, expiresAt: true },
+    });
+    return league ? { id: "SUPER_ADMIN", league } : null;
+  }
+
   return prisma.leagueMembership.findUnique({
     where: { userId_leagueId: { userId, leagueId } },
     select: {
@@ -22,7 +30,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (response) return response;
 
   const { id } = await params;
-  if (!(await canAccessLeague(user!.id, id))) {
+  if (!(await getLeagueAccess(user!.id, user!.role, id))) {
     return Response.json({ error: "No perteneces a esta sala" }, { status: 403 });
   }
 
@@ -46,7 +54,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (response) return response;
 
   const { id } = await params;
-  const access = await canAccessLeague(user!.id, id);
+  const access = await getLeagueAccess(user!.id, user!.role, id);
   if (!access) {
     return Response.json({ error: "No perteneces a esta sala" }, { status: 403 });
   }

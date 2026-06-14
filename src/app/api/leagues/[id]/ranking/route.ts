@@ -10,11 +10,21 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (response) return response;
 
   const { id } = await params;
-  const membership = await prisma.leagueMembership.findUnique({
-    where: { userId_leagueId: { userId: user!.id, leagueId: id } },
+  const access = await prisma.league.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      memberships: {
+        where: { userId: user!.id },
+        select: { id: true },
+      },
+    },
   });
 
-  if (!membership) {
+  if (!access) {
+    return Response.json({ error: "Sala no encontrada" }, { status: 404 });
+  }
+  if (user!.role !== "ADMIN" && access.memberships.length === 0) {
     return Response.json({ error: "No perteneces a esta sala" }, { status: 403 });
   }
 

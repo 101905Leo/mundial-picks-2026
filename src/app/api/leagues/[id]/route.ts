@@ -35,9 +35,17 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     return Response.json({ error: "Sala no encontrada" }, { status: 404 });
   }
 
-  const canManage = user!.role === "ADMIN" || league.ownerId === user!.id || league.memberships[0]?.role === "ADMIN";
-  if (!canManage) {
-    return Response.json({ error: "Solo un administrador de sala puede cambiar el nombre" }, { status: 403 });
+  const isSuperAdmin = user!.role === "ADMIN";
+  const isOwner = league.ownerId === user!.id;
+  const isRoomAdmin = league.memberships[0]?.role === "ADMIN";
+  const canEditRoomInfo = isSuperAdmin || isOwner || isRoomAdmin;
+  const canChangeStatus = isSuperAdmin || isOwner;
+
+  if (!canEditRoomInfo) {
+    return Response.json({ error: "Solo el super usuario, el creador o el administrador de sala pueden editar la sala" }, { status: 403 });
+  }
+  if (parsed.data.status && !canChangeStatus) {
+    return Response.json({ error: "Solo el super usuario o el creador pueden cambiar el estado de la sala" }, { status: 403 });
   }
 
   const updatedLeague = await prisma.league.update({
@@ -61,8 +69,8 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   if (!league) {
     return Response.json({ error: "Sala no encontrada" }, { status: 404 });
   }
-  if (user!.role !== "ADMIN" && league.ownerId !== user!.id) {
-    return Response.json({ error: "Solo el creador o el administrador general puede eliminar la sala" }, { status: 403 });
+  if (user!.role !== "ADMIN") {
+    return Response.json({ error: "Solo el super usuario puede eliminar una sala" }, { status: 403 });
   }
 
   await prisma.league.delete({ where: { id } });
