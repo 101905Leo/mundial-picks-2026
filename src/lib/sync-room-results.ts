@@ -50,7 +50,6 @@ export async function syncRoomResultsFromGlobal(options: { roomId?: string } = {
   const sourceMatches = await prisma.match.findMany({
     where: {
       roomId: options.roomId ? { not: options.roomId } : null,
-      status: { in: ["LIVE", "FINISHED"] },
       homeScore: { not: null },
       awayScore: { not: null },
     },

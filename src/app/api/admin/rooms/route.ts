@@ -203,7 +203,7 @@ export async function PATCH(request: NextRequest) {
     const deletedRooms = rooms.filter((room) => room.id !== keepRoom.id);
     const deleted = await prisma.league.deleteMany({ where: { id: { in: deletedRooms.map((room) => room.id) } } });
     const roomSync = await syncRoomResultsFromGlobal({ roomId: keepRoom.id });
-    const predictionsUpdated = await recalculateFinishedMatchPoints();
+    const predictionsUpdated = await recalculateFinishedMatchPoints({ clearManualPoints: true });
 
     return Response.json({
       keptRoom: keepRoom,
@@ -213,6 +213,7 @@ export async function PATCH(request: NextRequest) {
       roomMatchesSynced: roomSync.updated,
       roomMatchesAlreadySynced: roomSync.alreadySynced,
       predictionsUpdated,
+      clearManualPoints: true,
     });
   }
 

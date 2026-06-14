@@ -19,11 +19,7 @@ export function visiblePredictionPoints(prediction: PredictionScore, match: Matc
     return prediction.manualPoints;
   }
 
-  if (
-    (match.status === "LIVE" || match.status === "FINISHED") &&
-    match.homeScore !== null &&
-    match.awayScore !== null
-  ) {
+  if (match.homeScore !== null && match.awayScore !== null) {
     return calculatePredictionPoints(
       { homeScore: prediction.homeScore, awayScore: prediction.awayScore },
       { homeScore: match.homeScore, awayScore: match.awayScore },

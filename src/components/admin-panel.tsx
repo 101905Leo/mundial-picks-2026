@@ -426,7 +426,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
       return;
     }
     setMessage(
-      `Se conservó ${data.keptRoom.name}. Salas eliminadas ${data.deletedRooms}. Resultados actualizados ${data.roomMatchesSynced}. Picks recalculados ${data.predictionsUpdated}.`,
+      `Se conservó ${data.keptRoom.name}. Salas eliminadas ${data.deletedRooms}. Resultados actualizados ${data.roomMatchesSynced}. Picks recalculados ${data.predictionsUpdated}. Puntos manuales antiguos limpiados.`,
     );
     await loadRooms();
     await loadRoomDashboard(data.keptRoom.id);
@@ -1765,7 +1765,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
               </div>
               <div className="admin-room-repair-note">
                 <strong>Reparar Familia Avella</strong>
-                <span>Conserva solo esa sala, sincroniza sus resultados y recalcula los puntos de sus participantes.</span>
+                <span>Conserva solo esa sala, sincroniza resultados, limpia puntos manuales antiguos y recalcula los puntos correctos.</span>
               </div>
               <div className="form-row">
                 <label htmlFor="superAdminRoomSelector">Seleccionar sala para administrar</label>

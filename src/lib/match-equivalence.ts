@@ -53,7 +53,7 @@ export function sameMatchByTeamsAndKickoff(left: MatchIdentity, right: MatchIden
 }
 
 export function resolveEffectiveMatchScore<T extends MatchScore>(match: T, scoredMatches: MatchScore[]) {
-  if ((match.status === "LIVE" || match.status === "FINISHED") && match.homeScore !== null && match.awayScore !== null) {
+  if (match.homeScore !== null && match.awayScore !== null) {
     return match;
   }
 

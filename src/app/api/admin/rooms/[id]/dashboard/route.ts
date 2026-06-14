@@ -87,7 +87,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }),
     prisma.match.findMany({
       where: {
-        status: { in: ["LIVE", "FINISHED"] },
         homeScore: { not: null },
         awayScore: { not: null },
       },
@@ -133,7 +132,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         points: userPredictions.reduce((sum, prediction) => sum + prediction.points, 0),
         exactScores: userPredictions.filter(
           (prediction) =>
-            prediction.match.status === "FINISHED" &&
+            prediction.match.homeScore !== null &&
+            prediction.match.awayScore !== null &&
             prediction.match.homeScore === prediction.homeScore &&
             prediction.match.awayScore === prediction.awayScore,
         ).length,

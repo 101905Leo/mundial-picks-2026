@@ -85,7 +85,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const useOwnedMatchesOnly = ownPublishedMatches > 0;
   const scoredMatches = await prisma.match.findMany({
     where: {
-      status: { in: ["LIVE", "FINISHED"] },
       homeScore: { not: null },
       awayScore: { not: null },
     },
@@ -121,7 +120,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         match: resolveEffectiveMatchScore(prediction.match, scoredMatches),
       }));
       const finishedPredictions = scopedPredictions
-        .filter(({ match }) => match.status === "FINISHED")
+        .filter(({ match }) => match.homeScore !== null && match.awayScore !== null)
         .sort((a, b) => new Date(b.match.startsAt).getTime() - new Date(a.match.startsAt).getTime());
       let currentStreak = 0;
       for (const prediction of finishedPredictions) {
@@ -142,7 +141,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         predictions: scopedPredictions.length,
         exactScores: scopedPredictions.filter(
           ({ homeScore, awayScore, match }) =>
-            match.status === "FINISHED" &&
+            match.homeScore !== null &&
+            match.awayScore !== null &&
             homeScore === match.homeScore &&
             awayScore === match.awayScore,
         ).length,

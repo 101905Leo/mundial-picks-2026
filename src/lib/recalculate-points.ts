@@ -5,7 +5,6 @@ import { resolveEffectiveMatchScore, sameMatchByTeamsAndKickoff } from "@/lib/ma
 export async function recalculateFinishedMatchPoints(options: { clearManualPoints?: boolean } = {}) {
   const scoreMatches = await prisma.match.findMany({
     where: {
-      status: { in: ["LIVE", "FINISHED"] },
       homeScore: { not: null },
       awayScore: { not: null },
     },

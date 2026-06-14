@@ -64,7 +64,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }),
     prisma.match.findMany({
       where: {
-        status: { in: ["LIVE", "FINISHED"] },
         homeScore: { not: null },
         awayScore: { not: null },
       },
