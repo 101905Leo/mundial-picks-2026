@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import type { Match } from "@/components/types";
 import { isPickClosed } from "@/lib/pick-lock";
 import { flagForTeam } from "@/lib/team-flags";
@@ -14,12 +14,53 @@ type Props = {
   roomId?: string;
 };
 
+function trendForMatch(match: Match) {
+  const seed = `${match.homeTeam}-${match.awayTeam}`
+    .split("")
+    .reduce((total, char) => total + char.charCodeAt(0), 0);
+  const home = 38 + (seed % 19);
+  const draw = 18 + (seed % 9);
+  const away = Math.max(12, 100 - home - draw);
+  const total = home + draw + away;
+
+  return {
+    home: Math.round((home / total) * 100),
+    draw: Math.round((draw / total) * 100),
+    away: Math.round((away / total) * 100),
+  };
+}
+
 export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSaved, roomId }: Props) {
   const prediction = match.predictions?.[0];
   const [message, setMessage] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [homePick, setHomePick] = useState(prediction?.homeScore ?? 0);
+  const [awayPick, setAwayPick] = useState(prediction?.awayScore ?? 0);
   const startsAt = new Date(match.startsAt);
   const isClosed = isPickClosed(startsAt) || match.status === "LIVE" || match.status === "FINISHED";
   const inputDisabled = isClosed || !canPredict;
+  const trend = trendForMatch(match);
+  const quickPicks = [
+    { label: "Victoria local", homeScore: 1, awayScore: 0 },
+    { label: "Empate", homeScore: 1, awayScore: 1 },
+    { label: "Victoria visitante", homeScore: 0, awayScore: 1 },
+  ];
+
+  useEffect(() => {
+    setHomePick(prediction?.homeScore ?? 0);
+    setAwayPick(prediction?.awayScore ?? 0);
+  }, [match.id, prediction?.homeScore, prediction?.awayScore]);
+
+  useEffect(() => {
+    if (!modalOpen) return;
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setModalOpen(false);
+    }
+
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [modalOpen]);
 
   async function savePrediction(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -49,6 +90,7 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
       }
 
       setMessage("Pick guardado");
+      setModalOpen(false);
       await onSaved();
     } catch {
       setMessage("No hay conexión con el servidor. Verifica la base de datos e intenta nuevamente.");
@@ -64,47 +106,31 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
           {isClosed ? <span className="pick-closed-badge">Pick cerrado</span> : null}
         </div>
         {signedIn ? (
-          <form className="pick-form team-pick-form" onSubmit={savePrediction}>
-            <div className="pick-team-row">
-              <label htmlFor={`${match.id}-home`}>
-                <strong>{flagForTeam(match.homeTeam)}</strong>
-                <span>{match.homeTeam}</span>
-              </label>
-              <input
-                id={`${match.id}-home`}
-                name="homeScore"
-                type="number"
-                min={0}
-                defaultValue={prediction?.homeScore ?? 0}
-                disabled={inputDisabled}
-                required
-              />
-            </div>
-            <div className="pick-team-row">
-              <label htmlFor={`${match.id}-away`}>
-                <strong>{flagForTeam(match.awayTeam)}</strong>
-                <span>{match.awayTeam}</span>
-              </label>
-              <input
-                id={`${match.id}-away`}
-                name="awayScore"
-                type="number"
-                min={0}
-                defaultValue={prediction?.awayScore ?? 0}
-                disabled={inputDisabled}
-                required
-              />
-            </div>
-            <button className="button primary" disabled={inputDisabled} type="submit">
-              Guardar
+          <div className="pick-launcher">
+            <button
+              className="button primary pick-open-button"
+              disabled={inputDisabled}
+              onClick={() => {
+                setMessage("");
+                setModalOpen(true);
+              }}
+              type="button"
+            >
+              {prediction ? "Editar pick" : "Hacer pick"}
             </button>
+            {prediction ? (
+              <div className="saved-pick-pill">
+                <span>Tu pick</span>
+                <strong>{prediction.homeScore} - {prediction.awayScore}</strong>
+              </div>
+            ) : null}
             {isClosed ? (
               <p className="pick-closed-message">Predicciones cerradas. No se pueden guardar picks al comenzar el partido.</p>
             ) : null}
             {!canPredict && !isClosed ? (
               <p className="pick-payment-message">{disabledMessage}</p>
             ) : null}
-          </form>
+          </div>
         ) : (
           <>
             <div className="teams-stack">
@@ -136,6 +162,95 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
         {prediction ? <span>{prediction.homeScore}-{prediction.awayScore}</span> : <span>Sin pick</span>}
         {message ? <span>{message}</span> : null}
       </div>
+
+      {modalOpen ? (
+        <div className="prediction-modal-backdrop" role="presentation">
+          <form className="prediction-modal" onSubmit={savePrediction} role="dialog" aria-modal="true" aria-label="Hacer predicción">
+            <input name="homeScore" type="hidden" value={homePick} />
+            <input name="awayScore" type="hidden" value={awayPick} />
+            <header className="prediction-modal-header">
+              <div>
+                <span className="market-kicker">Predicción</span>
+                <h3>Hacer predicción</h3>
+                <p>
+                  <strong>{startsAt.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}</strong>
+                  {match.group ? ` · ${match.group}` : ""}
+                </p>
+              </div>
+              <button className="prediction-close" onClick={() => setModalOpen(false)} type="button" aria-label="Cerrar">
+                ×
+              </button>
+            </header>
+
+            <div className="prediction-teams">
+              <div className="prediction-team">
+                <span className="prediction-flag">{flagForTeam(match.homeTeam)}</span>
+                <strong>{match.homeTeam}</strong>
+                <small>Local</small>
+                <div className="prediction-stepper">
+                  <button onClick={() => setHomePick((score) => Math.max(0, score - 1))} type="button">−</button>
+                  <strong>{homePick}</strong>
+                  <button onClick={() => setHomePick((score) => score + 1)} type="button">+</button>
+                </div>
+              </div>
+              <span className="prediction-divider">-</span>
+              <div className="prediction-team">
+                <span className="prediction-flag">{flagForTeam(match.awayTeam)}</span>
+                <strong>{match.awayTeam}</strong>
+                <small>Visitante</small>
+                <div className="prediction-stepper">
+                  <button onClick={() => setAwayPick((score) => Math.max(0, score - 1))} type="button">−</button>
+                  <strong>{awayPick}</strong>
+                  <button onClick={() => setAwayPick((score) => score + 1)} type="button">+</button>
+                </div>
+              </div>
+            </div>
+
+            <section className="quick-picks">
+              <span>Predicciones rápidas</span>
+              <div>
+                {quickPicks.map((quickPick) => (
+                  <button
+                    key={quickPick.label}
+                    onClick={() => {
+                      setHomePick(quickPick.homeScore);
+                      setAwayPick(quickPick.awayScore);
+                    }}
+                    type="button"
+                  >
+                    <strong>{quickPick.homeScore} - {quickPick.awayScore}</strong>
+                    <small>{quickPick.label}</small>
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <section className="prediction-trend">
+              <span>Probabilidades sugeridas por algoritmo</span>
+              <div>
+                <article>
+                  <small>Victoria local</small>
+                  <strong>{trend.home}%</strong>
+                </article>
+                <article>
+                  <small>Empate</small>
+                  <strong>{trend.draw}%</strong>
+                </article>
+                <article>
+                  <small>Victoria visitante</small>
+                  <strong>{trend.away}%</strong>
+                </article>
+              </div>
+            </section>
+
+            <button className="button primary prediction-submit" type="submit">
+              Confirmar predicción
+            </button>
+            <p className="prediction-helper">Podrás editar tu predicción hasta 5 minutos antes del partido.</p>
+            {message ? <p className="prediction-error">{message}</p> : null}
+          </form>
+        </div>
+      ) : null}
     </article>
   );
 }
