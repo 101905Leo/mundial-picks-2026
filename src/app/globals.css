@@ -1203,6 +1203,25 @@ button {
   gap: 14px;
 }
 
+.super-room-selector-bar {
+  align-items: end;
+  border-color: rgba(244, 189, 79, 0.42);
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.62fr);
+}
+
+.super-room-selector-bar strong {
+  color: #fff;
+  display: block;
+  font-size: 1.05rem;
+  margin-top: 4px;
+}
+
+.super-room-selector-bar p {
+  margin: 4px 0 0;
+}
+
 .league-room-hero {
   align-items: center;
   background:
@@ -3166,7 +3185,8 @@ button {
   .three-columns,
   .inline-form,
   .score-form,
-  .room-selected-tools {
+  .room-selected-tools,
+  .super-room-selector-bar {
     grid-template-columns: 1fr;
   }
 

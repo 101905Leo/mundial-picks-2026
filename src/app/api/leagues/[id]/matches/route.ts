@@ -34,7 +34,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       predictions: {
         where: {
           userId: user!.id,
-          OR: [{ leagueId: league.id }, { leagueId: null, roomKey: "GLOBAL" }],
+          OR: [{ leagueId: league.id }, { roomKey: league.id }, { leagueId: null, roomKey: "GLOBAL" }],
         },
         select: {
           id: true,

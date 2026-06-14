@@ -467,6 +467,33 @@ export function LeaguePanel({ user }: Props) {
 
       {selectedLeague ? (
         <section className="league-room">
+          {isSuperAdmin ? (
+            <div className="panel super-room-selector-bar">
+              <div>
+                <span className="market-kicker">Super usuario</span>
+                <strong>Administrando una sala específica</strong>
+                <p className="muted">Selecciona una sala aquí antes de cambiar participantes, ranking, reglas o chat.</p>
+              </div>
+              <div className="form-row">
+                <label htmlFor="super-active-room-selector">Sala seleccionada</label>
+                <select
+                  id="super-active-room-selector"
+                  onChange={(event) => {
+                    const league = leagues.find((item) => item.id === event.target.value) ?? selectedLeague;
+                    setSelectedLeague(league);
+                    setRoomView("participants");
+                  }}
+                  value={selectedLeague.id}
+                >
+                  {selectableLeagues.map((league) => (
+                    <option key={league.id} value={league.id}>
+                      {league.name} · {league.inviteCode} · {league.status ?? "ACTIVE"}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          ) : null}
           <div className="panel league-room-hero">
             <div>
               <span className="market-kicker">{selectedLeague.competition?.name ?? "Sala privada"}</span>

@@ -81,7 +81,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         where: {
           userId: { in: memberIds },
           matchId: { in: visibleMatchIds },
-          OR: [{ leagueId: id }, { leagueId: null, roomKey: "GLOBAL" }],
+          OR: [{ leagueId: id }, { roomKey: id }, { leagueId: null, roomKey: "GLOBAL" }],
         },
         orderBy: [{ match: { startsAt: "asc" } }, { user: { name: "asc" } }],
         select: {

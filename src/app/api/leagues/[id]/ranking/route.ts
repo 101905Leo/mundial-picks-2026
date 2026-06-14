@@ -85,10 +85,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     .filter(({ user: member }) => member.role !== "ADMIN")
     .map(({ user: member, role }) => {
       const roomPredictions = member.predictions.filter(
-        ({ match, leagueId, roomKey }) =>
-          match.isPublished &&
-          matchBelongsToResolvedRoomScope(match, league, useOwnedMatchesOnly) &&
-          (leagueId === league.id || (leagueId === null && roomKey === "GLOBAL")),
+        ({ match, leagueId, roomKey }) => {
+          const belongsToSelectedRoom = leagueId === league.id || roomKey === league.id;
+          const belongsToGlobalFallback =
+            leagueId === null &&
+            roomKey === "GLOBAL" &&
+            matchBelongsToResolvedRoomScope(match, league, useOwnedMatchesOnly);
+
+          return match.isPublished && (belongsToSelectedRoom || belongsToGlobalFallback);
+        },
       );
       const scopedPredictions = uniqueRoomPredictions(roomPredictions, league.id);
       const finishedPredictions = scopedPredictions

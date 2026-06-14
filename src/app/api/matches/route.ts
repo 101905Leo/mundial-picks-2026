@@ -30,12 +30,14 @@ function normalizeMatchTeam(value: string) {
 }
 
 function matchIdentity(match: MatchWithPredictions) {
+  const kickoffMinute = match.startsAt.toISOString().slice(0, 16);
+
   return [
     match.roomId ?? "GLOBAL",
     match.competitionId ?? "NO_COMPETITION",
     normalizeMatchTeam(match.homeTeam),
     normalizeMatchTeam(match.awayTeam),
-    match.startsAt.toISOString(),
+    kickoffMinute,
   ].join("|");
 }
 
