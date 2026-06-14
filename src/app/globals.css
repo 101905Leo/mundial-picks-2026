@@ -1362,9 +1362,9 @@ button {
 .room-list .tab {
   align-items: center;
   background:
-    linear-gradient(90deg, rgba(208, 255, 60, 0.11), rgba(255, 255, 255, 0.025)),
+    linear-gradient(90deg, rgba(47, 107, 255, 0.14), rgba(255, 255, 255, 0.025)),
     rgba(14, 16, 20, 0.92);
-  border: 1px solid rgba(208, 255, 60, 0.16);
+  border: 1px solid rgba(191, 219, 254, 0.18);
   border-radius: 18px;
   display: grid;
   gap: 4px;
@@ -2235,13 +2235,15 @@ button {
   font-size: 0.76rem;
   font-weight: 700;
   gap: 12px;
-  grid-template-columns: minmax(300px, 1fr) 120px 88px;
+  grid-template-columns: minmax(360px, 1.15fr) minmax(190px, 0.52fr) minmax(120px, 0.26fr) 92px;
   padding: 10px 14px;
   text-transform: uppercase;
 }
 
 .market-list {
   display: grid;
+  gap: 10px;
+  padding: 10px;
 }
 
 .match-day {
@@ -2273,19 +2275,24 @@ button {
 
 .market-row {
   align-items: center;
-  background: rgba(16, 21, 33, 0.94);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(circle at 16% 50%, rgba(47, 107, 255, 0.12), transparent 32%),
+    linear-gradient(135deg, rgba(20, 27, 43, 0.98), rgba(8, 12, 20, 0.98));
+  border: 1px solid rgba(191, 219, 254, 0.12);
+  border-radius: 18px;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.22);
   display: grid;
-  gap: 12px;
-  grid-template-columns: minmax(300px, 1fr) 120px 88px;
-  min-height: 84px;
-  padding: 12px 14px;
+  gap: 16px;
+  grid-template-columns: minmax(360px, 1.15fr) minmax(190px, 0.52fr) minmax(120px, 0.26fr) 92px;
+  min-height: 128px;
+  padding: 16px;
 }
 
 .market-row:hover {
   background:
-    linear-gradient(90deg, rgba(47, 107, 255, 0.12), rgba(244, 189, 79, 0.08)),
-    #171e2d;
+    radial-gradient(circle at 16% 50%, rgba(47, 107, 255, 0.18), transparent 34%),
+    linear-gradient(135deg, rgba(24, 33, 54, 0.98), rgba(10, 14, 23, 0.98));
+  border-color: rgba(191, 219, 254, 0.24);
 }
 
 .match-cell {
@@ -2314,37 +2321,99 @@ button {
 
 .teams-stack {
   color: #fff;
+  align-items: center;
   display: grid;
   font-weight: 700;
-  gap: 3px;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
 }
 
-.teams-stack span,
 .publish-teams span {
   align-items: center;
   display: flex;
   gap: 8px;
 }
 
-.teams-stack strong,
 .publish-teams strong {
   font-size: 1.2rem;
   min-width: 24px;
 }
 
+.teams-stack > span {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  display: flex;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px;
+}
+
+.teams-stack > span > strong {
+  display: grid;
+  flex: 0 0 auto;
+  font-size: clamp(1.75rem, 3vw, 2.3rem);
+  height: 52px;
+  line-height: 1;
+  place-items: center;
+  width: 58px;
+}
+
+.teams-stack > span > span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.teams-stack b {
+  display: block;
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.teams-stack small {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.teams-stack em {
+  color: var(--gold-soft);
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .official-score {
   display: grid;
-  gap: 6px;
+  gap: 7px;
   grid-template-columns: 1fr 1fr;
+}
+
+.official-score::before {
+  color: var(--muted);
+  content: "Resultado real";
+  font-size: 0.68rem;
+  font-weight: 900;
+  grid-column: 1 / -1;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
 }
 
 .official-score span {
   background: linear-gradient(180deg, #0a0e17, #05070d);
   border: 1px solid rgba(244, 189, 79, 0.24);
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--gold-soft);
   font-weight: 800;
-  min-height: 38px;
+  min-height: 40px;
   padding: 9px;
   text-align: center;
 }
@@ -2424,6 +2493,17 @@ button {
   margin: 0;
 }
 
+.match-pick-action {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.match-pick-action .pick-launcher {
+  margin-top: 0;
+}
+
 .pick-launcher {
   align-items: center;
   display: flex;
@@ -2438,8 +2518,8 @@ button {
 
 .saved-pick-pill {
   align-items: center;
-  background: rgba(208, 255, 60, 0.08);
-  border: 1px solid rgba(208, 255, 60, 0.28);
+  background: rgba(47, 107, 255, 0.12);
+  border: 1px solid rgba(191, 219, 254, 0.28);
   border-radius: 999px;
   color: var(--muted);
   display: inline-flex;
@@ -2471,7 +2551,7 @@ button {
 
 .prediction-modal {
   background:
-    radial-gradient(circle at 24% 38%, rgba(208, 255, 60, 0.12), transparent 26%),
+    radial-gradient(circle at 24% 38%, rgba(47, 107, 255, 0.14), transparent 26%),
     linear-gradient(180deg, rgba(20, 22, 24, 0.99), rgba(8, 9, 11, 0.99));
   border: 1px solid rgba(255, 255, 255, 0.11);
   border-radius: 26px;
@@ -2509,8 +2589,8 @@ button {
 }
 
 .prediction-modal-header p strong {
-  background: rgba(208, 255, 60, 0.12);
-  border: 1px solid rgba(208, 255, 60, 0.3);
+  background: rgba(47, 107, 255, 0.14);
+  border: 1px solid rgba(191, 219, 254, 0.28);
   border-radius: 999px;
   color: #2f6bff;
   display: inline-flex;
@@ -2597,9 +2677,9 @@ button {
 
 .prediction-stepper strong {
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(208, 255, 60, 0.36);
+  border: 1px solid rgba(191, 219, 254, 0.34);
   border-radius: 20px;
-  box-shadow: 0 0 28px rgba(208, 255, 60, 0.14);
+  box-shadow: 0 0 28px rgba(47, 107, 255, 0.18);
   color: #2f6bff;
   display: grid;
   font-size: 2.2rem;
@@ -2647,7 +2727,7 @@ button {
 }
 
 .quick-picks button:hover {
-  border-color: rgba(208, 255, 60, 0.32);
+  border-color: rgba(191, 219, 254, 0.3);
 }
 
 .quick-picks strong {
@@ -3866,6 +3946,14 @@ button {
   .market-row {
     align-items: stretch;
     grid-template-columns: 1fr;
+  }
+
+  .teams-stack {
+    grid-template-columns: 1fr;
+  }
+
+  .teams-stack em {
+    text-align: center;
   }
 
   .pick-form {

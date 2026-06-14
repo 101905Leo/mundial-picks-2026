@@ -30,6 +30,12 @@ function trendForMatch(match: Match) {
   };
 }
 
+function matchStatusLabel(status: Match["status"]) {
+  if (status === "LIVE") return "En vivo";
+  if (status === "FINISHED") return "Finalizado";
+  return "Programado";
+}
+
 export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSaved, roomId }: Props) {
   const prediction = match.predictions?.[0];
   const [message, setMessage] = useState("");
@@ -101,10 +107,34 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
     <article className="market-row">
       <div className="match-cell">
         <div className="match-time">
-          <span className={`status ${match.status}`}>{match.status}</span>
+          <span className={`status ${match.status}`}>{matchStatusLabel(match.status)}</span>
           <span>{startsAt.toLocaleString("es", { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
           {isClosed ? <span className="pick-closed-badge">Pick cerrado</span> : null}
         </div>
+        <div className="teams-stack">
+          <span>
+            <strong>{flagForTeam(match.homeTeam)}</strong>
+            <span>
+              <b>{match.homeTeam}</b>
+              <small>Local</small>
+            </span>
+          </span>
+          <em>vs</em>
+          <span>
+            <strong>{flagForTeam(match.awayTeam)}</strong>
+            <span>
+              <b>{match.awayTeam}</b>
+              <small>Visitante</small>
+            </span>
+          </span>
+        </div>
+        <div className="match-context">
+          {match.group ? <span>{match.group}</span> : null}
+          {match.venue ? <span>{match.venue}</span> : null}
+        </div>
+      </div>
+
+      <div className="match-pick-action">
         {signedIn ? (
           <div className="pick-launcher">
             <button
@@ -132,24 +162,8 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
             ) : null}
           </div>
         ) : (
-          <>
-            <div className="teams-stack">
-              <span>
-                <strong>{flagForTeam(match.homeTeam)}</strong>
-                {match.homeTeam}
-              </span>
-              <span>
-                <strong>{flagForTeam(match.awayTeam)}</strong>
-                {match.awayTeam}
-              </span>
-            </div>
-            <p className="match-login-message">Inicia sesion para guardar tu marcador.</p>
-          </>
+          <p className="match-login-message">Inicia sesion para guardar tu marcador.</p>
         )}
-        <div className="match-context">
-          {match.group ? <span>{match.group}</span> : null}
-          {match.venue ? <span>{match.venue}</span> : null}
-        </div>
       </div>
 
       <div className="official-score">
