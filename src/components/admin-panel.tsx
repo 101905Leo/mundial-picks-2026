@@ -82,7 +82,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
   const [message, setMessage] = useState("");
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [usersLoaded, setUsersLoaded] = useState(false);
-  const [adminView, setAdminView] = useState<"overview" | "matches" | "users" | "rooms" | "security">("overview");
+  const [adminView, setAdminView] = useState<"overview" | "matches" | "users" | "rooms" | "security">("rooms");
   const [selectedPasswordUserId, setSelectedPasswordUserId] = useState("");
   const [adminRooms, setAdminRooms] = useState<AdminRoom[]>([]);
   const [competitions, setCompetitions] = useState<Competition[]>([]);

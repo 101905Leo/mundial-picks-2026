@@ -66,7 +66,7 @@ export function MundialPicksApp() {
     async function boot() {
       try {
         const sessionUser = await loadSession();
-        if (sessionUser) setActiveView("rooms");
+        if (sessionUser) setActiveView(sessionUser.role === "ADMIN" ? "admin" : "rooms");
         await loadData(sessionUser);
       } catch (error) {
         console.error("Initial app load failed", error);
@@ -122,6 +122,9 @@ export function MundialPicksApp() {
 
   async function refresh() {
     const sessionUser = await loadSession();
+    if (sessionUser?.role === "ADMIN" && activeView !== "admin") {
+      setActiveView("admin");
+    }
     await loadData(sessionUser);
   }
 
@@ -328,7 +331,7 @@ export function MundialPicksApp() {
                   <AuthPanel
                     onAuth={async (sessionUser, options) => {
                       setUser(sessionUser);
-                      if (options?.joinedLeague) setActiveView("rooms");
+                      setActiveView(sessionUser.role === "ADMIN" ? "admin" : "rooms");
                       await loadData(sessionUser);
                     }}
                   />
@@ -351,13 +354,7 @@ export function MundialPicksApp() {
 
             {user ? (
               <nav className="tabs" aria-label="Secciones principales">
-                <button
-                  className={`tab ${activeView === "rooms" ? "active" : ""}`}
-                  onClick={() => setActiveView("rooms")}
-                >
-                  Salas
-                </button>
-                {user?.role === "ADMIN" ? (
+                {user.role === "ADMIN" ? (
                   <button
                     className={`tab ${activeView === "admin" ? "active" : ""}`}
                     onClick={async () => {
@@ -365,9 +362,16 @@ export function MundialPicksApp() {
                       await loadAdminMatches();
                     }}
                   >
-                    Admin
+                    Panel administrador
                   </button>
-                ) : null}
+                ) : (
+                  <button
+                    className={`tab ${activeView === "rooms" ? "active" : ""}`}
+                    onClick={() => setActiveView("rooms")}
+                  >
+                    Salas
+                  </button>
+                )}
               </nav>
             ) : null}
 
@@ -453,7 +457,7 @@ export function MundialPicksApp() {
               <GlobalRankingPanel ranking={ranking} user={user} onOpenPicks={() => setActiveView("picks")} />
             ) : null}
 
-            {user && activeView === "rooms" ? (
+            {user && user.role !== "ADMIN" && activeView === "rooms" ? (
               <LeaguePanel user={user} />
             ) : null}
 
@@ -465,7 +469,7 @@ export function MundialPicksApp() {
               <LivePanel matches={matches} />
             ) : null}
 
-            {activeView === "admin" && user?.role === "ADMIN" ? (
+            {user?.role === "ADMIN" ? (
               <AdminPanel matches={matches} onChanged={loadAdminMatches} />
             ) : null}
           </>
