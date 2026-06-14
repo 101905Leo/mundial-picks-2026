@@ -104,6 +104,10 @@ export function AdminPanel({ matches, onChanged }: Props) {
       return days;
     }, []);
   const selectedPublishDay = matchDays.find((day) => day.date === selectedPublishDate) ?? matchDays[0] ?? null;
+  const todayKey = bogotaDateKey(new Date());
+  const todayPublishDay = matchDays.find((day) => day.date === todayKey) ?? null;
+  const nextPendingPublishDay = matchDays.find((day) => day.published < day.matches.length) ?? null;
+  const selectedHiddenMatches = selectedPublishDay ? selectedPublishDay.matches.length - selectedPublishDay.published : 0;
 
   async function loadUsers() {
     const response = await fetch("/api/admin/users");
@@ -996,26 +1000,21 @@ export function AdminPanel({ matches, onChanged }: Props) {
         {adminView === "matches" ? (
           <>
             <section className="form publish-manager">
-              <div className="section-title">
-                <h3>Publicar partidos</h3>
+              <div className="section-title publish-manager-title">
+                <div>
+                  <span className="market-kicker">Control de calendario</span>
+                  <h3>Publicar partidos</h3>
+                </div>
                 <span className="muted">
                   {publishedMatches}/{matches.length} publicados
                 </span>
               </div>
-              <div className="inline-form">
-                <button className="button secondary" type="button" onClick={() => publishAll(false)}>
-                  Ocultar todas
-                </button>
-                <button className="button secondary" type="button" onClick={() => publishAll(true)}>
-                  Publicar todas
-                </button>
-              </div>
               <div className="publish-day-list">
                 {selectedPublishDay ? (
-                  <section className="publish-day-card">
-                    <div className="publish-date-picker">
-                      <div className="form-row">
-                        <label htmlFor="publish-date">Fecha a gestionar</label>
+                  <section className="publish-console">
+                    <div className="publish-console-top">
+                      <div className="form-row publish-date-select">
+                        <label htmlFor="publish-date">Día que vas a publicar</label>
                         <select
                           id="publish-date"
                           onChange={(event) => setSelectedPublishDate(event.target.value)}
@@ -1028,13 +1027,42 @@ export function AdminPanel({ matches, onChanged }: Props) {
                           ))}
                         </select>
                       </div>
-                      <div className="publish-day-summary">
-                        <span className="market-kicker">{selectedPublishDay.date}</span>
-                        <h4>{selectedPublishDay.label}</h4>
-                        <strong>{selectedPublishDay.published}/{selectedPublishDay.matches.length} publicados</strong>
+                      <div className="publish-status-grid">
+                        <div>
+                          <span>Fecha</span>
+                          <strong>{selectedPublishDay.date}</strong>
+                        </div>
+                        <div>
+                          <span>Publicado</span>
+                          <strong>{selectedPublishDay.published}</strong>
+                        </div>
+                        <div>
+                          <span>Oculto</span>
+                          <strong>{selectedHiddenMatches}</strong>
+                        </div>
                       </div>
                     </div>
-                    <div className="publish-day-actions">
+                    <div className="publish-quick-actions">
+                      {todayPublishDay ? (
+                        <button
+                          className="button secondary"
+                          disabled={selectedPublishDay.date === todayPublishDay.date}
+                          onClick={() => setSelectedPublishDate(todayPublishDay.date)}
+                          type="button"
+                        >
+                          Ir a hoy
+                        </button>
+                      ) : null}
+                      {nextPendingPublishDay ? (
+                        <button
+                          className="button secondary"
+                          disabled={selectedPublishDay.date === nextPendingPublishDay.date}
+                          onClick={() => setSelectedPublishDate(nextPendingPublishDay.date)}
+                          type="button"
+                        >
+                          Próxima pendiente
+                        </button>
+                      ) : null}
                       <button
                         className="button primary"
                         disabled={selectedPublishDay.published === selectedPublishDay.matches.length}
@@ -1052,47 +1080,80 @@ export function AdminPanel({ matches, onChanged }: Props) {
                         Ocultar esta fecha
                       </button>
                     </div>
+                    <div className="publish-day-strip" aria-label="Fechas del calendario">
+                      {matchDays.map((day) => {
+                        const hidden = day.matches.length - day.published;
+                        return (
+                          <button
+                            className={`publish-day-chip ${day.date === selectedPublishDay.date ? "active" : ""}`}
+                            key={day.date}
+                            onClick={() => setSelectedPublishDate(day.date)}
+                            type="button"
+                          >
+                            <strong>{new Date(`${day.date}T12:00:00-05:00`).toLocaleDateString("es-CO", { day: "2-digit", month: "short" })}</strong>
+                            <span>{hidden === 0 ? "Completa" : `${hidden} ocultos`}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <details className="publish-global-actions">
+                      <summary>Acciones globales</summary>
+                      <div>
+                        <button className="button secondary" type="button" onClick={() => publishAll(false)}>
+                          Ocultar todos los partidos
+                        </button>
+                        <button className="button secondary" type="button" onClick={() => publishAll(true)}>
+                          Publicar todos los partidos
+                        </button>
+                      </div>
+                    </details>
                     <div className="publish-list compact">
                       {selectedPublishDay.matches.map((match) => (
                         <article className={`publish-card ${match.isPublished ? "published" : ""}`} key={match.id}>
-                          <div className="publish-teams">
-                            <span>
-                              <strong>{flagForTeam(match.homeTeam)}</strong>
-                              {match.homeTeam}
-                            </span>
-                            <span>
-                              <strong>{flagForTeam(match.awayTeam)}</strong>
-                              {match.awayTeam}
-                            </span>
-                          </div>
-                          <div className="publish-meta">
-                            <span>
+                          <div className="publish-match-main">
+                            <div className="publish-time">
                               {new Date(match.startsAt).toLocaleTimeString("es-CO", {
                                 hour: "2-digit",
                                 minute: "2-digit",
                                 timeZone: "America/Bogota",
                               })}
-                            </span>
+                            </div>
+                            <div className="publish-teams">
+                              <span>
+                                <strong>{flagForTeam(match.homeTeam)}</strong>
+                                {match.homeTeam}
+                              </span>
+                              <small>vs</small>
+                              <span>
+                                <strong>{flagForTeam(match.awayTeam)}</strong>
+                                {match.awayTeam}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="publish-meta">
                             {match.group ? <span>{match.group}</span> : null}
-                            <strong>{match.isPublished ? "Publicado" : "Oculto"}</strong>
+                            <strong className={match.isPublished ? "status-live" : "status-hidden"}>
+                              {match.isPublished ? "Publicado" : "Oculto"}
+                            </strong>
                           </div>
                           <div className="publish-actions">
-                            <button
-                              className="button primary"
-                              disabled={match.isPublished}
-                              onClick={() => publishMatch(match, true)}
-                              type="button"
-                            >
-                              Publicar
-                            </button>
-                            <button
-                              className="button secondary"
-                              disabled={!match.isPublished}
-                              onClick={() => publishMatch(match, false)}
-                              type="button"
-                            >
-                              Ocultar
-                            </button>
+                            {match.isPublished ? (
+                              <button
+                                className="button secondary"
+                                onClick={() => publishMatch(match, false)}
+                                type="button"
+                              >
+                                Ocultar
+                              </button>
+                            ) : (
+                              <button
+                                className="button primary"
+                                onClick={() => publishMatch(match, true)}
+                                type="button"
+                              >
+                                Publicar
+                              </button>
+                            )}
                             <button
                               className="button danger"
                               disabled={!match.isPublished || match.status === "FINISHED"}
