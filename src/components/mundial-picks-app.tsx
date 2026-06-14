@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { AdminPanel } from "@/components/admin-panel";
 import { AuthPanel } from "@/components/auth-panel";
-import { CompetitionPanel } from "@/components/competition-panel";
 import { Countdown } from "@/components/countdown";
 import { FormidableFacts } from "@/components/formidable-facts";
 import { GlobalRankingPanel } from "@/components/global-ranking-panel";
@@ -20,7 +19,7 @@ export function MundialPicksApp() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
   const [activeView, setActiveView] = useState<
-    "picks" | "ranking" | "facts" | "statistics" | "live" | "rooms" | "leagues" | "admin"
+    "picks" | "ranking" | "facts" | "statistics" | "live" | "rooms" | "admin"
   >("rooms");
   const [loading, setLoading] = useState(true);
 
@@ -357,12 +356,6 @@ export function MundialPicksApp() {
                 >
                   Mi sala
                 </button>
-                <button
-                  className={`tab ${activeView === "leagues" ? "active" : ""}`}
-                  onClick={() => setActiveView("leagues")}
-                >
-                  Ligas
-                </button>
                 {user?.role === "ADMIN" ? (
                   <button
                     className={`tab ${activeView === "admin" ? "active" : ""}`}
@@ -462,8 +455,6 @@ export function MundialPicksApp() {
             {user && activeView === "rooms" ? (
               <LeaguePanel user={user} />
             ) : null}
-
-            {user && activeView === "leagues" ? <CompetitionPanel user={user} /> : null}
 
             {user && activeView === "facts" ? <FormidableFacts /> : null}
 

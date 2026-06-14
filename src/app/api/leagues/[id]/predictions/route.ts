@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
-import { roomMatchScopeWhere } from "@/lib/room-match-scope";
+import { roomGlobalFallbackMatchWhere, roomOwnedMatchWhere } from "@/lib/room-match-scope";
 import { visiblePredictionPoints } from "@/lib/prediction-points";
 import { uniqueRoomPredictions } from "@/lib/room-predictions";
 
@@ -25,10 +25,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   });
   const memberIds = roomMembers.map((member) => member.userId);
 
+  const ownPublishedMatches = await prisma.match.count({
+    where: { isPublished: true, ...roomOwnedMatchWhere(membership.league) },
+  });
+  const matchScope = ownPublishedMatches > 0
+    ? roomOwnedMatchWhere(membership.league)
+    : roomGlobalFallbackMatchWhere(membership.league);
+
   const roomMatches = await prisma.match.findMany({
     where: {
       isPublished: true,
-      ...roomMatchScopeWhere(membership.league),
+      ...matchScope,
     },
     select: {
       id: true,

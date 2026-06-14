@@ -64,20 +64,22 @@ function statusFromApi(shortStatus?: string): MatchStatus | null {
   return null;
 }
 
-function findMatchingLocalMatch(matches: LocalMatch[], directSourceKey: string | null, fixtureDate: Date, homeKey: string, awayKey: string) {
-  if (directSourceKey) {
-    const exactSourceMatch = matches.find((item) => item.sourceKey === directSourceKey);
-    if (exactSourceMatch) return exactSourceMatch;
-  }
-
-  return matches.find((item) => {
+function findMatchingLocalMatches(matches: LocalMatch[], directSourceKey: string | null, fixtureDate: Date, homeKey: string, awayKey: string) {
+  const exactSourceMatch = directSourceKey ? matches.find((item) => item.sourceKey === directSourceKey) : null;
+  const teamTimeMatches = matches.filter((item) => {
     if (!closeKickoff(item.startsAt, fixtureDate)) return false;
     return normalizeTeam(item.homeTeam) === homeKey && normalizeTeam(item.awayTeam) === awayKey;
   });
+
+  return [
+    ...(exactSourceMatch ? [exactSourceMatch] : []),
+    ...teamTimeMatches.filter((item) => item.id !== exactSourceMatch?.id),
+  ];
 }
 
-function canAssignSourceKey(matches: LocalMatch[], match: LocalMatch, directSourceKey: string | null) {
+function canAssignSourceKey(matches: LocalMatch[], match: LocalMatch, directSourceKey: string | null, matchingCount: number) {
   if (!directSourceKey || match.sourceKey === directSourceKey) return false;
+  if (matchingCount > 1) return false;
 
   const owner = matches.find((item) => item.sourceKey === directSourceKey);
   return !owner || owner.id === match.id;
@@ -153,45 +155,47 @@ export async function updateWorldCupResultsFromApiFootball() {
     const homeKey = normalizeTeam(homeTeam);
     const awayKey = normalizeTeam(awayTeam);
 
-    const match = findMatchingLocalMatch(matches, directSourceKey, fixtureDate, homeKey, awayKey);
+    const matchingMatches = findMatchingLocalMatches(matches, directSourceKey, fixtureDate, homeKey, awayKey);
 
-    if (!match) continue;
-    matched += 1;
+    if (!matchingMatches.length) continue;
+    matched += matchingMatches.length;
 
-    const needsUpdate = match.homeScore !== homeScore || match.awayScore !== awayScore || match.status !== status;
-    const shouldAssignSourceKey = canAssignSourceKey(matches, match, directSourceKey);
-    const needsSourceKey = shouldAssignSourceKey;
+    for (const match of matchingMatches) {
+      const needsUpdate = match.homeScore !== homeScore || match.awayScore !== awayScore || match.status !== status;
+      const shouldAssignSourceKey = canAssignSourceKey(matches, match, directSourceKey, matchingMatches.length);
+      const needsSourceKey = shouldAssignSourceKey;
 
-    if (!needsUpdate && !needsSourceKey) continue;
+      if (!needsUpdate && !needsSourceKey) continue;
 
-    const updatedMatch = await prisma.match.update({
-      where: { id: match.id },
-      data: {
-        ...(shouldAssignSourceKey && directSourceKey ? { sourceKey: directSourceKey } : {}),
-        homeScore,
-        awayScore,
-        status,
-      },
-      select: {
-        id: true,
-        homeTeam: true,
-        awayTeam: true,
-        homeScore: true,
-        awayScore: true,
-        status: true,
-      },
-    });
-
-    if (needsUpdate) updated += 1;
-    if (needsUpdate && updatedMatch.homeScore !== null && updatedMatch.awayScore !== null) {
-      updatedMatches.push({
-        id: updatedMatch.id,
-        homeTeam: updatedMatch.homeTeam,
-        awayTeam: updatedMatch.awayTeam,
-        homeScore: updatedMatch.homeScore,
-        awayScore: updatedMatch.awayScore,
-        status: updatedMatch.status,
+      const updatedMatch = await prisma.match.update({
+        where: { id: match.id },
+        data: {
+          ...(shouldAssignSourceKey && directSourceKey ? { sourceKey: directSourceKey } : {}),
+          homeScore,
+          awayScore,
+          status,
+        },
+        select: {
+          id: true,
+          homeTeam: true,
+          awayTeam: true,
+          homeScore: true,
+          awayScore: true,
+          status: true,
+        },
       });
+
+      if (needsUpdate) updated += 1;
+      if (needsUpdate && updatedMatch.homeScore !== null && updatedMatch.awayScore !== null) {
+        updatedMatches.push({
+          id: updatedMatch.id,
+          homeTeam: updatedMatch.homeTeam,
+          awayTeam: updatedMatch.awayTeam,
+          homeScore: updatedMatch.homeScore,
+          awayScore: updatedMatch.awayScore,
+          status: updatedMatch.status,
+        });
+      }
     }
   }
 

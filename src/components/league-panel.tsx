@@ -6,7 +6,7 @@ import { MatchCard } from "@/components/match-card";
 import { RankingTable } from "@/components/ranking-table";
 import { FormidableFacts } from "@/components/formidable-facts";
 import { StatisticsPanel } from "@/components/statistics-panel";
-import type { Competition, League, LeagueMember, Match, RankingEntry, User } from "@/components/types";
+import type { League, LeagueMember, Match, RankingEntry, User } from "@/components/types";
 
 type Props = { user: User };
 type RoomView = "picks" | "facts" | "ranking" | "statistics" | "live" | "participants";
@@ -53,7 +53,6 @@ type RoomPredictionMatch = {
 
 export function LeaguePanel({ user }: Props) {
   const [leagues, setLeagues] = useState<League[]>([]);
-  const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [selectedLeague, setSelectedLeague] = useState<League | null>(null);
   const [roomView, setRoomView] = useState<RoomView>("picks");
   const [matches, setMatches] = useState<Match[]>([]);
@@ -72,10 +71,7 @@ export function LeaguePanel({ user }: Props) {
   const canManageRoom = Boolean(isOwner || isRoomAdmin);
 
   async function loadLeagues() {
-    const [roomsResponse, competitionsResponse] = await Promise.all([
-      fetch("/api/leagues"),
-      fetch("/api/competitions"),
-    ]);
+    const roomsResponse = await fetch("/api/leagues");
     const roomsData = await roomsResponse.json();
 
     if (!roomsResponse.ok) {
@@ -88,11 +84,6 @@ export function LeaguePanel({ user }: Props) {
       if (!current) return roomsData.leagues?.[0] ?? null;
       return roomsData.leagues?.find((league: League) => league.id === current.id) ?? roomsData.leagues?.[0] ?? null;
     });
-
-    if (competitionsResponse.ok) {
-      const competitionsData = await competitionsResponse.json();
-      setCompetitions(competitionsData.competitions ?? []);
-    }
   }
 
   async function loadRoom() {
@@ -100,30 +91,54 @@ export function LeaguePanel({ user }: Props) {
 
     try {
       const roomId = selectedLeague.id;
-      const [rankingResponse, predictionsResponse, matchesResponse] = await Promise.all([
-        fetch(`/api/leagues/${roomId}/ranking`, { cache: "no-store" }),
-        fetch(`/api/leagues/${roomId}/predictions`, { cache: "no-store" }),
-        fetch(`/api/leagues/${roomId}/matches`, { cache: "no-store" }),
+      const readResponse = async (response: Response, fallbackMessage: string) => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error ?? fallbackMessage);
+        return data;
+      };
+      const [rankingResult, predictionsResult, matchesResult] = await Promise.allSettled([
+        fetch(`/api/leagues/${roomId}/ranking`, { cache: "no-store" }).then((response) =>
+          readResponse(response, "No se pudo cargar el ranking de la sala."),
+        ),
+        fetch(`/api/leagues/${roomId}/predictions`, { cache: "no-store" }).then((response) =>
+          readResponse(response, "No se pudieron cargar los picks en vivo."),
+        ),
+        fetch(`/api/leagues/${roomId}/matches`, { cache: "no-store" }).then((response) =>
+          readResponse(response, "No se pudieron cargar los partidos de la sala."),
+        ),
       ]);
 
-      if (!rankingResponse.ok || !predictionsResponse.ok || !matchesResponse.ok) {
-        const failedResponse = [rankingResponse, predictionsResponse, matchesResponse].find((response) => !response.ok);
-        const failedData = await failedResponse?.json().catch(() => ({}));
-        setSyncError(failedData?.error ?? "No se pudo sincronizar la sala.");
-        return;
+      const syncErrors: string[] = [];
+      if (rankingResult.status === "fulfilled") {
+        const data = rankingResult.value;
+        setRanking(data.ranking ?? []);
+        setMembers(data.members ?? []);
+        setGroupInfo(data.groupInfo ?? null);
+        setSelectedLeague((current) => (current?.id === data.league.id ? { ...current, ...data.league } : current));
+      } else {
+        syncErrors.push(rankingResult.reason instanceof Error ? rankingResult.reason.message : "No se pudo cargar el ranking.");
+        setRanking([]);
+        setMembers([]);
+        setGroupInfo(null);
       }
 
-      const data = await rankingResponse.json();
-      setRanking(data.ranking ?? []);
-      setMembers(data.members ?? []);
-      setGroupInfo(data.groupInfo ?? null);
-      setSelectedLeague((current) => (current?.id === data.league.id ? { ...current, ...data.league } : current));
-      const predictionsData = await predictionsResponse.json();
-      setPredictions(predictionsData.predictions ?? []);
-      setPredictionMatches(predictionsData.matches ?? []);
-      const matchesData = await matchesResponse.json();
-      setMatches(matchesData.matches ?? []);
-      setSyncError("");
+      if (predictionsResult.status === "fulfilled") {
+        setPredictions(predictionsResult.value.predictions ?? []);
+        setPredictionMatches(predictionsResult.value.matches ?? []);
+      } else {
+        syncErrors.push(predictionsResult.reason instanceof Error ? predictionsResult.reason.message : "No se pudieron cargar los picks en vivo.");
+        setPredictions([]);
+        setPredictionMatches([]);
+      }
+
+      if (matchesResult.status === "fulfilled") {
+        setMatches(matchesResult.value.matches ?? []);
+      } else {
+        syncErrors.push(matchesResult.reason instanceof Error ? matchesResult.reason.message : "No se pudieron cargar los partidos.");
+        setMatches([]);
+      }
+
+      setSyncError(syncErrors.join(" "));
     } catch {
       setSyncError("No hay conexión con la base de datos. Los picks y resultados no pueden sincronizarse.");
     }
@@ -180,42 +195,6 @@ export function LeaguePanel({ user }: Props) {
       window.clearInterval(interval);
     };
   }, [selectedLeague?.id]);
-
-  async function createLeague(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-    const startsAt = String(formData.get("startsAt") ?? "");
-    const homeTeam = String(formData.get("homeTeam") ?? "").trim();
-    const awayTeam = String(formData.get("awayTeam") ?? "").trim();
-    const firstMatch = startsAt && homeTeam && awayTeam
-      ? { homeTeam, awayTeam, startsAt: new Date(startsAt).toISOString() }
-      : undefined;
-    const response = await fetch("/api/leagues", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: String(formData.get("name")),
-        competitionId: String(formData.get("competitionId")),
-        maxParticipants: Number(formData.get("maxParticipants")),
-        firstMatch,
-      }),
-    });
-    const data = await response.json();
-
-    if (!response.ok) {
-      setMessage(data.error ?? "No se pudo crear la sala");
-      return;
-    }
-
-    setMessage("Sala creada. Abriendo Wompi para confirmar el cupo.");
-    if (data.checkout?.checkoutUrl) {
-      window.location.href = data.checkout.checkoutUrl;
-      return;
-    }
-
-    await loadLeagues();
-  }
 
   async function joinLeague(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -403,39 +382,6 @@ export function LeaguePanel({ user }: Props) {
       </section> : null}
 
       {!selectedLeague ? <div className="grid three-columns room-entry-grid">
-        <form className="panel form room-create-form" onSubmit={createLeague}>
-          <h3>Crear sala</h3>
-          <div className="form-row">
-            <label htmlFor="league-name">Nombre</label>
-            <input id="league-name" name="name" minLength={3} placeholder="Nombre para tu grupo" required />
-          </div>
-          <div className="form-row">
-            <label htmlFor="competitionId">Liga</label>
-            <select id="competitionId" name="competitionId" required>
-              <option value="">Selecciona una liga</option>
-              {competitions.map((competition) => (
-                <option key={competition.id} value={competition.id}>{competition.name} · {competition.season}</option>
-              ))}
-            </select>
-          </div>
-          <div className="form-row">
-            <label htmlFor="maxParticipants">Cupo de participantes</label>
-            <select id="maxParticipants" name="maxParticipants" defaultValue="20" required>
-              <option value="20">20 participantes · $40.000 COP</option>
-              <option value="50">50 participantes · $80.000 COP</option>
-              <option value="100">100 participantes · $120.000 COP</option>
-            </select>
-            <small>El código se identificará como MP20, MP50 o MP100 y se bloqueará al completar el cupo.</small>
-          </div>
-          <details className="room-first-match">
-            <summary>Crear primer partido (opcional)</summary>
-            <div className="form-row"><label htmlFor="room-home">Local</label><input id="room-home" name="homeTeam" /></div>
-            <div className="form-row"><label htmlFor="room-away">Visitante</label><input id="room-away" name="awayTeam" /></div>
-            <div className="form-row"><label htmlFor="room-start">Inicio</label><input id="room-start" name="startsAt" type="datetime-local" /></div>
-          </details>
-          <button className="button primary" type="submit">Crear sala y pagar</button>
-        </form>
-
         <form className="panel form" onSubmit={joinLeague}>
           <h3>Entrar a una sala</h3>
           <div className="form-row">
@@ -464,6 +410,13 @@ export function LeaguePanel({ user }: Props) {
             ))}
             {!leagues.length ? <div className="empty">Crea una sala o entra con un código.</div> : null}
           </div>
+        </div>
+
+        <div className="panel room-promo">
+          <span className="market-kicker">Crear nueva sala</span>
+          <h3>Las salas se crean desde planes o desde el super admin</h3>
+          <p>Si quieres una sala para amigos, familia o empresa, elige un plan y la activamos con su código.</p>
+          <a className="button primary" href="/planes">Ver planes de salas</a>
         </div>
       </div> : null}
 

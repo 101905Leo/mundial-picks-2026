@@ -6,9 +6,14 @@ import { visiblePredictionPoints } from "@/lib/prediction-points";
 export async function GET(request: NextRequest) {
   const user = await getSessionFromRequest(request);
   const includeHidden = request.nextUrl.searchParams.get("includeHidden") === "true" && user?.role === "ADMIN";
+  const includeRoomMatches = request.nextUrl.searchParams.get("includeRooms") === "true" && user?.role === "ADMIN";
 
   const matches = await prisma.match.findMany({
-    where: includeHidden ? {} : { isPublished: true, roomId: null },
+    where: includeHidden
+      ? includeRoomMatches
+        ? {}
+        : { roomId: null }
+      : { isPublished: true, roomId: null },
     orderBy: { startsAt: "asc" },
     include: {
       predictions: user

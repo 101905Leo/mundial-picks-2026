@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
-import { roomMatchScopeWhere } from "@/lib/room-match-scope";
+import { roomGlobalFallbackMatchWhere, roomOwnedMatchWhere } from "@/lib/room-match-scope";
 import { visiblePredictionPoints } from "@/lib/prediction-points";
 import { pickRoomPrediction } from "@/lib/room-predictions";
 
@@ -19,10 +19,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return Response.json({ error: "No perteneces a esta sala" }, { status: 403 });
   }
 
+  const ownPublishedMatches = await prisma.match.count({
+    where: { isPublished: true, ...roomOwnedMatchWhere(league) },
+  });
+  const matchScope = ownPublishedMatches > 0 ? roomOwnedMatchWhere(league) : roomGlobalFallbackMatchWhere(league);
+
   const matches = await prisma.match.findMany({
     where: {
       isPublished: true,
-      ...roomMatchScopeWhere(league),
+      ...matchScope,
     },
     orderBy: { startsAt: "asc" },
     include: {

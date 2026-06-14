@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
-import { matchBelongsToRoomScope } from "@/lib/room-match-scope";
+import { matchBelongsToResolvedRoomScope, roomOwnedMatchWhere } from "@/lib/room-match-scope";
 import { visiblePredictionPoints } from "@/lib/prediction-points";
 import { uniqueRoomPredictions } from "@/lib/room-predictions";
 
@@ -66,6 +66,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return Response.json({ error: "Sala no encontrada" }, { status: 404 });
   }
 
+  const ownPublishedMatches = await prisma.match.count({
+    where: { isPublished: true, ...roomOwnedMatchWhere(league) },
+  });
+  const useOwnedMatchesOnly = ownPublishedMatches > 0;
   const weekStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const members = league.memberships
     .filter(({ user: member }) => member.role !== "ADMIN")
@@ -73,7 +77,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       const roomPredictions = member.predictions.filter(
         ({ match, leagueId, roomKey }) =>
           match.isPublished &&
-          matchBelongsToRoomScope(match, league) &&
+          matchBelongsToResolvedRoomScope(match, league, useOwnedMatchesOnly) &&
           (leagueId === league.id || (leagueId === null && roomKey === "GLOBAL")),
       );
       const scopedPredictions = uniqueRoomPredictions(roomPredictions, league.id);
