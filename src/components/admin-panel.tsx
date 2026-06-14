@@ -1760,8 +1760,12 @@ export function AdminPanel({ matches, onChanged }: Props) {
                 </div>
                 <div className="inline-actions">
                   <button className="button secondary" onClick={loadRooms} type="button">Actualizar salas</button>
-                  <button className="button danger" onClick={keepOnlyFamiliaAvella} type="button">Dejar solo Familia Avella</button>
+                  <button className="button danger" onClick={keepOnlyFamiliaAvella} type="button">Reparar Familia Avella</button>
                 </div>
+              </div>
+              <div className="admin-room-repair-note">
+                <strong>Reparar Familia Avella</strong>
+                <span>Conserva solo esa sala, sincroniza sus resultados y recalcula los puntos de sus participantes.</span>
               </div>
               <div className="form-row">
                 <label htmlFor="superAdminRoomSelector">Seleccionar sala para administrar</label>

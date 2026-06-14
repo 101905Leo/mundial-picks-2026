@@ -2777,6 +2777,26 @@ button {
   grid-column: 1 / -1;
 }
 
+.admin-room-repair-note {
+  align-items: center;
+  background: rgba(245, 177, 66, 0.1);
+  border: 1px solid rgba(245, 177, 66, 0.28);
+  border-radius: 8px;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 12px 14px;
+}
+
+.admin-room-repair-note strong {
+  color: var(--gold);
+  white-space: nowrap;
+}
+
+.admin-room-repair-note span {
+  color: var(--muted);
+}
+
 .room-selected-tools {
   display: grid;
   gap: 14px;
@@ -3320,6 +3340,11 @@ button {
 
   .room-sales-points {
     grid-template-columns: 1fr;
+  }
+
+  .admin-room-repair-note {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .league-chat-form {

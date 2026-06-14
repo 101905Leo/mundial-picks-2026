@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { matchBelongsToResolvedRoomScope, roomOwnedMatchWhere } from "@/lib/room-match-scope";
 import { visiblePredictionPoints } from "@/lib/prediction-points";
 import { uniqueRoomPredictions } from "@/lib/room-predictions";
+import { resolveEffectiveMatchScore, sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { user, response } = await requireUser(request);
@@ -54,6 +55,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                   match: {
                     select: {
                       id: true,
+                      homeTeam: true,
+                      awayTeam: true,
                       roomId: true,
                       competitionId: true,
                       isPublished: true,
@@ -80,6 +83,23 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     where: { isPublished: true, ...roomOwnedMatchWhere(league) },
   });
   const useOwnedMatchesOnly = ownPublishedMatches > 0;
+  const scoredMatches = await prisma.match.findMany({
+    where: {
+      status: { in: ["LIVE", "FINISHED"] },
+      homeScore: { not: null },
+      awayScore: { not: null },
+    },
+    select: {
+      id: true,
+      competitionId: true,
+      homeTeam: true,
+      awayTeam: true,
+      startsAt: true,
+      homeScore: true,
+      awayScore: true,
+      status: true,
+    },
+  });
   const weekStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const members = league.memberships
     .filter(({ user: member }) => member.role !== "ADMIN")
@@ -91,14 +111,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             leagueId === null &&
             roomKey === "GLOBAL" &&
             matchBelongsToResolvedRoomScope(match, league, useOwnedMatchesOnly);
+          const hasEquivalentScore = scoredMatches.some((candidate) => sameMatchByTeamsAndKickoff(candidate, match));
 
-          return match.isPublished && (belongsToSelectedRoom || belongsToGlobalFallback);
+          return (match.isPublished || hasEquivalentScore) && (belongsToSelectedRoom || belongsToGlobalFallback);
         },
       );
-      const scopedPredictions = uniqueRoomPredictions(roomPredictions, league.id);
+      const scopedPredictions = uniqueRoomPredictions(roomPredictions, league.id).map((prediction) => ({
+        ...prediction,
+        match: resolveEffectiveMatchScore(prediction.match, scoredMatches),
+      }));
       const finishedPredictions = scopedPredictions
         .filter(({ match }) => match.status === "FINISHED")
-        .sort((a, b) => b.match.startsAt.getTime() - a.match.startsAt.getTime());
+        .sort((a, b) => new Date(b.match.startsAt).getTime() - new Date(a.match.startsAt).getTime());
       let currentStreak = 0;
       for (const prediction of finishedPredictions) {
         if (visiblePredictionPoints(prediction, prediction.match) >= 2) currentStreak += 1;

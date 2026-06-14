@@ -73,7 +73,7 @@ function canAssignSourceKey(matches: LocalMatch[], match: LocalMatch, directSour
 }
 
 export async function updateWorldCupResultsFromFootballData() {
-  const apiKey = process.env.FOOTBALL_DATA_API_KEY;
+  const apiKey = process.env.FOOTBALL_DATA_API_KEY?.replace(/\s+/g, "").trim();
   const competitionCode = process.env.FOOTBALL_DATA_COMPETITION_CODE || "WC";
 
   if (!apiKey) {

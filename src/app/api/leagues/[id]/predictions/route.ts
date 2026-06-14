@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { roomGlobalFallbackMatchWhere, roomOwnedMatchWhere } from "@/lib/room-match-scope";
 import { visiblePredictionPoints } from "@/lib/prediction-points";
 import { uniqueRoomPredictions } from "@/lib/room-predictions";
+import { resolveEffectiveMatchScore } from "@/lib/match-equivalence";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { user, response } = await requireUser(request);
@@ -42,27 +43,48 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     ? roomOwnedMatchWhere(league)
     : roomGlobalFallbackMatchWhere(league);
 
-  const roomMatches = await prisma.match.findMany({
-    where: {
-      isPublished: true,
-      ...matchScope,
-    },
-    select: {
-      id: true,
-      homeTeam: true,
-      awayTeam: true,
-      startsAt: true,
-      status: true,
-      isPublished: true,
-      homeScore: true,
-      awayScore: true,
-    },
-    orderBy: { startsAt: "asc" },
-  });
+  const [roomMatches, scoredMatches] = await Promise.all([
+    prisma.match.findMany({
+      where: {
+        isPublished: true,
+        ...matchScope,
+      },
+      select: {
+        id: true,
+        competitionId: true,
+        homeTeam: true,
+        awayTeam: true,
+        startsAt: true,
+        status: true,
+        isPublished: true,
+        homeScore: true,
+        awayScore: true,
+      },
+      orderBy: { startsAt: "asc" },
+    }),
+    prisma.match.findMany({
+      where: {
+        status: { in: ["LIVE", "FINISHED"] },
+        homeScore: { not: null },
+        awayScore: { not: null },
+      },
+      select: {
+        id: true,
+        competitionId: true,
+        homeTeam: true,
+        awayTeam: true,
+        startsAt: true,
+        homeScore: true,
+        awayScore: true,
+        status: true,
+      },
+    }),
+  ]);
 
   const now = new Date();
   const liveWindowStart = new Date(now.getTime() - 8 * 60 * 60 * 1000);
-  const openMatches = roomMatches.filter((match) => match.status !== "FINISHED");
+  const effectiveRoomMatches = roomMatches.map((match) => resolveEffectiveMatchScore(match, scoredMatches));
+  const openMatches = effectiveRoomMatches.filter((match) => match.status !== "FINISHED");
   const activeMatches = openMatches.filter((match) => {
     const hasPartialScore = match.homeScore !== null && match.awayScore !== null;
     const looksInPlayByTime = match.startsAt <= now && match.startsAt >= liveWindowStart;
@@ -110,12 +132,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         },
       })
     : [];
-
   return Response.json({
     matches: visibleMatches,
     predictions: uniqueRoomPredictions(visiblePredictions, id).map((prediction) => ({
       ...prediction,
-      points: visiblePredictionPoints(prediction, prediction.match),
+      match: resolveEffectiveMatchScore(prediction.match, scoredMatches),
+      points: visiblePredictionPoints(prediction, resolveEffectiveMatchScore(prediction.match, scoredMatches)),
     })),
   });
 }

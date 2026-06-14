@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { roomGlobalFallbackMatchWhere, roomOwnedMatchWhere } from "@/lib/room-match-scope";
 import { visiblePredictionPoints } from "@/lib/prediction-points";
 import { pickRoomPrediction } from "@/lib/room-predictions";
+import { resolveEffectiveMatchScore } from "@/lib/match-equivalence";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { user, response } = await requireUser(request);
@@ -49,14 +50,34 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       },
     },
   });
+  const scoredMatches = await prisma.match.findMany({
+    where: {
+      status: { in: ["LIVE", "FINISHED"] },
+      homeScore: { not: null },
+      awayScore: { not: null },
+    },
+    select: {
+      id: true,
+      competitionId: true,
+      homeTeam: true,
+      awayTeam: true,
+      startsAt: true,
+      homeScore: true,
+      awayScore: true,
+      status: true,
+    },
+  });
 
   return Response.json({
-    matches: matches.map((match) => ({
-      ...match,
-      predictions: (() => {
-        const prediction = pickRoomPrediction(match.predictions, league.id);
-        return prediction ? [{ ...prediction, points: visiblePredictionPoints(prediction, match) }] : [];
-      })(),
-    })),
+    matches: matches.map((match) => {
+      const effectiveMatch = resolveEffectiveMatchScore(match, scoredMatches);
+      return {
+        ...effectiveMatch,
+        predictions: (() => {
+          const prediction = pickRoomPrediction(match.predictions, league.id);
+          return prediction ? [{ ...prediction, points: visiblePredictionPoints(prediction, effectiveMatch) }] : [];
+        })(),
+      };
+    }),
   });
 }
