@@ -28,9 +28,31 @@ type Standing = {
   points: number;
 };
 
+type TeamStat = {
+  team: string;
+  played: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
+  points: number;
+};
+
+type PredictionSuggestion = {
+  matchId: string;
+  homeTeam: string;
+  awayTeam: string;
+  startsAt: string;
+  suggestedHomeScore: number;
+  suggestedAwayScore: number;
+  confidence: string;
+  reason: string;
+};
+
 export function StatisticsPanel() {
   const [scorers, setScorers] = useState<Scorer[]>([]);
   const [groups, setGroups] = useState<Standing[][]>([]);
+  const [teamStats, setTeamStats] = useState<TeamStat[]>([]);
+  const [suggestions, setSuggestions] = useState<PredictionSuggestion[]>([]);
   const [message, setMessage] = useState("Cargando estadisticas...");
 
   async function loadStatistics() {
@@ -45,7 +67,15 @@ export function StatisticsPanel() {
 
     setScorers(data.topScorers ?? []);
     setGroups(data.groups ?? []);
-    setMessage(data.configured ? "" : "Configura API_FOOTBALL_KEY para mostrar datos oficiales.");
+    setTeamStats(data.localTeamStats ?? []);
+    setSuggestions(data.predictionSuggestions ?? []);
+    setMessage(
+      data.source === "local"
+        ? data.localMatchesCount > 0
+          ? "Mostrando estadísticas calculadas con los marcadores cargados en Mundial Picks."
+          : "Aún no hay suficientes marcadores cargados para calcular estadísticas locales."
+        : "",
+    );
   }
 
   useEffect(() => {
@@ -69,7 +99,30 @@ export function StatisticsPanel() {
 
       <section className="panel">
         <div className="section-title">
+          <h2>Pronósticos sugeridos</h2>
+          <span className="muted">Modelo base con estadísticas locales</span>
+        </div>
+        <div className="suggestion-grid">
+          {suggestions.map((suggestion) => (
+            <article className="suggestion-card" key={suggestion.matchId}>
+              <div>
+                <strong>{suggestion.homeTeam} vs {suggestion.awayTeam}</strong>
+                <span>{new Date(suggestion.startsAt).toLocaleString("es", { dateStyle: "short", timeStyle: "short" })}</span>
+              </div>
+              <strong className="suggestion-score">
+                {suggestion.suggestedHomeScore} - {suggestion.suggestedAwayScore}
+              </strong>
+              <small>Confianza {suggestion.confidence}. {suggestion.reason}</small>
+            </article>
+          ))}
+          {!suggestions.length ? <div className="empty">Las sugerencias aparecerán cuando haya próximos partidos publicados.</div> : null}
+        </div>
+      </section>
+
+      <section className="panel">
+        <div className="section-title">
           <h2>Goleadores</h2>
+          {!scorers.length ? <span className="muted">Requiere fuente oficial de jugadores</span> : null}
         </div>
         <div className="scorer-grid">
           {scorers.map((player, index) => (
@@ -85,6 +138,22 @@ export function StatisticsPanel() {
             </article>
           ))}
           {!scorers.length && !message ? <div className="empty">Los goleadores apareceran cuando la API publique datos.</div> : null}
+        </div>
+      </section>
+
+      <section className="panel">
+        <div className="section-title">
+          <h2>Rendimiento por selección</h2>
+        </div>
+        <div className="team-stat-grid">
+          {teamStats.slice(0, 12).map((team) => (
+            <article className="team-stat-card" key={team.team}>
+              <strong>{team.team}</strong>
+              <span>{team.played} PJ · {team.points} pts</span>
+              <small>{team.goalsFor} GF · {team.goalsAgainst} GC · DG {team.goalDifference}</small>
+            </article>
+          ))}
+          {!teamStats.length ? <div className="empty">Carga resultados para ver rendimiento por selección.</div> : null}
         </div>
       </section>
 

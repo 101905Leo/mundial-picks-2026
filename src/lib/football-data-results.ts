@@ -64,14 +64,6 @@ function findMatchingLocalMatches(matches: LocalMatch[], directSourceKey: string
   ];
 }
 
-function canAssignSourceKey(matches: LocalMatch[], match: LocalMatch, directSourceKey: string | null, matchingCount: number) {
-  if (!directSourceKey || match.sourceKey === directSourceKey) return false;
-  if (matchingCount > 1) return false;
-
-  const owner = matches.find((item) => item.sourceKey === directSourceKey);
-  return !owner || owner.id === match.id;
-}
-
 export async function updateWorldCupResultsFromFootballData() {
   const apiKey = process.env.FOOTBALL_DATA_API_KEY?.replace(/\s+/g, "").trim();
   const competitionCode = process.env.FOOTBALL_DATA_COMPETITION_CODE || "WC";
@@ -136,14 +128,11 @@ export async function updateWorldCupResultsFromFootballData() {
 
     for (const match of matchingMatches) {
       const needsUpdate = match.homeScore !== homeScore || match.awayScore !== awayScore || match.status !== status;
-      const shouldAssignSourceKey = canAssignSourceKey(localMatches, match, directSourceKey, matchingMatches.length);
-      const needsSourceKey = shouldAssignSourceKey;
-      if (!needsUpdate && !needsSourceKey) continue;
+      if (!needsUpdate) continue;
 
       const updatedMatch = await prisma.match.update({
         where: { id: match.id },
         data: {
-          ...(shouldAssignSourceKey && directSourceKey ? { sourceKey: directSourceKey } : {}),
           homeScore,
           awayScore,
           status,

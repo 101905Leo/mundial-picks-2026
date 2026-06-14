@@ -1890,10 +1890,48 @@ button {
 }
 
 .scorer-grid,
-.standings-grid {
+.standings-grid,
+.suggestion-grid,
+.team-stat-grid {
   display: grid;
   gap: 10px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.suggestion-card,
+.team-stat-card {
+  background: rgba(7, 10, 17, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.suggestion-card {
+  align-items: center;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.suggestion-card small {
+  color: var(--muted);
+  grid-column: 1 / -1;
+}
+
+.suggestion-card span,
+.team-stat-card span,
+.team-stat-card small {
+  color: var(--muted);
+}
+
+.suggestion-card strong,
+.team-stat-card strong {
+  color: #fff;
+}
+
+.suggestion-score {
+  color: var(--gold-soft) !important;
+  font-size: 1.7rem;
 }
 
 .scorer-card {
@@ -3328,6 +3366,8 @@ button {
   .room-payment-required,
   .scorer-grid,
   .standings-grid,
+  .suggestion-grid,
+  .team-stat-grid,
   .ranking-hero,
   .ranking-stat-grid,
   .ranking-search-panel {
