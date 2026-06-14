@@ -45,11 +45,11 @@ function sameMatch(left: ScoredMatch, right: ScoredMatch) {
   return normalizeTeam(left.homeTeam) === normalizeTeam(right.homeTeam) && normalizeTeam(left.awayTeam) === normalizeTeam(right.awayTeam);
 }
 
-export async function syncRoomResultsFromGlobal() {
+export async function syncRoomResultsFromGlobal(options: { roomId?: string } = {}) {
   const emptyStats = { matched: 0, updated: 0, alreadySynced: 0 };
-  const globalMatches = await prisma.match.findMany({
+  const sourceMatches = await prisma.match.findMany({
     where: {
-      roomId: null,
+      roomId: options.roomId ? { not: options.roomId } : null,
       status: { in: ["LIVE", "FINISHED"] },
       homeScore: { not: null },
       awayScore: { not: null },
@@ -68,12 +68,12 @@ export async function syncRoomResultsFromGlobal() {
     },
   });
 
-  if (!globalMatches.length) return emptyStats;
-  const competitionIds = [...new Set(globalMatches.map((match) => match.competitionId).filter(Boolean) as string[])];
+  if (!sourceMatches.length) return emptyStats;
+  const competitionIds = [...new Set(sourceMatches.map((match) => match.competitionId).filter(Boolean) as string[])];
 
   const roomMatches = await prisma.match.findMany({
     where: {
-      roomId: { not: null },
+      roomId: options.roomId ? options.roomId : { not: null },
       OR: competitionIds.length ? [{ competitionId: { in: competitionIds } }, { competitionId: null }] : undefined,
     },
     select: {
@@ -95,14 +95,14 @@ export async function syncRoomResultsFromGlobal() {
   let alreadySynced = 0;
 
   for (const roomMatch of roomMatches) {
-    const globalMatch = globalMatches.find((match) => sameMatch(match, roomMatch));
-    if (!globalMatch) continue;
+    const sourceMatch = sourceMatches.find((match) => sameMatch(match, roomMatch));
+    if (!sourceMatch) continue;
     matched += 1;
 
     if (
-      roomMatch.homeScore === globalMatch.homeScore &&
-      roomMatch.awayScore === globalMatch.awayScore &&
-      roomMatch.status === globalMatch.status
+      roomMatch.homeScore === sourceMatch.homeScore &&
+      roomMatch.awayScore === sourceMatch.awayScore &&
+      roomMatch.status === sourceMatch.status
     ) {
       alreadySynced += 1;
       continue;
@@ -111,9 +111,9 @@ export async function syncRoomResultsFromGlobal() {
     await prisma.match.update({
       where: { id: roomMatch.id },
       data: {
-        homeScore: globalMatch.homeScore,
-        awayScore: globalMatch.awayScore,
-        status: globalMatch.status,
+        homeScore: sourceMatch.homeScore,
+        awayScore: sourceMatch.awayScore,
+        status: sourceMatch.status,
       },
     });
     updated += 1;

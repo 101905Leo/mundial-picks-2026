@@ -2,6 +2,8 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import { recalculateFinishedMatchPoints } from "@/lib/recalculate-points";
+import { syncRoomResultsFromGlobal } from "@/lib/sync-room-results";
 
 const trialSchema = z.object({
   name: z.string().trim().min(3).max(80),
@@ -29,6 +31,24 @@ const roomSettingsSchema = z.object({
   expiresAt: z.string().datetime().nullable().optional(),
   maxParticipants: z.number().int().min(2).max(10000).optional(),
 });
+
+const roomSyncSchema = z.object({
+  action: z.literal("syncRoomResults"),
+  leagueId: z.string().min(1),
+});
+
+const keepOnlyRoomSchema = z.object({
+  action: z.literal("keepOnlyRoom"),
+  name: z.string().trim().min(3).max(80).default("Familia Avella"),
+});
+
+function normalizeRoomName(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
 
 async function uniqueRoomCode(maxParticipants: number) {
   for (let attempt = 0; attempt < 8; attempt += 1) {
@@ -137,6 +157,65 @@ export async function PATCH(request: NextRequest) {
   if (response) return response;
 
   const body = await request.json();
+  if (body.action === "syncRoomResults") {
+    const parsedSync = roomSyncSchema.safeParse(body);
+    if (!parsedSync.success) {
+      return Response.json({ error: "Sala inválida para sincronizar" }, { status: 400 });
+    }
+
+    const room = await prisma.league.findUnique({
+      where: { id: parsedSync.data.leagueId },
+      select: { id: true, name: true },
+    });
+    if (!room) return Response.json({ error: "Sala no encontrada" }, { status: 404 });
+
+    const roomSync = await syncRoomResultsFromGlobal({ roomId: room.id });
+    const predictionsUpdated = await recalculateFinishedMatchPoints();
+
+    return Response.json({
+      room,
+      roomMatchesMatched: roomSync.matched,
+      roomMatchesSynced: roomSync.updated,
+      roomMatchesAlreadySynced: roomSync.alreadySynced,
+      predictionsUpdated,
+    });
+  }
+
+  if (body.action === "keepOnlyRoom") {
+    const parsedKeep = keepOnlyRoomSchema.safeParse(body);
+    if (!parsedKeep.success) {
+      return Response.json({ error: "Nombre de sala inválido" }, { status: 400 });
+    }
+
+    const rooms = await prisma.league.findMany({
+      select: { id: true, name: true },
+      orderBy: { createdAt: "asc" },
+    });
+    const wantedName = normalizeRoomName(parsedKeep.data.name);
+    const keepRoom =
+      rooms.find((room) => normalizeRoomName(room.name) === wantedName) ??
+      rooms.find((room) => normalizeRoomName(room.name).includes(wantedName));
+
+    if (!keepRoom) {
+      return Response.json({ error: `No encontré una sala llamada ${parsedKeep.data.name}` }, { status: 404 });
+    }
+
+    const deletedRooms = rooms.filter((room) => room.id !== keepRoom.id);
+    const deleted = await prisma.league.deleteMany({ where: { id: { in: deletedRooms.map((room) => room.id) } } });
+    const roomSync = await syncRoomResultsFromGlobal({ roomId: keepRoom.id });
+    const predictionsUpdated = await recalculateFinishedMatchPoints();
+
+    return Response.json({
+      keptRoom: keepRoom,
+      deletedRooms: deleted.count,
+      deletedRoomNames: deletedRooms.map((room) => room.name),
+      roomMatchesMatched: roomSync.matched,
+      roomMatchesSynced: roomSync.updated,
+      roomMatchesAlreadySynced: roomSync.alreadySynced,
+      predictionsUpdated,
+    });
+  }
+
   if (body.action === "roomSettings") {
     const parsedSettings = roomSettingsSchema.safeParse(body);
     if (!parsedSettings.success) {

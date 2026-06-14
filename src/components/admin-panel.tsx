@@ -296,6 +296,45 @@ export function AdminPanel({ matches, onChanged }: Props) {
     if (response.ok) await loadRooms();
   }
 
+  async function syncSelectedRoomResults(room: AdminRoom) {
+    setMessage(`Sincronizando resultados de ${room.name}...`);
+    const response = await fetch("/api/admin/rooms", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "syncRoomResults", leagueId: room.id }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      setMessage(data.error ?? "No se pudo sincronizar la sala");
+      return;
+    }
+    setMessage(
+      `${room.name}: resultados revisados ${data.roomMatchesMatched}. Actualizados ${data.roomMatchesSynced}. Ya sincronizados ${data.roomMatchesAlreadySynced}. Picks recalculados ${data.predictionsUpdated}.`,
+    );
+    await loadRooms();
+    await onChanged();
+  }
+
+  async function keepOnlyFamiliaAvella() {
+    if (!window.confirm("¿Eliminar todas las salas excepto Familia Avella? Esta acción no se puede deshacer.")) return;
+    setMessage("Limpiando salas y conservando Familia Avella...");
+    const response = await fetch("/api/admin/rooms", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "keepOnlyRoom", name: "Familia Avella" }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      setMessage(data.error ?? "No se pudieron limpiar las salas");
+      return;
+    }
+    setMessage(
+      `Se conservó ${data.keptRoom.name}. Salas eliminadas ${data.deletedRooms}. Resultados actualizados ${data.roomMatchesSynced}. Picks recalculados ${data.predictionsUpdated}.`,
+    );
+    await loadRooms();
+    await onChanged();
+  }
+
   async function copyRoomInvitation(room: AdminRoom) {
     const invitation = `Únete a "${room.name}" en Mundial Picks: https://www.mundialpicks.online. Código: ${room.inviteCode}`;
     await navigator.clipboard.writeText(invitation);
@@ -1621,10 +1660,13 @@ export function AdminPanel({ matches, onChanged }: Props) {
                   <h3>Administración global de salas</h3>
                   <p className="muted">Elige una sala y administra sus datos sin entrar como admin de sala.</p>
                 </div>
-                <button className="button secondary" onClick={loadRooms} type="button">Actualizar salas</button>
+                <div className="inline-actions">
+                  <button className="button secondary" onClick={loadRooms} type="button">Actualizar salas</button>
+                  <button className="button danger" onClick={keepOnlyFamiliaAvella} type="button">Dejar solo Familia Avella</button>
+                </div>
               </div>
               <div className="form-row">
-                <label htmlFor="superAdminRoomSelector">Sala creada</label>
+                <label htmlFor="superAdminRoomSelector">Seleccionar sala para administrar</label>
                 <select
                   id="superAdminRoomSelector"
                   onChange={(event) => {
@@ -1659,6 +1701,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
                   </div>
                   <div className="admin-user-actions">
                     <button className="button secondary" onClick={() => copyRoomInvitation(selectedRoom)} type="button">Copiar invitación</button>
+                    <button className="button primary" onClick={() => syncSelectedRoomResults(selectedRoom)} type="button">Sincronizar resultados de esta sala</button>
                     <button className="button danger" onClick={() => deleteAdminRoom(selectedRoom)} type="button">Eliminar sala</button>
                   </div>
                   <div className="room-selected-tools">
