@@ -62,7 +62,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
   const publishedMatches = matches.filter((match) => match.isPublished).length;
   const resultLoadedMatches = matches.filter((match) => match.homeScore !== null && match.awayScore !== null).length;
   const activeUsers = users.filter((user) => user.isActive).length;
-  const publishedOpenMatches = matches.filter((match) => match.isPublished && match.status !== "FINISHED");
+  const editableResultMatches = matches.filter((match) => match.isPublished);
   const playedPublishedMatches = matches
     .filter((match) => match.isPublished && new Date(match.startsAt) <= new Date())
     .sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime());
@@ -1046,9 +1046,9 @@ export function AdminPanel({ matches, onChanged }: Props) {
               <div className="form-row">
                 <label htmlFor="matchId">Partido</label>
                 <select id="matchId" name="matchId" required>
-                  {publishedOpenMatches.map((match) => (
+                  {editableResultMatches.map((match) => (
                     <option key={match.id} value={match.id}>
-                      {match.homeTeam} vs {match.awayTeam}
+                      {match.homeTeam} vs {match.awayTeam} {match.status === "FINISHED" ? "(cerrado)" : ""}
                     </option>
                   ))}
                 </select>
@@ -1072,10 +1072,10 @@ export function AdminPanel({ matches, onChanged }: Props) {
                 </button>
               </div>
               <small className="muted">
-                El parcial deja el partido en vivo y actualiza puntos provisionales. Cerrar partido deja el resultado final.
+                El super admin puede corregir marcadores de partidos abiertos o cerrados. El parcial reabre el partido en vivo; cerrar partido deja el resultado final.
               </small>
-              {!publishedOpenMatches.length ? (
-                <div className="empty">No hay partidos publicados y abiertos para actualizar.</div>
+              {!editableResultMatches.length ? (
+                <div className="empty">No hay partidos publicados para actualizar.</div>
               ) : null}
             </form>
             <form className="form" onSubmit={deleteMatch}>
