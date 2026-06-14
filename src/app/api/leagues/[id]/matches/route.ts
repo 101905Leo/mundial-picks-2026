@@ -13,12 +13,20 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const { id } = await params;
   const league = await prisma.league.findFirst({
     where: user!.role === "ADMIN" ? { id } : { id, memberships: { some: { userId: user!.id } } },
-    select: { id: true, competitionId: true },
+    select: {
+      id: true,
+      ownerId: true,
+      competitionId: true,
+      memberships: { where: { userId: user!.id }, select: { role: true } },
+    },
   });
 
   if (!league) {
     return Response.json({ error: user!.role === "ADMIN" ? "Sala no encontrada" : "No perteneces a esta sala" }, { status: user!.role === "ADMIN" ? 404 : 403 });
   }
+
+  const includeHidden = request.nextUrl.searchParams.get("includeHidden") === "true";
+  const canManageRoom = user!.role === "ADMIN" || league.ownerId === user!.id || league.memberships[0]?.role === "ADMIN";
 
   const ownPublishedMatches = await prisma.match.count({
     where: { isPublished: true, ...roomOwnedMatchWhere(league) },
@@ -27,7 +35,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const matches = await prisma.match.findMany({
     where: {
-      isPublished: true,
+      ...(includeHidden && canManageRoom ? {} : { isPublished: true }),
       ...matchScope,
     },
     orderBy: { startsAt: "asc" },

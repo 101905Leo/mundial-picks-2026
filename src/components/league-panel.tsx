@@ -5,10 +5,10 @@ import { MatchCard } from "@/components/match-card";
 import { RankingTable } from "@/components/ranking-table";
 import { FormidableFacts } from "@/components/formidable-facts";
 import { StatisticsPanel } from "@/components/statistics-panel";
-import type { League, LeagueMember, Match, RankingEntry, User } from "@/components/types";
+import type { Competition, League, LeagueMember, Match, RankingEntry, User } from "@/components/types";
 
 type Props = { user: User };
-type RoomView = "picks" | "facts" | "ranking" | "statistics" | "participants";
+type RoomView = "picks" | "matches" | "facts" | "ranking" | "statistics" | "participants";
 
 type LeagueMessage = {
   id: string;
@@ -60,6 +60,8 @@ export function LeaguePanel({ user }: Props) {
   const [selectedLeague, setSelectedLeague] = useState<League | null>(null);
   const [roomView, setRoomView] = useState<RoomView>("picks");
   const [matches, setMatches] = useState<Match[]>([]);
+  const [managedMatches, setManagedMatches] = useState<Match[]>([]);
+  const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
   const [members, setMembers] = useState<LeagueMember[]>([]);
   const [chatMessages, setChatMessages] = useState<LeagueMessage[]>([]);
@@ -78,7 +80,10 @@ export function LeaguePanel({ user }: Props) {
   const canDeleteRoom = isSuperAdmin;
 
   async function loadLeagues() {
-    const roomsResponse = await fetch("/api/leagues");
+    const [roomsResponse, competitionsResponse] = await Promise.all([
+      fetch("/api/leagues"),
+      fetch("/api/competitions"),
+    ]);
     const roomsData = await roomsResponse.json();
 
     if (!roomsResponse.ok) {
@@ -93,6 +98,11 @@ export function LeaguePanel({ user }: Props) {
       if (!current) return isSuperAdmin ? null : loadedActiveLeagues[0] ?? loadedLeagues[0] ?? null;
       return loadedLeagues.find((league) => league.id === current.id) ?? (isSuperAdmin ? null : loadedActiveLeagues[0] ?? loadedLeagues[0] ?? null);
     });
+
+    if (competitionsResponse.ok) {
+      const competitionsData = await competitionsResponse.json();
+      setCompetitions(competitionsData.competitions ?? []);
+    }
   }
 
   async function loadRoom() {
@@ -145,6 +155,14 @@ export function LeaguePanel({ user }: Props) {
       } else {
         syncErrors.push(matchesResult.reason instanceof Error ? matchesResult.reason.message : "No se pudieron cargar los partidos.");
         setMatches([]);
+      }
+
+      if (canEditRoomInfo) {
+        const managedMatchesResponse = await fetch(`/api/leagues/${roomId}/matches?includeHidden=true`, { cache: "no-store" });
+        const managedMatchesData = await readResponse(managedMatchesResponse, "No se pudo cargar el control de partidos.");
+        setManagedMatches(managedMatchesData.matches ?? []);
+      } else {
+        setManagedMatches([]);
       }
 
       setSyncError(syncErrors.join(" "));
@@ -333,6 +351,48 @@ export function LeaguePanel({ user }: Props) {
     form.reset();
   }
 
+  async function importCompetitionMatches(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selectedLeague) return;
+
+    const formData = new FormData(event.currentTarget);
+    const response = await fetch(`/api/leagues/${selectedLeague.id}/matches/import`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ competitionId: String(formData.get("competitionId")) }),
+    });
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      setMessage(data.error ?? "No se pudieron cargar los partidos en esta sala");
+      return;
+    }
+
+    setMessage(data.message ?? "Partidos cargados en la sala");
+    await loadLeagues();
+    await loadRoom();
+    setRoomView("matches");
+  }
+
+  async function publishRoomMatch(matchId: string, publish: boolean) {
+    if (!selectedLeague) return;
+
+    const response = await fetch(`/api/leagues/${selectedLeague.id}/matches/${matchId}/publish`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ publish }),
+    });
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      setMessage(data.error ?? "No se pudo cambiar la publicacion del partido");
+      return;
+    }
+
+    setMessage(publish ? "Partido publicado en esta sala" : "Partido oculto en esta sala");
+    await loadRoom();
+  }
+
   const liveMatches = matches.filter((match) => match.status === "LIVE");
   const totalPicks = members.reduce((sum, member) => sum + member.predictions, 0);
   const finishedMatches = matches.filter((match) => match.status === "FINISHED").length;
@@ -377,6 +437,14 @@ export function LeaguePanel({ user }: Props) {
       : selectedLeague?.status === "CLOSED"
         ? "Esta sala está cerrada."
         : "La sala debe estar activa para guardar picks.";
+  const roomTabs: Array<[RoomView, string]> = [
+    ["picks", "Picks"],
+    ...(canEditRoomInfo ? ([["matches", "Partidos"]] as Array<[RoomView, string]>) : []),
+    ["facts", "Datos"],
+    ["ranking", "Ranking"],
+    ["statistics", "Estadísticas"],
+    ["participants", "Participantes"],
+  ];
 
   function shareRanking() {
     if (!selectedLeague || !userRanking) return;
@@ -551,13 +619,7 @@ export function LeaguePanel({ user }: Props) {
           ) : (
           <>
           <nav className="admin-nav room-nav" aria-label="Secciones de la sala">
-            {([
-              ["picks", "Picks"],
-              ["facts", "Datos"],
-              ["ranking", "Ranking"],
-              ["statistics", "Estadísticas"],
-              ["participants", "Participantes"],
-            ] as Array<[RoomView, string]>).map(([view, label]) => (
+            {roomTabs.map(([view, label]) => (
               <button className={`tab ${roomView === view ? "active" : ""}`} key={view} onClick={() => setRoomView(view)} type="button">
                 {label}
               </button>
@@ -628,6 +690,75 @@ export function LeaguePanel({ user }: Props) {
                     </article>
                   ))}
                   {!savedPicks.length ? <div className="empty">Todavía no has guardado picks en esta sala.</div> : null}
+                </div>
+              </section>
+            </div>
+          ) : null}
+
+          {roomView === "matches" && canEditRoomInfo ? (
+            <div className="grid">
+              <section className="panel room-match-admin">
+                <div className="section-title">
+                  <div>
+                    <span className="market-kicker">Calendario de la sala</span>
+                    <h3>Cargar liga y publicar partidos</h3>
+                  </div>
+                </div>
+                <form className="room-match-loader" onSubmit={importCompetitionMatches}>
+                  <div className="form-row">
+                    <label htmlFor="roomCompetitionId">Liga disponible</label>
+                    <select id="roomCompetitionId" name="competitionId" defaultValue={selectedLeague.competitionId ?? competitions[0]?.id ?? ""} required>
+                      <option value="">Selecciona liga</option>
+                      {competitions.map((competition) => (
+                        <option key={competition.id} value={competition.id}>
+                          {competition.name} · {competition.season}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <button className="button primary" type="submit">Cargar partidos en esta sala</button>
+                </form>
+                <p className="muted">
+                  Los partidos se copian a esta sala como ocultos. Luego publicas solo los que quieras mostrar a sus participantes.
+                </p>
+              </section>
+
+              <section className="panel room-match-admin-list">
+                <div className="section-title">
+                  <div>
+                    <span className="market-kicker">Publicación por sala</span>
+                    <h3>{managedMatches.length} partidos cargados</h3>
+                  </div>
+                </div>
+                <div className="room-match-control-list">
+                  {managedMatches.map((match) => (
+                    <article className={`room-match-control ${match.isPublished ? "published" : "hidden"}`} key={match.id}>
+                      <div className="room-match-control-teams">
+                        <strong>{match.homeTeam} vs {match.awayTeam}</strong>
+                        <span>
+                          {new Date(match.startsAt).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" })}
+                          {match.venue ? ` · ${match.venue}` : ""}
+                        </span>
+                      </div>
+                      <div className="room-match-control-score">
+                        <strong>{match.homeScore !== null && match.awayScore !== null ? `${match.homeScore}-${match.awayScore}` : "--"}</strong>
+                        <span>{match.status}</span>
+                      </div>
+                      <div className="room-match-control-actions">
+                        <span>{match.isPublished ? "Publicado" : "Oculto"}</span>
+                        <button
+                          className={match.isPublished ? "button secondary" : "button primary"}
+                          onClick={() => publishRoomMatch(match.id, !match.isPublished)}
+                          type="button"
+                        >
+                          {match.isPublished ? "Ocultar" : "Publicar"}
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                  {!managedMatches.length ? (
+                    <div className="empty">Carga una liga para crear el calendario propio de esta sala.</div>
+                  ) : null}
                 </div>
               </section>
             </div>

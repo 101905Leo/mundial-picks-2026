@@ -3430,6 +3430,125 @@ button {
   padding: 14px;
 }
 
+.room-panel-preview {
+  display: grid;
+  gap: 10px;
+}
+
+.room-nav.preview {
+  background: rgba(2, 6, 14, 0.44);
+  padding: 6px;
+}
+
+.room-nav.preview .tab {
+  min-height: 34px;
+  min-width: 110px;
+  pointer-events: none;
+}
+
+.room-preview-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.room-preview-grid article {
+  background: rgba(18, 24, 37, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.room-preview-grid span {
+  color: var(--muted);
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.room-preview-grid strong {
+  color: var(--gold-soft);
+  display: block;
+  font-size: 1.35rem;
+  margin-top: 3px;
+}
+
+.admin-room-match-list.compact-preview {
+  max-height: 260px;
+}
+
+.room-match-admin,
+.room-match-admin-list {
+  align-self: start;
+}
+
+.room-match-loader {
+  align-items: end;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(220px, 1fr) auto;
+}
+
+.room-match-control-list {
+  display: grid;
+  gap: 8px;
+  max-height: 620px;
+  overflow: auto;
+}
+
+.room-match-control {
+  align-items: center;
+  background: rgba(8, 12, 20, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-left: 4px solid var(--red);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(220px, 1fr) minmax(70px, 0.32fr) minmax(170px, auto);
+  padding: 10px;
+}
+
+.room-match-control.published {
+  border-left-color: var(--premium-cyan);
+}
+
+.room-match-control-teams strong,
+.room-match-control-score strong {
+  color: #fff;
+  display: block;
+}
+
+.room-match-control-teams span,
+.room-match-control-score span {
+  color: var(--muted);
+  display: block;
+  font-size: 0.78rem;
+  margin-top: 3px;
+}
+
+.room-match-control-score strong {
+  color: var(--gold-soft);
+  font-size: 1.25rem;
+}
+
+.room-match-control-actions {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.room-match-control-actions > span {
+  background: rgba(2, 6, 14, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 900;
+  padding: 6px 8px;
+  text-transform: uppercase;
+}
+
 .admin-room-user-header {
   align-items: center;
   display: flex;
@@ -4015,6 +4134,9 @@ button {
   .room-selected-tools,
   .room-control-bar,
   .room-selected-card,
+  .room-match-loader,
+  .room-match-control,
+  .room-preview-grid,
   .super-room-selector-bar,
   .admin-room-summary,
   .admin-room-user-forms,
@@ -4194,6 +4316,33 @@ button {
 
   .app-shell.action-view .hero-band {
     display: none;
+  }
+
+  .app-shell.action-view .topbar {
+    gap: 8px;
+    padding: 8px 12px;
+  }
+
+  .app-shell.action-view .topbar .countdown-panel.compact {
+    display: none;
+  }
+
+  .app-shell.action-view .brand-logo-image {
+    height: 42px;
+    width: 26px;
+  }
+
+  .app-shell.action-view .brand strong {
+    font-size: 0.92rem;
+  }
+
+  .app-shell.action-view .brand span span {
+    display: none;
+  }
+
+  .app-shell.action-view .top-actions {
+    flex-direction: row;
+    gap: 8px;
   }
 
   .panel .section-title {

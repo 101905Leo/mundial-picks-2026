@@ -2177,6 +2177,51 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
                         </section>
 
                         <div className="admin-room-grid">
+                          <details className="admin-room-section admin-room-section-wide" open>
+                            <summary>Vista operativa de la sala</summary>
+                            <div className="room-panel-preview">
+                              <nav className="admin-nav room-nav preview" aria-label="Vista de sala">
+                                <span className="tab active">Picks</span>
+                                <span className="tab">Partidos</span>
+                                <span className="tab">Ranking</span>
+                                <span className="tab">Estadísticas</span>
+                                <span className="tab">Participantes</span>
+                              </nav>
+                              <div className="room-preview-grid">
+                                <article>
+                                  <span>Publicados</span>
+                                  <strong>{roomDashboard.matches.filter((match) => match.isPublished).length}</strong>
+                                </article>
+                                <article>
+                                  <span>En vivo</span>
+                                  <strong>{roomDashboard.summary.liveMatches}</strong>
+                                </article>
+                                <article>
+                                  <span>Picks</span>
+                                  <strong>{roomDashboard.summary.picks}</strong>
+                                </article>
+                              </div>
+                              <div className="admin-room-list admin-room-match-list compact-preview">
+                                {roomDashboard.matches.filter((match) => match.isPublished).slice(0, 4).map((match) => (
+                                  <article key={`preview-${match.id}`}>
+                                    <div className="admin-match-teams">
+                                      <span>{flagForTeam(match.homeTeam)} <strong>{match.homeTeam}</strong></span>
+                                      <em>vs</em>
+                                      <span>{flagForTeam(match.awayTeam)} <strong>{match.awayTeam}</strong></span>
+                                    </div>
+                                    <div className="admin-match-scoreline">
+                                      <span>{match.status}</span>
+                                      <strong>{match.homeScore !== null && match.awayScore !== null ? `${match.homeScore} - ${match.awayScore}` : "- -"}</strong>
+                                    </div>
+                                  </article>
+                                ))}
+                                {!roomDashboard.matches.some((match) => match.isPublished) ? (
+                                  <div className="empty">Esta sala no tiene partidos publicados para sus participantes.</div>
+                                ) : null}
+                              </div>
+                            </div>
+                          </details>
+
                           <details className="admin-room-section" open>
                             <summary>Ranking de esta sala</summary>
                             <div className="table-scroll">
