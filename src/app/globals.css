@@ -3306,6 +3306,32 @@ button {
   margin-top: 3px;
 }
 
+.admin-room-user-forms {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.room-user-mini-form {
+  background: rgba(12, 17, 28, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
+}
+
+.room-user-mini-form h4 {
+  color: #fff;
+  font-size: 0.98rem;
+  margin: 0;
+}
+
+.room-user-mini-form .button {
+  justify-self: start;
+}
+
 .admin-room-grid {
   display: grid;
   gap: 14px;
@@ -3763,6 +3789,7 @@ button {
   .room-selected-tools,
   .super-room-selector-bar,
   .admin-room-summary,
+  .admin-room-user-forms,
   .admin-room-grid {
     grid-template-columns: 1fr;
   }

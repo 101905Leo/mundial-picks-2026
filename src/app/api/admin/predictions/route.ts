@@ -3,10 +3,13 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { calculatePredictionPoints } from "@/lib/scoring";
+import { matchBelongsToRoomScope } from "@/lib/room-match-scope";
+import { resolveEffectiveMatchScore } from "@/lib/match-equivalence";
 
 const deletePredictionSchema = z.object({
   userId: z.string().min(1),
   matchId: z.string().min(1),
+  leagueId: z.string().optional(),
 });
 
 const savePredictionSchema = deletePredictionSchema.extend({
@@ -27,7 +30,8 @@ export async function PUT(request: NextRequest) {
     return Response.json({ error: "Pick o puntos invalidos" }, { status: 400 });
   }
 
-  const [user, match] = await Promise.all([
+  const roomId = parsed.data.leagueId || "";
+  const [user, match, room, scoredMatches] = await Promise.all([
     prisma.user.findUnique({ where: { id: parsed.data.userId }, select: { id: true, name: true, role: true } }),
     prisma.match.findUnique({
       where: { id: parsed.data.matchId },
@@ -39,6 +43,32 @@ export async function PUT(request: NextRequest) {
         status: true,
         homeScore: true,
         awayScore: true,
+        roomId: true,
+        competitionId: true,
+      },
+    }),
+    roomId
+      ? prisma.league.findUnique({
+          where: { id: roomId },
+          select: {
+            id: true,
+            name: true,
+            competitionId: true,
+            memberships: { where: { userId: parsed.data.userId }, select: { id: true } },
+          },
+        })
+      : Promise.resolve(null),
+    prisma.match.findMany({
+      where: { homeScore: { not: null }, awayScore: { not: null } },
+      select: {
+        id: true,
+        competitionId: true,
+        homeTeam: true,
+        awayTeam: true,
+        startsAt: true,
+        homeScore: true,
+        awayScore: true,
+        status: true,
       },
     }),
   ]);
@@ -51,38 +81,53 @@ export async function PUT(request: NextRequest) {
     return Response.json({ error: "Modo espectador: solo puedes modificar picks de participantes." }, { status: 403 });
   }
 
+  if (roomId) {
+    if (!room) {
+      return Response.json({ error: "Sala no encontrada" }, { status: 404 });
+    }
+    if (room.memberships.length === 0) {
+      return Response.json({ error: "El participante no pertenece a esta sala" }, { status: 403 });
+    }
+    if (!matchBelongsToRoomScope(match, room)) {
+      return Response.json({ error: "Este partido no pertenece a la sala seleccionada" }, { status: 403 });
+    }
+  }
+
+  const roomKey = roomId || "GLOBAL";
+  const effectiveMatch = resolveEffectiveMatchScore(match, scoredMatches);
+
   const calculatedPoints =
-    match.homeScore !== null && match.awayScore !== null
+    effectiveMatch.homeScore !== null && effectiveMatch.awayScore !== null
       ? calculatePredictionPoints(
           { homeScore: parsed.data.homeScore, awayScore: parsed.data.awayScore },
-          { homeScore: match.homeScore, awayScore: match.awayScore },
+          { homeScore: effectiveMatch.homeScore, awayScore: effectiveMatch.awayScore },
         )
       : 0;
 
   const prediction = await prisma.prediction.upsert({
-    where: { userId_matchId_roomKey: { userId: user.id, matchId: match.id, roomKey: "GLOBAL" } },
+    where: { userId_matchId_roomKey: { userId: user.id, matchId: match.id, roomKey } },
     update: {
       homeScore: parsed.data.homeScore,
       awayScore: parsed.data.awayScore,
       points: calculatedPoints,
       manualPoints: null,
-      leagueId: null,
-      roomKey: "GLOBAL",
+      leagueId: roomId || null,
+      roomKey,
       lockedAt:
-        match.status === "FINISHED" || match.startsAt <= new Date()
+        effectiveMatch.status === "FINISHED" || match.startsAt <= new Date()
           ? new Date()
           : null,
     },
     create: {
       userId: user.id,
       matchId: match.id,
-      leagueId: null,
-      roomKey: "GLOBAL",
+      leagueId: roomId || null,
+      roomKey,
       homeScore: parsed.data.homeScore,
       awayScore: parsed.data.awayScore,
       points: calculatedPoints,
       lockedAt:
-        match.status === "FINISHED" || match.startsAt <= new Date()
+        effectiveMatch.status === "FINISHED" || match.startsAt <= new Date()
           ? new Date()
           : null,
     },
@@ -92,6 +137,7 @@ export async function PUT(request: NextRequest) {
     prediction,
     user: user.name,
     match: `${match.homeTeam} vs ${match.awayTeam}`,
+    room: room?.name ?? null,
     override: "El super admin modifico este pick aunque el partido este cerrado.",
   });
 }
@@ -105,12 +151,14 @@ export async function PATCH(request: NextRequest) {
     return Response.json({ error: "Puntos invalidos" }, { status: 400 });
   }
 
+  const roomId = parsed.data.leagueId || "";
+  const roomKey = roomId || "GLOBAL";
   const prediction = await prisma.prediction.findUnique({
     where: {
       userId_matchId_roomKey: {
         userId: parsed.data.userId,
         matchId: parsed.data.matchId,
-        roomKey: "GLOBAL",
+        roomKey,
       },
     },
     include: {
@@ -158,12 +206,14 @@ export async function DELETE(request: NextRequest) {
     return Response.json({ error: "Datos invalidos" }, { status: 400 });
   }
 
+  const roomId = parsed.data.leagueId || "";
+  const roomKey = roomId || "GLOBAL";
   const prediction = await prisma.prediction.findUnique({
     where: {
       userId_matchId_roomKey: {
         userId: parsed.data.userId,
         matchId: parsed.data.matchId,
-        roomKey: "GLOBAL",
+        roomKey,
       },
     },
     include: {
