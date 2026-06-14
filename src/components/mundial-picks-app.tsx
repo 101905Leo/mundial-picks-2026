@@ -170,8 +170,10 @@ export function MundialPicksApp() {
     return days;
   }, []);
 
+  const isActionView = Boolean(user);
+
   return (
-    <main className="app-shell">
+    <main className={`app-shell ${isActionView ? "action-view" : ""}`}>
       <header className="topbar">
         <div className="brand">
           <img className="brand-logo-image" src="/logo-copa-mundial-2026.png" alt="Copa Mundial de la FIFA 2026™" />

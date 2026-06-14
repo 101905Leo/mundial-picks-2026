@@ -3241,6 +3241,29 @@ button {
   grid-column: 1 / -1;
 }
 
+.compact-room-command {
+  gap: 10px;
+  padding: 10px;
+}
+
+.room-control-bar {
+  align-items: end;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(260px, 1fr) auto;
+}
+
+.room-control-field {
+  display: grid;
+  gap: 5px;
+}
+
+.room-control-field label {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
 .admin-room-repair-note {
   align-items: center;
   background: rgba(245, 177, 66, 0.1);
@@ -3274,7 +3297,54 @@ button {
 }
 
 .room-selected-card {
+  align-items: center;
+  background:
+    linear-gradient(135deg, rgba(20, 83, 255, 0.14), rgba(56, 189, 248, 0.08)),
+    rgba(6, 10, 18, 0.74);
+  border: 1px solid rgba(93, 220, 255, 0.16);
+  border-left: 4px solid var(--premium-cyan);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
   grid-column: 1 / -1;
+  grid-template-columns: minmax(200px, 1fr) minmax(170px, auto) minmax(180px, auto) auto;
+  padding: 10px 12px;
+}
+
+.room-selected-card > div:first-child strong {
+  color: #fff;
+  display: block;
+}
+
+.room-selected-card > div:first-child span {
+  color: var(--muted);
+  display: block;
+  font-size: 0.86rem;
+}
+
+.room-selected-card .admin-user-stats,
+.room-selected-card .admin-user-badges,
+.room-selected-card .admin-user-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.room-selected-card .admin-user-stats span,
+.room-selected-card .admin-user-badges span {
+  background: rgba(2, 6, 14, 0.74);
+  border: 1px solid rgba(93, 220, 255, 0.14);
+  border-radius: 999px;
+  color: var(--muted);
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 800;
+  gap: 5px;
+  padding: 6px 9px;
+}
+
+.room-selected-card .admin-user-stats strong {
+  color: var(--gold-soft);
 }
 
 .admin-room-dashboard {
@@ -3285,6 +3355,19 @@ button {
   gap: 14px;
   grid-column: 1 / -1;
   padding: 16px;
+}
+
+.admin-room-dashboard.compact {
+  gap: 10px;
+  padding: 10px;
+}
+
+.room-dashboard-bar {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  min-height: 24px;
 }
 
 .admin-room-summary {
@@ -3327,6 +3410,15 @@ button {
   display: grid;
   gap: 14px;
   padding: 14px;
+}
+
+.admin-room-user-tools.compact {
+  gap: 10px;
+  padding: 10px;
+}
+
+.participant-control {
+  align-items: end;
 }
 
 .admin-room-user-card {
@@ -3921,6 +4013,8 @@ button {
   .inline-form,
   .score-form,
   .room-selected-tools,
+  .room-control-bar,
+  .room-selected-card,
   .super-room-selector-bar,
   .admin-room-summary,
   .admin-room-user-forms,
@@ -4096,6 +4190,10 @@ button {
   .hero-logo-image {
     height: 132px;
     width: 82px;
+  }
+
+  .app-shell.action-view .hero-band {
+    display: none;
   }
 
   .panel .section-title {

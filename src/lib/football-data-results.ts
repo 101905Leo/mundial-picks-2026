@@ -8,7 +8,15 @@ type FootballDataMatch = {
   homeTeam?: { name?: string; shortName?: string };
   awayTeam?: { name?: string; shortName?: string };
   score?: {
+    regularTime?: {
+      home?: number | null;
+      away?: number | null;
+    };
     fullTime?: {
+      home?: number | null;
+      away?: number | null;
+    };
+    halfTime?: {
       home?: number | null;
       away?: number | null;
     };
@@ -109,8 +117,9 @@ export async function updateWorldCupResultsFromFootballData() {
     const awayTeam = fixture.awayTeam?.name || fixture.awayTeam?.shortName;
     const fixtureDate = fixture.utcDate ? new Date(fixture.utcDate) : null;
     const status = statusFromFootballData(fixture.status);
-    const homeScore = fixture.score?.fullTime?.home ?? null;
-    const awayScore = fixture.score?.fullTime?.away ?? null;
+    const currentScore = fixture.score?.fullTime ?? fixture.score?.regularTime ?? fixture.score?.halfTime;
+    const homeScore = currentScore?.home ?? null;
+    const awayScore = currentScore?.away ?? null;
 
     if (!homeTeam || !awayTeam || !fixtureDate || status === null || homeScore === null || awayScore === null) {
       continue;

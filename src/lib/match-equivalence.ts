@@ -72,8 +72,14 @@ export function resolveEffectiveMatchScore<T extends MatchScore>(match: T, score
     equivalent.homeScore !== null &&
     equivalent.awayScore !== null &&
     (match.homeScore !== equivalent.homeScore || match.awayScore !== equivalent.awayScore);
+  const equivalentHasDifferentLiveScore =
+    equivalent.status === "LIVE" &&
+    match.status !== "FINISHED" &&
+    equivalent.homeScore !== null &&
+    equivalent.awayScore !== null &&
+    (match.homeScore !== equivalent.homeScore || match.awayScore !== equivalent.awayScore);
 
-  if (!currentHasNoScore && !equivalentIsMoreFinal && !equivalentHasDifferentFinalScore) {
+  if (!currentHasNoScore && !equivalentIsMoreFinal && !equivalentHasDifferentFinalScore && !equivalentHasDifferentLiveScore) {
     return match;
   }
 
