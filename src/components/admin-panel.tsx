@@ -1079,6 +1079,14 @@ export function AdminPanel({ matches, onChanged }: Props) {
                       >
                         Ocultar esta fecha
                       </button>
+                      <button
+                        className="button danger"
+                        disabled={publishedMatches === 0}
+                        onClick={() => publishAll(false)}
+                        type="button"
+                      >
+                        Ocultar todo
+                      </button>
                     </div>
                     <div className="publish-day-strip" aria-label="Fechas del calendario">
                       {matchDays.map((day) => {
