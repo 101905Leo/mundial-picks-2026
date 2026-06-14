@@ -354,7 +354,7 @@ export function MundialPicksApp() {
                   className={`tab ${activeView === "rooms" ? "active" : ""}`}
                   onClick={() => setActiveView("rooms")}
                 >
-                  Mi sala
+                  Salas
                 </button>
                 {user?.role === "ADMIN" ? (
                   <button

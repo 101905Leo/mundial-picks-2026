@@ -1,6 +1,7 @@
 import { updateWorldCupResultsFromApiFootball } from "@/lib/football-results";
 import { updateWorldCupResultsFromFootballData } from "@/lib/football-data-results";
 import { recalculateFinishedMatchPoints } from "@/lib/recalculate-points";
+import { syncRoomResultsFromGlobal } from "@/lib/sync-room-results";
 import { notifyWhatsAppUsers } from "@/lib/whatsapp";
 
 export function isAutomaticResultsWindow(date = new Date()) {
@@ -24,6 +25,7 @@ export async function updateResultsAndRecalculate(options: { enforceSchedule?: b
       matched: 0,
       updated: 0,
       updatedMatches: [],
+      roomMatchesSynced: 0,
       predictionsUpdated: 0,
       skipped: true,
       source: "Fuera del horario automatico de 14:00 a 00:59 America/Bogota",
@@ -65,11 +67,13 @@ export async function updateResultsAndRecalculate(options: { enforceSchedule?: b
     matched: 0,
     updated: 0,
     updatedMatches: [],
+    roomMatchesSynced: 0,
     source: "Sin proveedor de resultados configurado",
   };
+  const roomMatchesSynced = await syncRoomResultsFromGlobal();
   const predictionsUpdated = await recalculateFinishedMatchPoints();
 
-  if (resolvedResult.updatedMatches.length > 0) {
+  if (resolvedResult.updatedMatches.length > 0 || roomMatchesSynced > 0) {
     const scoreLines = resolvedResult.updatedMatches
       .slice(0, 8)
       .map((match) => `${match.homeTeam} ${match.homeScore}-${match.awayScore} ${match.awayTeam}`)
@@ -80,12 +84,13 @@ export async function updateResultsAndRecalculate(options: { enforceSchedule?: b
         : "";
 
     await notifyWhatsAppUsers(
-      `Resultados actualizados Copa Mundial de la FIFA 2026™:\n${scoreLines}${extraMatches}\nPicks recalculados: ${predictionsUpdated}.`,
+      `Resultados actualizados Copa Mundial de la FIFA 2026™:\n${scoreLines || "Salas sincronizadas con resultados existentes."}${extraMatches}\nPartidos de sala sincronizados: ${roomMatchesSynced}.\nPicks recalculados: ${predictionsUpdated}.`,
     );
   }
 
   return {
     ...resolvedResult,
+    roomMatchesSynced,
     predictionsUpdated,
   };
 }

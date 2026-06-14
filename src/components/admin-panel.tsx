@@ -329,10 +329,11 @@ export function AdminPanel({ matches, onChanged }: Props) {
       return;
     }
 
+    const syncNote = data.roomMatchesSynced ? ` Salas sincronizadas: ${data.roomMatchesSynced}.` : "";
     setMessage(
       isFinal
-        ? "Resultado final guardado y puntos recalculados"
-        : "Marcador parcial guardado y puntos actualizados en vivo.",
+        ? `Resultado final guardado y puntos recalculados.${syncNote}`
+        : `Marcador parcial guardado y puntos actualizados en vivo.${syncNote}`,
     );
     onChanged();
   }
@@ -419,7 +420,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
     }
 
     setMessage(
-      `API recibio: ${data.received ?? 0}. Relacionados: ${data.matched ?? 0}. Resultados revisados: ${data.checked}. Partidos actualizados: ${data.updated}. Picks recalculados: ${data.predictionsUpdated}.`,
+      `API recibio: ${data.received ?? 0}. Relacionados: ${data.matched ?? 0}. Resultados revisados: ${data.checked}. Partidos actualizados: ${data.updated}. Salas sincronizadas: ${data.roomMatchesSynced ?? 0}. Picks recalculados: ${data.predictionsUpdated}.`,
     );
     onChanged();
   }

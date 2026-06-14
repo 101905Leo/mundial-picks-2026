@@ -51,6 +51,11 @@ type RoomPredictionMatch = {
   awayScore: number | null;
 };
 
+function isActiveLeague(league: League) {
+  const expired = Boolean(league.expiresAt && new Date(league.expiresAt) <= new Date());
+  return (league.status ?? "ACTIVE") === "ACTIVE" && !expired;
+}
+
 export function LeaguePanel({ user }: Props) {
   const [leagues, setLeagues] = useState<League[]>([]);
   const [selectedLeague, setSelectedLeague] = useState<League | null>(null);
@@ -79,10 +84,12 @@ export function LeaguePanel({ user }: Props) {
       return;
     }
 
-    setLeagues(roomsData.leagues ?? []);
+    const loadedLeagues = (roomsData.leagues ?? []) as League[];
+    const loadedActiveLeagues = loadedLeagues.filter(isActiveLeague);
+    setLeagues(loadedLeagues);
     setSelectedLeague((current) => {
-      if (!current) return roomsData.leagues?.[0] ?? null;
-      return roomsData.leagues?.find((league: League) => league.id === current.id) ?? roomsData.leagues?.[0] ?? null;
+      if (!current) return loadedActiveLeagues[0] ?? loadedLeagues[0] ?? null;
+      return loadedLeagues.find((league) => league.id === current.id) ?? loadedActiveLeagues[0] ?? loadedLeagues[0] ?? null;
     });
   }
 
@@ -347,6 +354,7 @@ export function LeaguePanel({ user }: Props) {
   const leader = ranking[0] ?? null;
   const pointsBehindLeader = userRanking && leader ? Math.max(0, leader.points - userRanking.points) : 0;
   const roomHasExpired = Boolean(selectedLeague?.expiresAt && new Date(selectedLeague.expiresAt) <= new Date());
+  const activeLeagues = leagues.filter(isActiveLeague);
   const roomIsActivated = Boolean(
     selectedLeague?.paidAt ||
     ["APPROVED", "TRIAL", "MANUAL"].includes(selectedLeague?.paymentStatus ?? "") ||
@@ -392,9 +400,9 @@ export function LeaguePanel({ user }: Props) {
         </form>
 
         <div className="panel">
-          <h3>Tus salas</h3>
+          <h3>Salas activas</h3>
           <div className="tabs room-list">
-            {leagues.map((league) => (
+            {activeLeagues.map((league) => (
               <button
                 className="tab"
                 key={league.id}
@@ -408,7 +416,7 @@ export function LeaguePanel({ user }: Props) {
                 <span>{league.competition?.name ?? "Competición"}</span>
               </button>
             ))}
-            {!leagues.length ? <div className="empty">Crea una sala o entra con un código.</div> : null}
+            {!activeLeagues.length ? <div className="empty">Entra con un código para activar una sala aquí.</div> : null}
           </div>
         </div>
 
@@ -444,11 +452,11 @@ export function LeaguePanel({ user }: Props) {
                 <button className="button secondary" onClick={() => setRoomView("participants")} type="button">Editar sala</button>
                 <button className="button primary" onClick={copyInvitation} type="button">Copiar invitación</button>
                 <button className="button secondary" onClick={shareInvitation} type="button">Compartir por WhatsApp</button>
-                <button className="button secondary" onClick={() => setSelectedLeague(null)} type="button">Mis salas</button>
+                <button className="button secondary" onClick={() => setSelectedLeague(null)} type="button">Salas</button>
               </div>
             ) : (
               <div className="room-owner-actions">
-                <button className="button secondary" onClick={() => setSelectedLeague(null)} type="button">Mis salas</button>
+                <button className="button secondary" onClick={() => setSelectedLeague(null)} type="button">Salas</button>
               </div>
             )}
           </div>

@@ -1,7 +1,9 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import { recalculateFinishedMatchPoints } from "@/lib/recalculate-points";
 import { calculatePredictionPoints } from "@/lib/scoring";
+import { syncRoomResultsFromGlobal } from "@/lib/sync-room-results";
 import { resultSchema } from "@/lib/validators";
 import { notifyWhatsAppUsers } from "@/lib/whatsapp";
 
@@ -57,11 +59,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }),
   );
 
+  const roomMatchesSynced = match.roomId === null ? await syncRoomResultsFromGlobal() : 0;
+  const roomPredictionsRecalculated = roomMatchesSynced > 0 ? await recalculateFinishedMatchPoints() : 0;
+
   await notifyWhatsAppUsers(
     parsed.data.isFinal
       ? `Resultado final: ${match.homeTeam} ${match.homeScore}-${match.awayScore} ${match.awayTeam}. Ya se recalcularon los puntos.`
       : `Marcador parcial: ${match.homeTeam} ${match.homeScore}-${match.awayScore} ${match.awayTeam}. Puntos actualizados en vivo.`,
   );
 
-  return Response.json({ match });
+  return Response.json({ match, roomMatchesSynced, roomPredictionsRecalculated });
 }
