@@ -47,6 +47,72 @@ type RoomSummary = {
   incomeInCents: number;
 };
 
+type AdminRoomDashboard = {
+  summary: {
+    participants: number;
+    admins: number;
+    matches: number;
+    picks: number;
+    messages: number;
+    finishedMatches: number;
+    liveMatches: number;
+  };
+  participants: Array<{
+    id: string;
+    name: string;
+    phone: string;
+    isActive: boolean;
+    entryPaidAt: string | null;
+    role: "MEMBER" | "ADMIN";
+    joinedAt: string;
+  }>;
+  ranking: Array<{
+    id: string;
+    name: string;
+    phone: string;
+    isActive: boolean;
+    entryPaidAt: string | null;
+    roomRole: "MEMBER" | "ADMIN";
+    predictions: number;
+    points: number;
+    exactScores: number;
+  }>;
+  matches: Array<{
+    id: string;
+    homeTeam: string;
+    awayTeam: string;
+    group: string | null;
+    venue: string | null;
+    startsAt: string;
+    homeScore: number | null;
+    awayScore: number | null;
+    status: "SCHEDULED" | "LIVE" | "FINISHED";
+    isPublished: boolean;
+  }>;
+  predictions: Array<{
+    id: string;
+    homeScore: number;
+    awayScore: number;
+    points: number;
+    user: { id: string; name: string; phone: string };
+    match: {
+      id: string;
+      homeTeam: string;
+      awayTeam: string;
+      startsAt: string;
+      homeScore: number | null;
+      awayScore: number | null;
+      status: "SCHEDULED" | "LIVE" | "FINISHED";
+    };
+  }>;
+  messages: Array<{
+    id: string;
+    body: string;
+    createdAt: string;
+    user: { id: string; name: string; phone: string; role: "USER" | "ADMIN" };
+  }>;
+};
+
 function bogotaDateKey(date: Date) {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: "America/Bogota",
@@ -90,6 +156,8 @@ export function AdminPanel({ matches, onChanged }: Props) {
   const [roomSummary, setRoomSummary] = useState<RoomSummary>({ total: 0, activeRooms: 0, expiredRooms: 0, incomeInCents: 0 });
   const [selectedAdminRoomId, setSelectedAdminRoomId] = useState("");
   const [selectedSettingsRoomId, setSelectedSettingsRoomId] = useState("");
+  const [roomDashboard, setRoomDashboard] = useState<AdminRoomDashboard | null>(null);
+  const [roomDashboardLoading, setRoomDashboardLoading] = useState(false);
   const [selectedPublishDate, setSelectedPublishDate] = useState("");
   const publishedMatches = matches.filter((match) => match.isPublished).length;
   const resultLoadedMatches = matches.filter((match) => match.homeScore !== null && match.awayScore !== null).length;
@@ -168,9 +236,35 @@ export function AdminPanel({ matches, onChanged }: Props) {
     if (!usersLoaded) await loadUsers();
   }
 
+  async function loadRoomDashboard(roomId = selectedRoom?.id ?? "") {
+    if (!roomId) {
+      setRoomDashboard(null);
+      return;
+    }
+
+    setRoomDashboardLoading(true);
+    const response = await fetch(`/api/admin/rooms/${roomId}/dashboard`, { cache: "no-store" });
+    const data = await response.json().catch(() => ({}));
+    setRoomDashboardLoading(false);
+
+    if (!response.ok) {
+      setRoomDashboard(null);
+      setMessage(data.error ?? "No se pudo cargar el tablero de la sala");
+      return;
+    }
+
+    setRoomDashboard(data);
+  }
+
   useEffect(() => {
     loadRooms();
   }, []);
+
+  useEffect(() => {
+    if (adminView === "rooms" && selectedRoom?.id) {
+      loadRoomDashboard(selectedRoom.id);
+    }
+  }, [adminView, selectedRoom?.id]);
 
   useEffect(() => {
     if (!matchDays.length) {
@@ -259,6 +353,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
 
     setMessage(`${data.membership.user.name} ahora es ${data.membership.role === "ADMIN" ? "administrador" : "participante"} en ${data.room}.`);
     await loadRooms();
+    await loadRoomDashboard(String(formData.get("adminRoomId")));
   }
 
   async function updateRoomSettings(event: FormEvent<HTMLFormElement>) {
@@ -286,6 +381,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
     }
     setMessage(`Sala actualizada: ${data.room.name}`);
     await loadRooms();
+    await loadRoomDashboard(data.room.id);
   }
 
   async function deleteAdminRoom(room: AdminRoom) {
@@ -312,6 +408,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
       `${room.name}: resultados revisados ${data.roomMatchesMatched}. Actualizados ${data.roomMatchesSynced}. Ya sincronizados ${data.roomMatchesAlreadySynced}. Picks recalculados ${data.predictionsUpdated}.`,
     );
     await loadRooms();
+    await loadRoomDashboard(room.id);
     await onChanged();
   }
 
@@ -332,6 +429,7 @@ export function AdminPanel({ matches, onChanged }: Props) {
       `Se conservó ${data.keptRoom.name}. Salas eliminadas ${data.deletedRooms}. Resultados actualizados ${data.roomMatchesSynced}. Picks recalculados ${data.predictionsUpdated}.`,
     );
     await loadRooms();
+    await loadRoomDashboard(data.keptRoom.id);
     await onChanged();
   }
 
@@ -1702,8 +1800,113 @@ export function AdminPanel({ matches, onChanged }: Props) {
                   <div className="admin-user-actions">
                     <button className="button secondary" onClick={() => copyRoomInvitation(selectedRoom)} type="button">Copiar invitación</button>
                     <button className="button primary" onClick={() => syncSelectedRoomResults(selectedRoom)} type="button">Sincronizar resultados de esta sala</button>
+                    <button className="button secondary" onClick={() => loadRoomDashboard(selectedRoom.id)} type="button">Ver todo de esta sala</button>
                     <button className="button danger" onClick={() => deleteAdminRoom(selectedRoom)} type="button">Eliminar sala</button>
                   </div>
+                  <section className="admin-room-dashboard">
+                    <div className="section-title">
+                      <div>
+                        <span className="market-kicker">Vista completa de sala</span>
+                        <h3>{selectedRoom.name}</h3>
+                        <p className="muted">Aquí ves todo lo que pertenece solo a esta sala seleccionada.</p>
+                      </div>
+                      {roomDashboardLoading ? <span className="user-chip">Cargando...</span> : null}
+                    </div>
+                    {roomDashboard ? (
+                      <>
+                        <div className="admin-room-summary">
+                          <article><span>Participantes</span><strong>{roomDashboard.summary.participants}</strong></article>
+                          <article><span>Admins</span><strong>{roomDashboard.summary.admins}</strong></article>
+                          <article><span>Partidos</span><strong>{roomDashboard.summary.matches}</strong></article>
+                          <article><span>Picks</span><strong>{roomDashboard.summary.picks}</strong></article>
+                          <article><span>Finalizados</span><strong>{roomDashboard.summary.finishedMatches}</strong></article>
+                          <article><span>Chat</span><strong>{roomDashboard.summary.messages}</strong></article>
+                        </div>
+
+                        <div className="admin-room-grid">
+                          <section className="admin-room-section">
+                            <h3>Ranking de esta sala</h3>
+                            <div className="table-scroll">
+                              <table className="ranking">
+                                <thead>
+                                  <tr><th>#</th><th>Jugador</th><th>Picks</th><th>Exactos</th><th>Puntos</th></tr>
+                                </thead>
+                                <tbody>
+                                  {roomDashboard.ranking.map((entry, index) => (
+                                    <tr key={entry.id}>
+                                      <td>{index + 1}</td>
+                                      <td>{entry.name}</td>
+                                      <td>{entry.predictions}</td>
+                                      <td>{entry.exactScores}</td>
+                                      <td><strong>{entry.points}</strong></td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                            {!roomDashboard.ranking.length ? <div className="empty">No hay ranking para esta sala.</div> : null}
+                          </section>
+
+                          <section className="admin-room-section">
+                            <h3>Participantes</h3>
+                            <div className="admin-room-list">
+                              {roomDashboard.participants.map((participant) => (
+                                <article key={participant.id}>
+                                  <strong>{participant.name}</strong>
+                                  <span>{participant.phone} · {participant.role === "ADMIN" ? "Admin sala" : "Participante"} · {participant.isActive ? "Activo" : "Inactivo"}</span>
+                                </article>
+                              ))}
+                            </div>
+                          </section>
+
+                          <section className="admin-room-section">
+                            <h3>Partidos de la sala</h3>
+                            <div className="admin-room-list">
+                              {roomDashboard.matches.map((match) => (
+                                <article key={match.id}>
+                                  <strong>{match.homeTeam} vs {match.awayTeam}</strong>
+                                  <span>
+                                    {new Date(match.startsAt).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" })} · {match.status}
+                                    {" · "}
+                                    {match.homeScore !== null && match.awayScore !== null ? `${match.homeScore}-${match.awayScore}` : "Sin marcador"}
+                                  </span>
+                                </article>
+                              ))}
+                            </div>
+                          </section>
+
+                          <section className="admin-room-section">
+                            <h3>Picks guardados</h3>
+                            <div className="admin-room-list compact">
+                              {roomDashboard.predictions.map((prediction) => (
+                                <article key={prediction.id}>
+                                  <strong>{prediction.user.name}: {prediction.homeScore}-{prediction.awayScore}</strong>
+                                  <span>{prediction.match.homeTeam} vs {prediction.match.awayTeam} · {prediction.points} pts</span>
+                                </article>
+                              ))}
+                            </div>
+                            {!roomDashboard.predictions.length ? <div className="empty">No hay picks guardados en esta sala.</div> : null}
+                          </section>
+
+                          <section className="admin-room-section admin-room-section-wide">
+                            <h3>Chat de la sala</h3>
+                            <div className="admin-room-list compact">
+                              {roomDashboard.messages.map((chatMessage) => (
+                                <article key={chatMessage.id}>
+                                  <strong>{chatMessage.user.name}</strong>
+                                  <span>{new Date(chatMessage.createdAt).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" })}</span>
+                                  <p>{chatMessage.body}</p>
+                                </article>
+                              ))}
+                            </div>
+                            {!roomDashboard.messages.length ? <div className="empty">No hay mensajes en esta sala.</div> : null}
+                          </section>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="empty">Selecciona una sala para ver su tablero completo.</div>
+                    )}
+                  </section>
                   <div className="room-selected-tools">
                     <form className="form" onSubmit={updateRoomSettings}>
                       <input name="settingsRoomId" type="hidden" value={selectedRoom.id} />

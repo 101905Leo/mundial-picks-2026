@@ -2789,6 +2789,92 @@ button {
   background: rgba(5, 7, 13, 0.42);
 }
 
+.admin-room-dashboard {
+  background: rgba(5, 7, 13, 0.38);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  grid-column: 1 / -1;
+  padding: 16px;
+}
+
+.admin-room-summary {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(6, minmax(110px, 1fr));
+}
+
+.admin-room-summary article {
+  background: rgba(18, 24, 37, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.admin-room-summary span,
+.admin-room-list span {
+  color: var(--muted);
+  display: block;
+  font-size: 0.82rem;
+}
+
+.admin-room-summary strong {
+  color: var(--gold);
+  display: block;
+  font-size: 1.5rem;
+  margin-top: 4px;
+}
+
+.admin-room-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-room-section {
+  background: rgba(12, 17, 28, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 14px;
+  min-width: 0;
+}
+
+.admin-room-section h3 {
+  margin-top: 0;
+}
+
+.admin-room-section-wide {
+  grid-column: 1 / -1;
+}
+
+.admin-room-list {
+  display: grid;
+  gap: 8px;
+  max-height: 360px;
+  overflow: auto;
+}
+
+.admin-room-list article {
+  background: rgba(5, 7, 13, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.admin-room-list.compact {
+  max-height: 420px;
+}
+
+.admin-room-list p {
+  color: #fff;
+  margin: 8px 0 0;
+}
+
+.table-scroll {
+  overflow: auto;
+}
+
 .inline-actions {
   display: flex;
   flex-wrap: wrap;
@@ -3193,7 +3279,9 @@ button {
   .inline-form,
   .score-form,
   .room-selected-tools,
-  .super-room-selector-bar {
+  .super-room-selector-bar,
+  .admin-room-summary,
+  .admin-room-grid {
     grid-template-columns: 1fr;
   }
 
