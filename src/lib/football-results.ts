@@ -30,6 +30,8 @@ type ApiFootballResponse = {
   response?: ApiFootballFixture[];
 };
 
+type LocalMatch = Awaited<ReturnType<typeof prisma.match.findMany>>[number];
+
 const finalStatuses = new Set(["FT", "AET", "PEN"]);
 const liveStatuses = new Set(["1H", "HT", "2H", "ET", "BT", "P", "SUSP", "INT", "LIVE"]);
 
@@ -60,6 +62,25 @@ function statusFromApi(shortStatus?: string): MatchStatus | null {
   if (finalStatuses.has(shortStatus)) return "FINISHED";
   if (liveStatuses.has(shortStatus)) return "LIVE";
   return null;
+}
+
+function findMatchingLocalMatch(matches: LocalMatch[], directSourceKey: string | null, fixtureDate: Date, homeKey: string, awayKey: string) {
+  if (directSourceKey) {
+    const exactSourceMatch = matches.find((item) => item.sourceKey === directSourceKey);
+    if (exactSourceMatch) return exactSourceMatch;
+  }
+
+  return matches.find((item) => {
+    if (!closeKickoff(item.startsAt, fixtureDate)) return false;
+    return normalizeTeam(item.homeTeam) === homeKey && normalizeTeam(item.awayTeam) === awayKey;
+  });
+}
+
+function canAssignSourceKey(matches: LocalMatch[], match: LocalMatch, directSourceKey: string | null) {
+  if (!directSourceKey || match.sourceKey === directSourceKey) return false;
+
+  const owner = matches.find((item) => item.sourceKey === directSourceKey);
+  return !owner || owner.id === match.id;
 }
 
 export async function updateWorldCupResultsFromApiFootball() {
@@ -132,24 +153,21 @@ export async function updateWorldCupResultsFromApiFootball() {
     const homeKey = normalizeTeam(homeTeam);
     const awayKey = normalizeTeam(awayTeam);
 
-    const match = matches.find((item) => {
-      if (directSourceKey && item.sourceKey === directSourceKey) return true;
-      if (!closeKickoff(item.startsAt, fixtureDate)) return false;
-      return normalizeTeam(item.homeTeam) === homeKey && normalizeTeam(item.awayTeam) === awayKey;
-    });
+    const match = findMatchingLocalMatch(matches, directSourceKey, fixtureDate, homeKey, awayKey);
 
     if (!match) continue;
     matched += 1;
 
     const needsUpdate = match.homeScore !== homeScore || match.awayScore !== awayScore || match.status !== status;
-    const needsSourceKey = Boolean(directSourceKey && match.sourceKey !== directSourceKey);
+    const shouldAssignSourceKey = canAssignSourceKey(matches, match, directSourceKey);
+    const needsSourceKey = shouldAssignSourceKey;
 
     if (!needsUpdate && !needsSourceKey) continue;
 
     const updatedMatch = await prisma.match.update({
       where: { id: match.id },
       data: {
-        ...(directSourceKey ? { sourceKey: directSourceKey } : {}),
+        ...(shouldAssignSourceKey && directSourceKey ? { sourceKey: directSourceKey } : {}),
         homeScore,
         awayScore,
         status,
