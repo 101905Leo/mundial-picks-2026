@@ -6,13 +6,18 @@
   --ink: #f8fafc;
   --muted: #aab4c8;
   --line: rgba(255, 255, 255, 0.1);
-  --primary: #2356d8;
+  --primary: #d7ff47;
   --primary-dark: #07111f;
   --red: #e21e37;
   --gold: #f4bd4f;
   --gold-soft: #ffe5a3;
-  --blue: #2a75ff;
-  --green-accent: #2fd184;
+  --lime: #d7ff47;
+  --lime-soft: #ecff9a;
+  --lime-glow: rgba(215, 255, 71, 0.32);
+  --blue: #d7ff47;
+  --green-accent: #54d86a;
+  --premium-gradient: linear-gradient(135deg, var(--lime), var(--green-accent));
+  --premium-panel: linear-gradient(145deg, rgba(31, 38, 55, 0.94), rgba(8, 12, 20, 0.96));
   --shadow: 0 18px 60px rgba(0, 0, 0, 0.38);
 }
 
@@ -23,8 +28,8 @@
 body {
   margin: 0;
   background:
-    radial-gradient(circle at 78% 0%, rgba(226, 30, 55, 0.16), transparent 32%),
-    radial-gradient(circle at 10% 18%, rgba(42, 117, 255, 0.18), transparent 30%),
+    radial-gradient(circle at 78% 0%, rgba(244, 189, 79, 0.16), transparent 32%),
+    radial-gradient(circle at 10% 18%, rgba(215, 255, 71, 0.16), transparent 30%),
     linear-gradient(180deg, #05070d 0%, #0a0d15 46%, #05070d 100%);
   color: var(--ink);
   font-family:
@@ -95,7 +100,7 @@ button {
 
 .entry-panel {
   align-items: center;
-  background: linear-gradient(145deg, rgba(31, 38, 55, 0.92), rgba(12, 16, 25, 0.92));
+  background: var(--premium-panel);
   border: 1px solid rgba(244, 189, 79, 0.24);
   border-radius: 8px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.24);
@@ -105,7 +110,7 @@ button {
 }
 
 .entry-panel.active {
-  border-color: rgba(47, 209, 132, 0.38);
+  border-color: var(--lime-glow);
 }
 
 .entry-panel > div {
@@ -190,7 +195,7 @@ button {
 }
 
 .hero-band::after {
-  background: linear-gradient(90deg, var(--blue), var(--gold), var(--red));
+  background: linear-gradient(90deg, var(--lime), var(--gold), var(--green-accent));
   bottom: 0;
   content: "";
   height: 3px;
@@ -278,7 +283,7 @@ button {
 
 .landing-intro {
   background:
-    linear-gradient(135deg, rgba(35, 86, 216, 0.28), rgba(226, 30, 55, 0.14)),
+    linear-gradient(135deg, rgba(215, 255, 71, 0.28), rgba(226, 30, 55, 0.14)),
     linear-gradient(180deg, rgba(23, 30, 45, 0.96), rgba(9, 13, 22, 0.98));
 }
 
@@ -291,7 +296,7 @@ button {
 
 .mobile-note {
   background:
-    radial-gradient(circle at 100% 0%, rgba(47, 209, 132, 0.14), transparent 38%),
+    radial-gradient(circle at 100% 0%, rgba(84, 216, 106, 0.14), transparent 38%),
     linear-gradient(180deg, rgba(18, 24, 37, 0.97), rgba(9, 12, 20, 0.98));
 }
 
@@ -316,7 +321,7 @@ button {
 
 .mobile-note-steps span {
   background: rgba(5, 7, 13, 0.58);
-  border: 1px solid rgba(47, 209, 132, 0.18);
+  border: 1px solid rgba(84, 216, 106, 0.18);
   border-radius: 8px;
   color: #e8fff4;
   font-weight: 800;
@@ -729,9 +734,9 @@ button {
 
 .news-panel {
   background:
-    radial-gradient(circle at 100% 0%, rgba(42, 117, 255, 0.18), transparent 34%),
+    radial-gradient(circle at 100% 0%, rgba(215, 255, 71, 0.18), transparent 34%),
     linear-gradient(180deg, rgba(18, 24, 37, 0.97), rgba(9, 12, 20, 0.98));
-  border: 1px solid rgba(42, 117, 255, 0.22);
+  border: 1px solid rgba(215, 255, 71, 0.22);
   border-radius: 8px;
   box-shadow: var(--shadow);
   display: grid;
@@ -740,7 +745,7 @@ button {
 }
 
 .news-panel.compact {
-  border-color: rgba(42, 117, 255, 0.24);
+  border-color: rgba(215, 255, 71, 0.24);
   border-radius: 8px;
   box-shadow: 0 12px 34px rgba(0, 0, 0, 0.22);
   padding: 14px;
@@ -1047,16 +1052,16 @@ button {
 
 .tab.active,
 .button.primary {
-  background: linear-gradient(135deg, var(--blue), #123fb9 52%, #0d2b7e);
-  border-color: rgba(130, 171, 255, 0.54);
-  box-shadow: 0 12px 28px rgba(35, 86, 216, 0.28);
-  color: #fff;
+  background: var(--premium-gradient);
+  border-color: rgba(236, 255, 154, 0.62);
+  box-shadow: 0 12px 28px rgba(215, 255, 71, 0.18);
+  color: #07111f;
 }
 
 .tab.active {
   box-shadow:
     inset 0 -3px 0 var(--gold),
-    0 10px 24px rgba(35, 86, 216, 0.22);
+    0 10px 24px rgba(215, 255, 71, 0.18);
 }
 
 .button.secondary {
@@ -1190,7 +1195,7 @@ button {
 
 .league-link.active,
 .league-link:hover {
-  background: linear-gradient(90deg, rgba(42, 117, 255, 0.24), rgba(244, 189, 79, 0.1));
+  background: linear-gradient(90deg, rgba(215, 255, 71, 0.24), rgba(244, 189, 79, 0.1));
   color: #fff;
 }
 
@@ -1225,7 +1230,7 @@ button {
 .league-room-hero {
   align-items: center;
   background:
-    linear-gradient(115deg, rgba(47, 209, 132, 0.16), rgba(42, 117, 255, 0.11) 44%, rgba(226, 30, 55, 0.09)),
+    linear-gradient(115deg, rgba(84, 216, 106, 0.16), rgba(215, 255, 71, 0.11) 44%, rgba(226, 30, 55, 0.09)),
     linear-gradient(180deg, rgba(18, 24, 37, 0.98), rgba(8, 11, 18, 0.98));
   display: grid;
   gap: 16px;
@@ -1249,7 +1254,7 @@ button {
 .public-room-promo {
   align-items: center;
   background:
-    linear-gradient(105deg, rgba(42, 117, 255, 0.18), rgba(244, 189, 79, 0.12) 55%, rgba(226, 30, 55, 0.12)),
+    linear-gradient(105deg, rgba(215, 255, 71, 0.18), rgba(244, 189, 79, 0.12) 55%, rgba(226, 30, 55, 0.12)),
     rgba(10, 14, 23, 0.98);
   display: grid;
   gap: 18px;
@@ -1331,7 +1336,7 @@ button {
 .room-payment-required {
   align-items: center;
   background:
-    linear-gradient(100deg, rgba(244, 189, 79, 0.16), rgba(42, 117, 255, 0.11)),
+    linear-gradient(100deg, rgba(244, 189, 79, 0.16), rgba(215, 255, 71, 0.11)),
     rgba(10, 14, 23, 0.98);
   display: grid;
   gap: 18px;
@@ -1586,7 +1591,7 @@ button {
 
 .league-room-stats span {
   background: rgba(5, 7, 13, 0.58);
-  border: 1px solid rgba(47, 209, 132, 0.18);
+  border: 1px solid rgba(84, 216, 106, 0.18);
   border-radius: 8px;
   color: var(--muted);
   display: grid;
@@ -1636,8 +1641,8 @@ button {
 }
 
 .member-status.active {
-  background: rgba(47, 209, 132, 0.17);
-  border: 1px solid rgba(47, 209, 132, 0.34);
+  background: rgba(84, 216, 106, 0.17);
+  border: 1px solid rgba(84, 216, 106, 0.34);
   color: #a9f7ca;
 }
 
@@ -1755,7 +1760,7 @@ button {
 
 .plans-shell {
   background:
-    linear-gradient(135deg, rgba(47, 209, 132, 0.08), transparent 42%),
+    linear-gradient(135deg, rgba(84, 216, 106, 0.08), transparent 42%),
     #070a10;
   color: var(--ink);
   min-height: 100vh;
@@ -1884,7 +1889,7 @@ button {
 }
 
 .competition-card > strong.competition-active {
-  color: #9bf0c0;
+  color: #ecff9a;
 }
 
 .competition-create .inline-form {
@@ -2032,7 +2037,7 @@ button {
 }
 
 .standing-head {
-  background: rgba(42, 117, 255, 0.14);
+  background: rgba(215, 255, 71, 0.14);
   color: var(--muted);
   font-size: 0.72rem;
   font-weight: 900;
@@ -2051,7 +2056,7 @@ button {
 .market-header {
   align-items: center;
   background:
-    linear-gradient(90deg, rgba(42, 117, 255, 0.2), transparent 46%),
+    linear-gradient(90deg, rgba(215, 255, 71, 0.2), transparent 46%),
     rgba(6, 9, 16, 0.92);
   border-bottom: 1px solid rgba(244, 189, 79, 0.18);
   display: flex;
@@ -2063,7 +2068,7 @@ button {
 .countdown-panel {
   align-items: center;
   background:
-    linear-gradient(90deg, rgba(42, 117, 255, 0.28), rgba(226, 30, 55, 0.18)),
+    linear-gradient(90deg, rgba(215, 255, 71, 0.28), rgba(226, 30, 55, 0.18)),
     #070b13;
   border-bottom: 1px solid var(--line);
   display: flex;
@@ -2279,7 +2284,7 @@ button {
 
 .market-row:hover {
   background:
-    linear-gradient(90deg, rgba(42, 117, 255, 0.12), rgba(244, 189, 79, 0.08)),
+    linear-gradient(90deg, rgba(215, 255, 71, 0.12), rgba(244, 189, 79, 0.08)),
     #171e2d;
 }
 
@@ -2975,7 +2980,7 @@ button {
 
 .publish-card.published {
   border-left-color: var(--green-accent);
-  box-shadow: inset 0 0 0 1px rgba(47, 209, 132, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(84, 216, 106, 0.1);
 }
 
 .publish-match-main {
@@ -3035,8 +3040,8 @@ button {
 }
 
 .status-live {
-  background: rgba(47, 209, 132, 0.13);
-  color: #8df0ba;
+  background: rgba(84, 216, 106, 0.13);
+  color: #ecff9a;
 }
 
 .status-hidden {
@@ -3258,7 +3263,7 @@ button {
 
 .admin-user-stats span {
   background: rgba(5, 7, 13, 0.58);
-  border: 1px solid rgba(47, 209, 132, 0.18);
+  border: 1px solid rgba(84, 216, 106, 0.18);
   border-radius: 8px;
   color: var(--muted);
   display: grid;
@@ -3352,8 +3357,8 @@ button {
 }
 
 .status.SCHEDULED {
-  background: rgba(42, 117, 255, 0.16);
-  color: #a9c5ff;
+  background: rgba(215, 255, 71, 0.16);
+  color: #ecff9a;
 }
 
 .status.FINISHED {
@@ -3391,7 +3396,7 @@ button {
 .ranking-hero {
   align-items: center;
   background:
-    radial-gradient(circle at 10% 0%, rgba(47, 209, 132, 0.16), transparent 34%),
+    radial-gradient(circle at 10% 0%, rgba(84, 216, 106, 0.16), transparent 34%),
     linear-gradient(135deg, rgba(13, 41, 30, 0.92), rgba(8, 11, 18, 0.98) 56%, rgba(5, 7, 13, 0.98));
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
@@ -3406,7 +3411,7 @@ button {
 }
 
 .ranking-hero::after {
-  background: linear-gradient(90deg, rgba(42, 117, 255, 0.85), rgba(244, 189, 79, 0.9), rgba(226, 30, 55, 0.92));
+  background: linear-gradient(90deg, rgba(215, 255, 71, 0.85), rgba(244, 189, 79, 0.9), rgba(226, 30, 55, 0.92));
   bottom: 0;
   content: "";
   height: 3px;
@@ -3417,7 +3422,7 @@ button {
 
 .ranking-hero .market-kicker,
 .ranking-board .market-kicker {
-  color: #5ff0b0;
+  color: #d7ff47;
   letter-spacing: 0.38em;
 }
 
@@ -3506,7 +3511,7 @@ button {
 }
 
 .ranking-stat-grid small {
-  color: #5ff0b0;
+  color: #d7ff47;
   font-weight: 900;
 }
 
@@ -3585,7 +3590,7 @@ button {
 }
 
 .ranking.big tr.current-user {
-  background: linear-gradient(90deg, rgba(42, 117, 255, 0.18), rgba(244, 189, 79, 0.08));
+  background: linear-gradient(90deg, rgba(215, 255, 71, 0.18), rgba(244, 189, 79, 0.08));
 }
 
 .ranking.big tr.current-user td:first-child {
