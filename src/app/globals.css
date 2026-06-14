@@ -2482,6 +2482,53 @@ button {
   padding-right: 4px;
 }
 
+.publish-day-list {
+  display: grid;
+  gap: 14px;
+  max-height: 620px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.publish-day-card {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+
+.publish-day-header {
+  align-items: center;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.publish-day-header h4 {
+  color: #fff;
+  font-size: 1rem;
+  margin: 2px 0;
+  text-transform: capitalize;
+}
+
+.publish-day-header small {
+  color: var(--muted);
+}
+
+.publish-day-actions {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(120px, 1fr));
+}
+
+.publish-list.compact {
+  max-height: none;
+  overflow: visible;
+  padding-right: 0;
+}
+
 .publish-card {
   align-items: center;
   background: linear-gradient(180deg, rgba(16, 21, 33, 0.98), rgba(8, 11, 18, 0.98));
@@ -3224,6 +3271,11 @@ button {
   .publish-card,
   .admin-user-card {
     align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .publish-day-header,
+  .publish-day-actions {
     grid-template-columns: 1fr;
   }
 

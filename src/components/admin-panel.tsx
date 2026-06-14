@@ -47,6 +47,29 @@ type RoomSummary = {
   incomeInCents: number;
 };
 
+function bogotaDateKey(date: Date) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Bogota",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const year = parts.find((part) => part.type === "year")?.value ?? "0000";
+  const month = parts.find((part) => part.type === "month")?.value ?? "00";
+  const day = parts.find((part) => part.type === "day")?.value ?? "00";
+
+  return `${year}-${month}-${day}`;
+}
+
+function readableBogotaDate(dateKey: string) {
+  return new Date(`${dateKey}T12:00:00-05:00`).toLocaleDateString("es-CO", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 export function AdminPanel({ matches, onChanged }: Props) {
   const [message, setMessage] = useState("");
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -66,6 +89,19 @@ export function AdminPanel({ matches, onChanged }: Props) {
   const playedPublishedMatches = matches
     .filter((match) => match.isPublished && new Date(match.startsAt) <= new Date())
     .sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime());
+  const matchDays = [...matches]
+    .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())
+    .reduce<Array<{ date: string; label: string; matches: Match[]; published: number }>>((days, match) => {
+      const date = bogotaDateKey(new Date(match.startsAt));
+      let day = days.find((item) => item.date === date);
+      if (!day) {
+        day = { date, label: readableBogotaDate(date), matches: [], published: 0 };
+        days.push(day);
+      }
+      day.matches.push(match);
+      if (match.isPublished) day.published += 1;
+      return days;
+    }, []);
 
   async function loadUsers() {
     const response = await fetch("/api/admin/users");
@@ -721,6 +757,30 @@ export function AdminPanel({ matches, onChanged }: Props) {
     onChanged();
   }
 
+  async function publishDay(date: string, publish: boolean) {
+    setMessage("");
+    const label = readableBogotaDate(date);
+    const confirmed = window.confirm(
+      publish ? `Publicar todos los partidos de ${label}?` : `Ocultar todos los partidos de ${label}?`,
+    );
+    if (!confirmed) return;
+
+    const response = await fetch("/api/admin/matches/publish-day", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date, publish }),
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      setMessage(data.error ?? "No se pudo actualizar la fecha");
+      return;
+    }
+
+    setMessage(`${publish ? "Publicados" : "Ocultados"} ${data.updated} partidos de ${label}`);
+    onChanged();
+  }
+
   async function closeMatch(match: Match) {
     setMessage("");
 
@@ -938,52 +998,92 @@ export function AdminPanel({ matches, onChanged }: Props) {
                   Publicar todas
                 </button>
               </div>
-              <div className="publish-list">
-                {matches.map((match) => (
-                  <article className={`publish-card ${match.isPublished ? "published" : ""}`} key={match.id}>
-                    <div className="publish-teams">
-                      <span>
-                        <strong>{flagForTeam(match.homeTeam)}</strong>
-                        {match.homeTeam}
-                      </span>
-                      <span>
-                        <strong>{flagForTeam(match.awayTeam)}</strong>
-                        {match.awayTeam}
-                      </span>
+              <div className="publish-day-list">
+                {matchDays.map((day) => (
+                  <section className="publish-day-card" key={day.date}>
+                    <div className="publish-day-header">
+                      <div>
+                        <span className="market-kicker">{day.date}</span>
+                        <h4>{day.label}</h4>
+                        <small>
+                          {day.published}/{day.matches.length} publicados
+                        </small>
+                      </div>
+                      <div className="publish-day-actions">
+                        <button
+                          className="button primary"
+                          disabled={day.published === day.matches.length}
+                          onClick={() => publishDay(day.date, true)}
+                          type="button"
+                        >
+                          Publicar día
+                        </button>
+                        <button
+                          className="button secondary"
+                          disabled={day.published === 0}
+                          onClick={() => publishDay(day.date, false)}
+                          type="button"
+                        >
+                          Ocultar día
+                        </button>
+                      </div>
                     </div>
-                    <div className="publish-meta">
-                      <span>{new Date(match.startsAt).toLocaleString("es", { dateStyle: "medium", timeStyle: "short" })}</span>
-                      {match.group ? <span>{match.group}</span> : null}
-                      <strong>{match.isPublished ? "Publicado" : "Oculto"}</strong>
+                    <div className="publish-list compact">
+                      {day.matches.map((match) => (
+                        <article className={`publish-card ${match.isPublished ? "published" : ""}`} key={match.id}>
+                          <div className="publish-teams">
+                            <span>
+                              <strong>{flagForTeam(match.homeTeam)}</strong>
+                              {match.homeTeam}
+                            </span>
+                            <span>
+                              <strong>{flagForTeam(match.awayTeam)}</strong>
+                              {match.awayTeam}
+                            </span>
+                          </div>
+                          <div className="publish-meta">
+                            <span>
+                              {new Date(match.startsAt).toLocaleTimeString("es-CO", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                timeZone: "America/Bogota",
+                              })}
+                            </span>
+                            {match.group ? <span>{match.group}</span> : null}
+                            <strong>{match.isPublished ? "Publicado" : "Oculto"}</strong>
+                          </div>
+                          <div className="publish-actions">
+                            <button
+                              className="button primary"
+                              disabled={match.isPublished}
+                              onClick={() => publishMatch(match, true)}
+                              type="button"
+                            >
+                              Publicar
+                            </button>
+                            <button
+                              className="button secondary"
+                              disabled={!match.isPublished}
+                              onClick={() => publishMatch(match, false)}
+                              type="button"
+                            >
+                              Ocultar
+                            </button>
+                            <button
+                              className="button danger"
+                              disabled={!match.isPublished || match.status === "FINISHED"}
+                              onClick={() => closeMatch(match)}
+                              type="button"
+                            >
+                              Cerrar
+                            </button>
+                          </div>
+                        </article>
+                      ))}
                     </div>
-                    <div className="publish-actions">
-                      <button
-                        className="button primary"
-                        disabled={match.isPublished}
-                        onClick={() => publishMatch(match, true)}
-                        type="button"
-                      >
-                        Publicar
-                      </button>
-                      <button
-                        className="button secondary"
-                        disabled={!match.isPublished}
-                        onClick={() => publishMatch(match, false)}
-                        type="button"
-                      >
-                        Ocultar
-                      </button>
-                      <button
-                        className="button danger"
-                        disabled={!match.isPublished || match.status === "FINISHED"}
-                        onClick={() => closeMatch(match)}
-                        type="button"
-                      >
-                        Cerrar
-                      </button>
-                    </div>
-                  </article>
+                  </section>
                 ))}
+                {!matchDays.length ? <div className="empty">Todavía no hay partidos cargados.</div> : null}
               </div>
             </section>
             <form className="form" onSubmit={createMatch}>

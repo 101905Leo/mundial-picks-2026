@@ -19,9 +19,9 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Fecha invalida" }, { status: 400 });
   }
 
-  const start = new Date(`${parsed.data.date}T00:00:00.000Z`);
+  const start = new Date(`${parsed.data.date}T00:00:00.000-05:00`);
   const end = new Date(start);
-  end.setUTCDate(end.getUTCDate() + 1);
+  end.setDate(end.getDate() + 1);
 
   const result = await prisma.match.updateMany({
     where: {
