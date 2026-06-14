@@ -59,10 +59,6 @@ export async function updateResultsAndRecalculate(options: { enforceSchedule?: b
     }
   }
 
-  if (!result && providers.length > 0) {
-    throw new Error(`Ningun proveedor pudo actualizar resultados. ${providerErrors.join(" | ")}`);
-  }
-
   const resolvedResult = result ?? {
     checked: 0,
     received: 0,
@@ -72,7 +68,10 @@ export async function updateResultsAndRecalculate(options: { enforceSchedule?: b
     roomMatchesSynced: 0,
     roomMatchesMatched: 0,
     roomMatchesAlreadySynced: 0,
-    source: "Sin proveedor de resultados configurado",
+    source:
+      providers.length > 0
+        ? `Proveedor externo sin actualización: ${providerErrors.join(" | ")}`
+        : "Sin proveedor de resultados configurado",
   };
   const roomSync = await syncRoomResultsFromGlobal();
   const roomMatchesSynced = roomSync.updated;
@@ -99,5 +98,6 @@ export async function updateResultsAndRecalculate(options: { enforceSchedule?: b
     roomMatchesMatched: roomSync.matched,
     roomMatchesAlreadySynced: roomSync.alreadySynced,
     predictionsUpdated,
+    providerErrors,
   };
 }

@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
+import { removeSuperAdminRoomMemberships } from "@/lib/remove-super-admin-room-memberships";
 import { joinLeagueSchema } from "@/lib/validators";
 
 export async function POST(request: NextRequest) {
@@ -25,6 +26,8 @@ export async function POST(request: NextRequest) {
   if (user!.role === "ADMIN") {
     return Response.json({ league, membership: null, spectator: true });
   }
+
+  await removeSuperAdminRoomMemberships();
 
   if (!league.paidAt || !["APPROVED", "TRIAL", "MANUAL"].includes(league.paymentStatus)) {
     return Response.json({ error: "Esta sala todavía no ha confirmado el pago de su cupo" }, { status: 403 });

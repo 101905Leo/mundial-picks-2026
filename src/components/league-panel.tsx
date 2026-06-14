@@ -399,7 +399,7 @@ export function LeaguePanel({ user }: Props) {
         {isSuperAdmin ? (
           <section className="panel form room-command-center">
             <span className="market-kicker">Super usuario</span>
-            <h3>Salas-usuario</h3>
+            <h3>Selecciona una sala</h3>
             <p className="muted">Los cambios se aplican solo a la sala que elijas. Cada sala conserva sus participantes, normas, ranking y chat propios.</p>
             <div className="form-row">
               <label htmlFor="room-selector">Sala</label>

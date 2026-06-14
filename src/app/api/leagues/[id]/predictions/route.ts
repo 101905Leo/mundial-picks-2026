@@ -32,9 +32,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const roomMembers = await prisma.leagueMembership.findMany({
     where: { leagueId: id },
-    select: { userId: true },
+    select: { userId: true, user: { select: { role: true } } },
   });
-  const memberIds = roomMembers.map((member) => member.userId);
+  const memberIds = roomMembers
+    .filter((member) => member.user.role !== "ADMIN")
+    .map((member) => member.userId);
 
   const ownPublishedMatches = await prisma.match.count({
     where: { isPublished: true, ...roomOwnedMatchWhere(league) },

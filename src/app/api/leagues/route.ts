@@ -41,6 +41,13 @@ export async function POST(request: NextRequest) {
   const { user, response } = await requireUser(request);
   if (response) return response;
 
+  if (user!.role === "ADMIN") {
+    return Response.json(
+      { error: "El super usuario administra la app, pero no puede crear salas como participante." },
+      { status: 403 },
+    );
+  }
+
   const body = await request.json();
   const parsed = leagueSchema.safeParse(body);
 

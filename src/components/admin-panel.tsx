@@ -39,7 +39,7 @@ type AdminRoom = {
   owner: { id: string; name: string; phone: string };
   memberships: Array<{
     role: "MEMBER" | "ADMIN";
-    user: { id: string; name: string; phone: string };
+    user: { id: string; name: string; phone: string; role: "USER" | "ADMIN" };
   }>;
 };
 
@@ -192,6 +192,12 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
     adminRooms.find((room) => room.id === selectedSettingsRoomId) ??
     adminRooms.find((room) => room.id === selectedAdminRoomId) ??
     null;
+  const selectedRoomMemberships = selectedRoom?.memberships.filter((membership) => membership.user.role !== "ADMIN") ?? [];
+  const roomAdminRows = adminRooms.flatMap((room) =>
+    room.memberships
+      .filter((membership) => membership.role === "ADMIN" && membership.user.role !== "ADMIN")
+      .map((membership) => ({ room, user: membership.user })),
+  );
   const selectedRoomParticipant =
     roomDashboard?.participants.find((participant) => participant.id === selectedRoomUserId) ?? null;
   const selectedRoomRanking =
@@ -675,8 +681,11 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
       data.roomMatchesAlreadySynced > 0
         ? ` Salas ya sincronizadas: ${data.roomMatchesAlreadySynced}.`
         : "";
+    const providerNote = Array.isArray(data.providerErrors) && data.providerErrors.length
+      ? ` Aviso proveedor: ${data.providerErrors[0]}`
+      : "";
     setMessage(
-      `API recibió: ${data.received ?? 0}. Relacionados: ${data.matched ?? 0}. Resultados revisados: ${data.checked}. Partidos actualizados: ${data.updated}. Salas revisadas: ${data.roomMatchesMatched ?? 0}. Salas sincronizadas: ${data.roomMatchesSynced ?? 0}.${unchangedNote}${roomNote} Picks recalculados: ${data.predictionsUpdated}.`,
+      `API recibió: ${data.received ?? 0}. Relacionados: ${data.matched ?? 0}. Resultados revisados: ${data.checked}. Partidos actualizados: ${data.updated}. Salas revisadas: ${data.roomMatchesMatched ?? 0}. Salas sincronizadas: ${data.roomMatchesSynced ?? 0}.${unchangedNote}${roomNote} Picks recalculados: ${data.predictionsUpdated}.${providerNote}`,
     );
     onChanged();
   }
@@ -1161,16 +1170,36 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
         >
           Usuarios
         </button>
-        <button
-          className={`tab ${adminView === "rooms" ? "active" : ""}`}
-          onClick={async () => {
-            setAdminView("rooms");
-            await loadRooms();
-          }}
-          type="button"
-        >
-          Salas-usuario
-        </button>
+        <div className="admin-room-menu">
+          <button
+            className={`tab ${adminView === "rooms" ? "active" : ""}`}
+            onClick={async () => {
+              setAdminView("rooms");
+              await loadRooms();
+            }}
+            type="button"
+          >
+            Salas
+          </button>
+          <div className="admin-room-dropdown">
+            {adminRooms.map((room) => (
+              <button
+                key={room.id}
+                onClick={() => {
+                  setSelectedSettingsRoomId(room.id);
+                  setSelectedAdminRoomId(room.id);
+                  setSelectedRoomUserId("");
+                  setAdminView("rooms");
+                }}
+                type="button"
+              >
+                <strong>{room.name}</strong>
+                <span>{room.inviteCode} · {room.status}</span>
+              </button>
+            ))}
+            {!adminRooms.length ? <span>No hay salas creadas</span> : null}
+          </div>
+        </div>
         <button
           className={`tab ${adminView === "security" ? "active" : ""}`}
           onClick={() => setAdminView("security")}
@@ -1229,6 +1258,30 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
                 <li>Usa la actualización manual solo para comprobar o corregir.</li>
                 <li>Los pagos se administran por plan de sala, no por usuario.</li>
               </ol>
+            </section>
+            <section className="form room-admin-overview">
+              <div className="section-title">
+                <div>
+                  <span className="market-kicker">Administradores de sala</span>
+                  <h3>Responsables por sala</h3>
+                  <p className="muted">Aquí solo ves administradores de salas. Los participantes se gestionan al entrar a cada sala.</p>
+                </div>
+              </div>
+              <div className="admin-room-list">
+                {roomAdminRows.map(({ room, user: roomUser }) => (
+                  <article key={`${room.id}-${roomUser.id}`}>
+                    <div>
+                      <strong>{roomUser.name}</strong>
+                      <span>{roomUser.phone}</span>
+                    </div>
+                    <div>
+                      <strong>{room.name}</strong>
+                      <span>{room.status} · {room.inviteCode}</span>
+                    </div>
+                  </article>
+                ))}
+                {!roomAdminRows.length ? <div className="empty">Todavía no hay administradores de sala visibles.</div> : null}
+              </div>
             </section>
             <section className="form result-audit">
               <div className="section-title">
@@ -1850,17 +1903,12 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
               <div className="section-title">
                 <div>
                   <span className="market-kicker">Super usuario</span>
-                  <h3>Salas-usuario</h3>
+                  <h3>Entrar a una sala</h3>
                   <p className="muted">Elige una sala y luego un participante. Todo lo que cambies aplica solo dentro de esa sala.</p>
                 </div>
                 <div className="inline-actions">
                   <button className="button secondary" onClick={loadRooms} type="button">Actualizar salas</button>
-                  <button className="button danger" onClick={keepOnlyFamiliaAvella} type="button">Reparar Familia Avella</button>
                 </div>
-              </div>
-              <div className="admin-room-repair-note">
-                <strong>Reparar Familia Avella</strong>
-                <span>Conserva solo esa sala, sincroniza resultados, limpia puntos manuales antiguos y recalcula los puntos correctos.</span>
               </div>
               <div className="form-row">
                 <label htmlFor="superAdminRoomSelector">1. Entrar a sala</label>
@@ -1889,8 +1937,8 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
                     <span>{selectedRoom.competition?.name ?? "Sin liga"} · Código {selectedRoom.inviteCode}</span>
                   </div>
                   <div className="admin-user-stats">
-                    <span><strong>{selectedRoom.memberships.length}/{selectedRoom.maxParticipants}</strong>Cupo</span>
-                    <span><strong>{selectedRoom.memberships.filter((membership) => membership.role === "ADMIN").length}</strong>Admins sala</span>
+                    <span><strong>{selectedRoomMemberships.length}/{selectedRoom.maxParticipants}</strong>Cupo</span>
+                    <span><strong>{selectedRoomMemberships.filter((membership) => membership.role === "ADMIN").length}</strong>Admins sala</span>
                     <span><strong>{selectedRoom.owner.name}</strong>Propietario</span>
                   </div>
                   <div className="admin-user-badges">
@@ -1901,7 +1949,6 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
                   <div className="admin-user-actions">
                     <button className="button secondary" onClick={() => copyRoomInvitation(selectedRoom)} type="button">Copiar invitación</button>
                     <button className="button primary" onClick={() => syncSelectedRoomResults(selectedRoom)} type="button">Sincronizar resultados de esta sala</button>
-                    <button className="button secondary" onClick={() => loadRoomDashboard(selectedRoom.id)} type="button">Ver todo de esta sala</button>
                     <button className="button danger" onClick={() => deleteAdminRoom(selectedRoom)} type="button">Eliminar sala</button>
                   </div>
                   <section className="admin-room-dashboard">
@@ -1927,7 +1974,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
                         <section className="admin-room-user-tools">
                           <div className="section-title">
                             <div>
-                              <span className="market-kicker">Salas-usuario</span>
+                              <span className="market-kicker">Sala seleccionada</span>
                               <h3>Usuario dentro de esta sala</h3>
                               <p className="muted">Selecciona un participante para revisar sus picks, puntos y permisos solo en {selectedRoom.name}.</p>
                             </div>
@@ -2300,7 +2347,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
                         <label htmlFor="selectedRoomAdminUserId">Participante</label>
                         <select id="selectedRoomAdminUserId" name="roomAdminUserId" required>
                           <option value="">Selecciona participante</option>
-                          {selectedRoom.memberships.map((membership) => (
+                          {selectedRoomMemberships.map((membership) => (
                             <option key={membership.user.id} value={membership.user.id}>
                               {membership.user.name} · {membership.role === "ADMIN" ? "Admin actual" : "Participante"}
                             </option>
@@ -2405,138 +2452,6 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
               <button className="button primary" type="submit">Crear prueba gratis de 10</button>
             </form>
 
-            <form className="form" onSubmit={updateRoomAdmin}>
-              <span className="market-kicker">Permisos de sala</span>
-              <h3>Asignar administrador</h3>
-              <div className="form-row">
-                <label htmlFor="adminRoomId">Sala</label>
-                <select
-                  id="adminRoomId"
-                  name="adminRoomId"
-                  onChange={(event) => setSelectedAdminRoomId(event.target.value)}
-                  required
-                  value={selectedAdminRoomId}
-                >
-                  <option value="">Selecciona sala</option>
-                  {adminRooms.map((room) => (
-                    <option key={room.id} value={room.id}>{room.name} · {room.inviteCode}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-row">
-                <label htmlFor="roomAdminUserId">Participante</label>
-                <select id="roomAdminUserId" name="roomAdminUserId" required>
-                  <option value="">Selecciona participante</option>
-                  {adminRooms.find((room) => room.id === selectedAdminRoomId)?.memberships.map((membership) => (
-                    <option key={membership.user.id} value={membership.user.id}>
-                      {membership.user.name} · {membership.role === "ADMIN" ? "Admin actual" : "Participante"}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-row">
-                <label htmlFor="roomRole">Rol</label>
-                <select id="roomRole" name="roomRole" defaultValue="ADMIN" required>
-                  <option value="ADMIN">Administrador de sala</option>
-                  <option value="MEMBER">Participante</option>
-                </select>
-              </div>
-              <button className="button primary" type="submit">Guardar rol de sala</button>
-            </form>
-
-            <form className="form" onSubmit={updateRoomSettings}>
-              <span className="market-kicker">Control de alquiler</span>
-              <h3>Estado, propietario y vencimiento</h3>
-              <div className="form-row">
-                <label htmlFor="settingsRoomId">Sala</label>
-                <select
-                  id="settingsRoomId"
-                  name="settingsRoomId"
-                  onChange={(event) => setSelectedSettingsRoomId(event.target.value)}
-                  required
-                  value={selectedSettingsRoomId}
-                >
-                  <option value="">Selecciona sala</option>
-                  {adminRooms.map((room) => <option key={room.id} value={room.id}>{room.name} · {room.inviteCode}</option>)}
-                </select>
-              </div>
-              <div className="form-row">
-                <label htmlFor="settingsRoomName">Nombre de la sala</label>
-                <input
-                  id="settingsRoomName"
-                  key={selectedSettingsRoomId}
-                  name="settingsRoomName"
-                  defaultValue={adminRooms.find((room) => room.id === selectedSettingsRoomId)?.name ?? ""}
-                  minLength={3}
-                  maxLength={80}
-                  placeholder="Selecciona una sala"
-                />
-              </div>
-              <div className="form-row">
-                <label htmlFor="settingsOwnerId">Nuevo propietario (opcional)</label>
-                <select id="settingsOwnerId" name="settingsOwnerId">
-                  <option value="">Conservar propietario</option>
-                  {users.filter((item) => item.role === "USER").map((item) => (
-                    <option key={item.id} value={item.id}>{item.name} - {item.phone}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="inline-form">
-                <div className="form-row">
-                  <label htmlFor="settingsStatus">Estado</label>
-                  <select id="settingsStatus" name="settingsStatus" defaultValue="">
-                    <option value="">Conservar estado</option>
-                    <option value="ACTIVE">Activa</option>
-                    <option value="SUSPENDED">Suspendida</option>
-                    <option value="EXPIRED">Vencida</option>
-                    <option value="CLOSED">Cerrada</option>
-                  </select>
-                </div>
-                <div className="form-row">
-                  <label htmlFor="settingsMaxParticipants">Límite</label>
-                  <input id="settingsMaxParticipants" name="settingsMaxParticipants" type="number" min={2} max={10000} placeholder="Conservar" />
-                </div>
-                <div className="form-row">
-                  <label htmlFor="settingsExpiresAt">Vencimiento</label>
-                  <input id="settingsExpiresAt" name="settingsExpiresAt" type="datetime-local" />
-                </div>
-              </div>
-              <button className="button primary" type="submit">Guardar configuración</button>
-            </form>
-
-            <section className="form users-admin-list">
-              <div className="section-title">
-                <div>
-                  <h3>Salas registradas</h3>
-                  <p className="muted">Revisa cupo, pago y administradores asignados.</p>
-                </div>
-                <button className="button secondary" onClick={loadRooms} type="button">Actualizar</button>
-              </div>
-              <div className="admin-user-list">
-                {adminRooms.map((room) => (
-                  <article className="admin-user-card active" key={room.id}>
-                    <div>
-                      <strong>{room.name}</strong>
-                      <span>{room.competition?.name ?? "Sin liga"} · Código {room.inviteCode}</span>
-                    </div>
-                    <div className="admin-user-stats">
-                      <span><strong>{room.memberships.length}/{room.maxParticipants}</strong>Cupo</span>
-                      <span><strong>{room.memberships.filter((membership) => membership.role === "ADMIN").length}</strong>Admins</span>
-                    </div>
-                    <div className="admin-user-badges">
-                      <span>{room.paymentStatus === "TRIAL" ? "Prueba gratis" : room.paidAt ? "Pagada" : "Pago pendiente"}</span>
-                      <span>{room.status === "ACTIVE" ? "Activa" : room.status === "EXPIRED" ? "Vencida" : room.status === "SUSPENDED" ? "Suspendida" : "Cerrada"}</span>
-                      <span>Creador: {room.owner.name}</span>
-                      {room.expiresAt ? <span>Vence: {new Date(room.expiresAt).toLocaleDateString("es")}</span> : null}
-                    </div>
-                    <div className="admin-user-actions">
-                      <button className="button danger" onClick={() => deleteAdminRoom(room)} type="button">Eliminar sala</button>
-                    </div>
-                  </article>
-                ))}
-                {!adminRooms.length ? <div className="empty">No hay salas registradas.</div> : null}
-              </div>
-            </section>
           </>
         ) : null}
         {adminView === "security" ? (

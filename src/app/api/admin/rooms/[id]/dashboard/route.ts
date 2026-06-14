@@ -5,12 +5,15 @@ import { roomGlobalFallbackMatchWhere, roomOwnedMatchWhere } from "@/lib/room-ma
 import { visiblePredictionPoints } from "@/lib/prediction-points";
 import { uniqueRoomPredictions } from "@/lib/room-predictions";
 import { resolveEffectiveMatchScore, sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
+import { removeSuperAdminRoomMemberships } from "@/lib/remove-super-admin-room-memberships";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { response } = await requireAdmin(request);
   if (response) return response;
 
   const { id } = await params;
+  await removeSuperAdminRoomMemberships();
+
   const room = await prisma.league.findUnique({
     where: { id },
     include: {
@@ -34,7 +37,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     where: { isPublished: true, ...roomOwnedMatchWhere(room) },
   });
   const matchScope = ownPublishedMatches > 0 ? roomOwnedMatchWhere(room) : roomGlobalFallbackMatchWhere(room);
-  const memberIds = room.memberships.map((membership) => membership.userId);
+  const visibleMemberships = room.memberships.filter((membership) => membership.user.role !== "ADMIN");
+  const memberIds = visibleMemberships.map((membership) => membership.userId);
 
   const [matches, rawPredictions, messages, scoredMatches] = await Promise.all([
     prisma.match.findMany({
@@ -117,8 +121,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }));
   const effectiveMatches = matches.map((match) => resolveEffectiveMatchScore(match, scoredMatches));
 
-  const ranking = room.memberships
-    .filter((membership) => membership.user.role !== "ADMIN")
+  const ranking = visibleMemberships
     .map((membership) => {
       const userPredictions = scopedPredictions.filter((prediction) => prediction.userId === membership.userId);
       return {
@@ -144,15 +147,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   return Response.json({
     room,
     summary: {
-      participants: room.memberships.length,
-      admins: room.memberships.filter((membership) => membership.role === "ADMIN").length,
+      participants: visibleMemberships.length,
+      admins: visibleMemberships.filter((membership) => membership.role === "ADMIN").length,
       matches: effectiveMatches.length,
       picks: scopedPredictions.length,
       messages: messages.length,
       finishedMatches: effectiveMatches.filter((match) => match.status === "FINISHED").length,
       liveMatches: effectiveMatches.filter((match) => match.status === "LIVE").length,
     },
-    participants: room.memberships.map((membership) => ({
+    participants: visibleMemberships.map((membership) => ({
       id: membership.user.id,
       name: membership.user.name,
       phone: membership.user.phone,

@@ -2876,6 +2876,53 @@ button {
   min-width: 132px;
 }
 
+.admin-room-menu {
+  position: relative;
+}
+
+.admin-room-dropdown {
+  background: rgba(5, 7, 13, 0.96);
+  border: 1px solid rgba(93, 220, 255, 0.16);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  display: none;
+  gap: 6px;
+  left: 0;
+  max-height: 340px;
+  min-width: 280px;
+  overflow: auto;
+  padding: 8px;
+  position: absolute;
+  top: calc(100% + 8px);
+  z-index: 30;
+}
+
+.admin-room-menu:hover .admin-room-dropdown,
+.admin-room-menu:focus-within .admin-room-dropdown {
+  display: grid;
+}
+
+.admin-room-dropdown button {
+  appearance: none;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: #fff;
+  display: grid;
+  gap: 3px;
+  padding: 10px;
+  text-align: left;
+}
+
+.admin-room-dropdown button:hover {
+  border-color: var(--premium-blue-glow);
+}
+
+.admin-room-dropdown span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
 .admin-quick-actions,
 .admin-guide {
   min-height: 230px;
@@ -4017,15 +4064,83 @@ button {
 
   .market-row {
     align-items: stretch;
+    border-radius: 12px;
+    gap: 10px;
     grid-template-columns: 1fr;
+    min-height: 0;
+    padding: 10px;
   }
 
   .teams-stack {
-    grid-template-columns: 1fr;
+    gap: 7px;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   }
 
   .teams-stack em {
+    font-size: 0.66rem;
     text-align: center;
+  }
+
+  .teams-stack > span {
+    border-radius: 10px;
+    gap: 7px;
+    padding: 8px;
+  }
+
+  .teams-stack > span > strong {
+    font-size: 1.45rem;
+    height: 34px;
+    width: 38px;
+  }
+
+  .teams-stack b {
+    font-size: 0.9rem;
+  }
+
+  .teams-stack small,
+  .match-context,
+  .pick-closed-message,
+  .pick-payment-message {
+    display: none;
+  }
+
+  .match-time {
+    font-size: 0.72rem;
+    gap: 6px;
+  }
+
+  .match-pick-action .pick-launcher {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .pick-open-button {
+    min-height: 38px;
+    padding: 8px 12px;
+  }
+
+  .saved-pick-pill {
+    min-height: 36px;
+    padding: 6px 10px;
+  }
+
+  .official-score,
+  .points-cell {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+  }
+
+  .official-score::before {
+    content: "Real";
+    text-align: left;
+  }
+
+  .official-score span {
+    min-height: 34px;
+    min-width: 42px;
   }
 
   .pick-form {

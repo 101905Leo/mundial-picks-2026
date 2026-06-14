@@ -17,7 +17,7 @@ export function MundialPicksApp() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
   const [activeView, setActiveView] = useState<
-    "picks" | "ranking" | "facts" | "rooms" | "admin" | "adminRooms"
+    "picks" | "ranking" | "facts" | "rooms" | "admin"
   >("rooms");
   const [loading, setLoading] = useState(true);
 
@@ -64,10 +64,7 @@ export function MundialPicksApp() {
     async function boot() {
       try {
         const sessionUser = await loadSession();
-        if (sessionUser) {
-          const adminRoute = window.location.pathname === "/salas-usuario";
-          setActiveView(sessionUser.role === "ADMIN" ? (adminRoute ? "adminRooms" : "admin") : "rooms");
-        }
+        if (sessionUser) setActiveView(sessionUser.role === "ADMIN" ? "admin" : "rooms");
         await loadData(sessionUser);
       } catch (error) {
         console.error("Initial app load failed", error);
@@ -334,13 +331,7 @@ export function MundialPicksApp() {
                   <AuthPanel
                     onAuth={async (sessionUser, options) => {
                       setUser(sessionUser);
-                      setActiveView(
-                        sessionUser.role === "ADMIN"
-                          ? window.location.pathname === "/salas-usuario"
-                            ? "adminRooms"
-                            : "admin"
-                          : "rooms",
-                      );
+                      setActiveView(sessionUser.role === "ADMIN" ? "admin" : "rooms");
                       await loadData(sessionUser);
                     }}
                   />
@@ -374,15 +365,6 @@ export function MundialPicksApp() {
                       }}
                     >
                       Panel administrador
-                    </button>
-                    <button
-                      className={`tab ${activeView === "adminRooms" ? "active" : ""}`}
-                      onClick={() => {
-                        setActiveView("adminRooms");
-                        window.history.pushState(null, "", "/salas-usuario");
-                      }}
-                    >
-                      Salas-usuario
                     </button>
                   </>
                 ) : (
@@ -484,10 +466,9 @@ export function MundialPicksApp() {
 
             {user && activeView === "facts" ? <FormidableFacts /> : null}
 
-            {user?.role === "ADMIN" && (activeView === "admin" || activeView === "adminRooms") ? (
+            {user?.role === "ADMIN" && activeView === "admin" ? (
               <AdminPanel
-                key={activeView}
-                initialView={activeView === "adminRooms" ? "rooms" : "overview"}
+                initialView="overview"
                 matches={matches}
                 onChanged={loadAdminMatches}
               />

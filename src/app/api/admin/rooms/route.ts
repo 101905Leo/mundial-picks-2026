@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { recalculateFinishedMatchPoints } from "@/lib/recalculate-points";
+import { removeSuperAdminRoomMemberships } from "@/lib/remove-super-admin-room-memberships";
 import { syncRoomResultsFromGlobal } from "@/lib/sync-room-results";
 
 const trialSchema = z.object({
@@ -62,6 +63,8 @@ export async function GET(request: NextRequest) {
   const { response } = await requireAdmin(request);
   if (response) return response;
 
+  await removeSuperAdminRoomMemberships();
+
   const rooms = await prisma.league.findMany({
     orderBy: { createdAt: "desc" },
     select: {
@@ -79,12 +82,12 @@ export async function GET(request: NextRequest) {
       paidAt: true,
       plan: { select: { id: true, name: true, slug: true } },
       competition: { select: { id: true, name: true, season: true } },
-      owner: { select: { id: true, name: true, phone: true } },
+      owner: { select: { id: true, name: true, phone: true, role: true } },
       memberships: {
         orderBy: { joinedAt: "asc" },
         select: {
           role: true,
-          user: { select: { id: true, name: true, phone: true } },
+          user: { select: { id: true, name: true, phone: true, role: true } },
         },
       },
     },
@@ -110,7 +113,7 @@ export async function POST(request: NextRequest) {
   }
 
   const [owner, competition, plan] = await Promise.all([
-    prisma.user.findUnique({ where: { id: parsed.data.ownerId }, select: { id: true, name: true } }),
+    prisma.user.findUnique({ where: { id: parsed.data.ownerId }, select: { id: true, name: true, role: true } }),
     prisma.competition.findUnique({ where: { id: parsed.data.competitionId }, select: { id: true } }),
     parsed.data.planId
       ? prisma.roomPlan.findUnique({ where: { id: parsed.data.planId } })
@@ -119,6 +122,12 @@ export async function POST(request: NextRequest) {
 
   if (!owner || !competition) {
     return Response.json({ error: "Usuario o liga no encontrado" }, { status: 404 });
+  }
+  if (owner.role === "ADMIN") {
+    return Response.json(
+      { error: "El super usuario administra la app, pero no puede ser propietario ni participante de una sala." },
+      { status: 403 },
+    );
   }
 
   const maxParticipants =
@@ -155,6 +164,8 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   const { response } = await requireAdmin(request);
   if (response) return response;
+
+  await removeSuperAdminRoomMemberships();
 
   const body = await request.json();
   if (body.action === "syncRoomResults") {
@@ -235,18 +246,33 @@ export async function PATCH(request: NextRequest) {
       return Response.json({ error: "El cupo no puede ser menor que los participantes actuales" }, { status: 409 });
     }
 
+    const nextOwner = parsedSettings.data.ownerId
+      ? await prisma.user.findUnique({
+          where: { id: parsedSettings.data.ownerId },
+          select: { id: true, role: true },
+        })
+      : null;
+
+    if (parsedSettings.data.ownerId && !nextOwner) {
+      return Response.json({ error: "El nuevo propietario no existe" }, { status: 404 });
+    }
+    if (nextOwner?.role === "ADMIN") {
+      return Response.json(
+        { error: "El super usuario administra la app, pero no puede ser propietario ni participante de una sala." },
+        { status: 403 },
+      );
+    }
+
     const room = await prisma.$transaction(async (tx) => {
-      if (parsedSettings.data.ownerId) {
-        const owner = await tx.user.findUnique({ where: { id: parsedSettings.data.ownerId }, select: { id: true } });
-        if (!owner) throw new Error("El nuevo propietario no existe");
+      if (nextOwner) {
         await tx.leagueMembership.upsert({
           where: {
             userId_leagueId: {
-              userId: owner.id,
+              userId: nextOwner.id,
               leagueId: current.id,
             },
           },
-          create: { userId: owner.id, leagueId: current.id, role: "ADMIN" },
+          create: { userId: nextOwner.id, leagueId: current.id, role: "ADMIN" },
           update: { role: "ADMIN" },
         });
       }
@@ -255,7 +281,7 @@ export async function PATCH(request: NextRequest) {
         where: { id: current.id },
         data: {
           name: parsedSettings.data.name,
-          ownerId: parsedSettings.data.ownerId,
+          ownerId: nextOwner?.id,
           status: parsedSettings.data.status,
           expiresAt:
             parsedSettings.data.expiresAt === undefined
@@ -295,10 +321,17 @@ export async function PATCH(request: NextRequest) {
         leagueId: parsed.data.leagueId,
       },
     },
-    select: { id: true },
+    select: { id: true, user: { select: { role: true } } },
   });
   if (!existingMembership) {
     return Response.json({ error: "El usuario debe pertenecer a la sala antes de asignarle un rol" }, { status: 404 });
+  }
+  if (existingMembership.user.role === "ADMIN") {
+    await prisma.leagueMembership.delete({ where: { id: existingMembership.id } });
+    return Response.json(
+      { error: "El super usuario fue retirado de la sala porque no puede competir ni ser admin de sala." },
+      { status: 409 },
+    );
   }
 
   const membership = await prisma.leagueMembership.update({
