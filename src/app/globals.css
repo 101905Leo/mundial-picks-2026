@@ -2758,6 +2758,18 @@ button {
   grid-column: 1 / -1;
 }
 
+.room-selected-tools {
+  display: grid;
+  gap: 14px;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  margin-top: 8px;
+}
+
+.room-selected-tools .form {
+  background: rgba(5, 7, 13, 0.42);
+}
+
 .admin-user-badges {
   display: flex;
   flex-wrap: wrap;
@@ -3153,7 +3165,8 @@ button {
   .two-columns,
   .three-columns,
   .inline-form,
-  .score-form {
+  .score-form,
+  .room-selected-tools {
     grid-template-columns: 1fr;
   }
 

@@ -70,6 +70,14 @@ function readableBogotaDate(dateKey: string) {
   });
 }
 
+function datetimeLocalValue(value: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60 * 1000);
+  return offsetDate.toISOString().slice(0, 16);
+}
+
 export function AdminPanel({ matches, onChanged }: Props) {
   const [message, setMessage] = useState("");
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -1652,6 +1660,101 @@ export function AdminPanel({ matches, onChanged }: Props) {
                   <div className="admin-user-actions">
                     <button className="button secondary" onClick={() => copyRoomInvitation(selectedRoom)} type="button">Copiar invitación</button>
                     <button className="button danger" onClick={() => deleteAdminRoom(selectedRoom)} type="button">Eliminar sala</button>
+                  </div>
+                  <div className="room-selected-tools">
+                    <form className="form" onSubmit={updateRoomSettings}>
+                      <input name="settingsRoomId" type="hidden" value={selectedRoom.id} />
+                      <h3>Editar sala seleccionada</h3>
+                      <div className="form-row">
+                        <label htmlFor="selectedSettingsRoomName">Nombre de la sala</label>
+                        <input
+                          id="selectedSettingsRoomName"
+                          key={`${selectedRoom.id}-name`}
+                          name="settingsRoomName"
+                          defaultValue={selectedRoom.name}
+                          minLength={3}
+                          maxLength={80}
+                          required
+                        />
+                      </div>
+                      <div className="form-row">
+                        <label htmlFor="selectedSettingsOwnerId">Propietario</label>
+                        <select
+                          id="selectedSettingsOwnerId"
+                          key={`${selectedRoom.id}-owner`}
+                          name="settingsOwnerId"
+                          defaultValue={selectedRoom.ownerId}
+                        >
+                          {users.filter((item) => item.role === "USER").map((item) => (
+                            <option key={item.id} value={item.id}>{item.name} - {item.phone}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="inline-form">
+                        <div className="form-row">
+                          <label htmlFor="selectedSettingsStatus">Estado</label>
+                          <select
+                            id="selectedSettingsStatus"
+                            key={`${selectedRoom.id}-status`}
+                            name="settingsStatus"
+                            defaultValue={selectedRoom.status}
+                          >
+                            <option value="ACTIVE">Activa</option>
+                            <option value="SUSPENDED">Suspendida</option>
+                            <option value="EXPIRED">Vencida</option>
+                            <option value="CLOSED">Cerrada</option>
+                          </select>
+                        </div>
+                        <div className="form-row">
+                          <label htmlFor="selectedSettingsMaxParticipants">Límite</label>
+                          <input
+                            id="selectedSettingsMaxParticipants"
+                            key={`${selectedRoom.id}-limit`}
+                            name="settingsMaxParticipants"
+                            type="number"
+                            min={2}
+                            max={10000}
+                            defaultValue={selectedRoom.maxParticipants}
+                            required
+                          />
+                        </div>
+                        <div className="form-row">
+                          <label htmlFor="selectedSettingsExpiresAt">Vencimiento</label>
+                          <input
+                            id="selectedSettingsExpiresAt"
+                            key={`${selectedRoom.id}-expires`}
+                            name="settingsExpiresAt"
+                            type="datetime-local"
+                            defaultValue={datetimeLocalValue(selectedRoom.expiresAt)}
+                          />
+                        </div>
+                      </div>
+                      <button className="button primary" type="submit">Guardar sala seleccionada</button>
+                    </form>
+
+                    <form className="form" onSubmit={updateRoomAdmin}>
+                      <input name="adminRoomId" type="hidden" value={selectedRoom.id} />
+                      <h3>Administrador de sala</h3>
+                      <div className="form-row">
+                        <label htmlFor="selectedRoomAdminUserId">Participante</label>
+                        <select id="selectedRoomAdminUserId" name="roomAdminUserId" required>
+                          <option value="">Selecciona participante</option>
+                          {selectedRoom.memberships.map((membership) => (
+                            <option key={membership.user.id} value={membership.user.id}>
+                              {membership.user.name} · {membership.role === "ADMIN" ? "Admin actual" : "Participante"}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="form-row">
+                        <label htmlFor="selectedRoomRole">Rol</label>
+                        <select id="selectedRoomRole" name="roomRole" defaultValue="ADMIN" required>
+                          <option value="ADMIN">Administrador de sala</option>
+                          <option value="MEMBER">Participante</option>
+                        </select>
+                      </div>
+                      <button className="button primary" type="submit">Guardar rol</button>
+                    </form>
                   </div>
                 </div>
               ) : (
