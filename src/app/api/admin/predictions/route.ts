@@ -28,7 +28,7 @@ export async function PUT(request: NextRequest) {
   }
 
   const [user, match] = await Promise.all([
-    prisma.user.findUnique({ where: { id: parsed.data.userId }, select: { id: true, name: true } }),
+    prisma.user.findUnique({ where: { id: parsed.data.userId }, select: { id: true, name: true, role: true } }),
     prisma.match.findUnique({
       where: { id: parsed.data.matchId },
       select: {
@@ -45,6 +45,10 @@ export async function PUT(request: NextRequest) {
 
   if (!user || !match) {
     return Response.json({ error: "Usuario o partido no encontrado" }, { status: 404 });
+  }
+
+  if (user.role === "ADMIN") {
+    return Response.json({ error: "El super administrador no compite. Solo puedes modificar picks de participantes." }, { status: 403 });
   }
 
   const calculatedPoints =
@@ -110,13 +114,17 @@ export async function PATCH(request: NextRequest) {
       },
     },
     include: {
-      user: { select: { id: true, name: true } },
+      user: { select: { id: true, name: true, role: true } },
       match: { select: { id: true, homeTeam: true, awayTeam: true, startsAt: true, status: true } },
     },
   });
 
   if (!prediction) {
     return Response.json({ error: "Primero crea el pick del participante y luego ajusta sus puntos" }, { status: 404 });
+  }
+
+  if (prediction.user.role === "ADMIN") {
+    return Response.json({ error: "El super administrador no compite. Solo puedes ajustar puntos de participantes." }, { status: 403 });
   }
 
   const updatedPrediction = await prisma.prediction.update({

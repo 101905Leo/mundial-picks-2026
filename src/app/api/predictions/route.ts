@@ -9,6 +9,13 @@ export async function POST(request: NextRequest) {
   const { user, response } = await requireUser(request);
   if (response) return response;
 
+  if (user!.role === "ADMIN") {
+    return Response.json(
+      { error: "El super administrador no compite. Usa el panel admin para corregir picks de participantes." },
+      { status: 403 },
+    );
+  }
+
   const body = await request.json();
   const parsed = predictionSchema.safeParse(body);
   const roomId = typeof body.roomId === "string" ? body.roomId : "";
@@ -51,14 +58,13 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "La prediccion se cierra 5 minutos antes del partido." }, { status: 409 });
   }
 
-  const hasLeagueAccess =
-    user!.role === "ADMIN" ? true : (await prisma.leagueMembership.count({ where: { userId: user!.id } })) > 0;
+  const hasLeagueAccess = (await prisma.leagueMembership.count({ where: { userId: user!.id } })) > 0;
 
   if (!user!.isActive && !hasLeagueAccess) {
     return Response.json({ error: "Tu usuario esta desactivado para guardar picks." }, { status: 403 });
   }
 
-  if (user!.role !== "ADMIN" && !roomId) {
+  if (!roomId) {
     return Response.json({ error: "Debes entrar a una sala para guardar picks." }, { status: 403 });
   }
 

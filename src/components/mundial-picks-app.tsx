@@ -144,9 +144,11 @@ export function MundialPicksApp() {
   const openMatches = matches.length - lockedMatches.length;
   const upcomingMatches = matches.slice(0, 3);
   const canViewGlobalRanking = Boolean(user);
-  const canPredict = Boolean(user && (user.role === "ADMIN" || user.hasLeagueAccess));
+  const canPredict = Boolean(user && user.role !== "ADMIN" && user.hasLeagueAccess);
   const pickDisabledMessage =
-    user && !user.hasLeagueAccess
+    user?.role === "ADMIN"
+      ? "El super administrador solo administra salas; no compite ni guarda picks."
+      : user && !user.hasLeagueAccess
       ? "Entra a una sala con código para guardar picks."
       : "Tu acceso de sala permite guardar picks.";
   const matchesByDate = matches.reduce<Array<{ key: string; label: string; matches: Match[] }>>((days, match) => {

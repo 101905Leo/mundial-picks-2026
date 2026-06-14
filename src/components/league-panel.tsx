@@ -365,12 +365,15 @@ export function LeaguePanel({ user }: Props) {
     isSuperAdmin,
   );
   const roomCanPredict =
+    !isSuperAdmin &&
     (selectedLeague?.status ?? "ACTIVE") === "ACTIVE" &&
     !roomHasExpired &&
     roomIsActivated;
-  const roomDisabledMessage = roomHasExpired
-    ? "Esta sala está vencida."
-    : selectedLeague?.status === "SUSPENDED"
+  const roomDisabledMessage = isSuperAdmin
+    ? "El super administrador administra la sala; no participa como competidor."
+    : roomHasExpired
+      ? "Esta sala está vencida."
+      : selectedLeague?.status === "SUSPENDED"
       ? "Esta sala está suspendida."
       : selectedLeague?.status === "CLOSED"
         ? "Esta sala está cerrada."

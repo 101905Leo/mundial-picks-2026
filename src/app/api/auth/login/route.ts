@@ -24,6 +24,13 @@ export async function POST(request: NextRequest) {
   let joinedLeague = null;
 
   if (inviteCode) {
+    if (user.role === "ADMIN") {
+      return Response.json(
+        { error: "El super administrador no se une a salas como participante. Ingresa desde el panel administrador." },
+        { status: 403 },
+      );
+    }
+
     const league = await prisma.league.findUnique({ where: { inviteCode } });
 
     if (!league) {
@@ -62,7 +69,7 @@ export async function POST(request: NextRequest) {
     role: user.role,
     isActive: user.isActive,
     entryPaidAt: user.entryPaidAt,
-    hasLeagueAccess: leagueCount > 0,
+    hasLeagueAccess: user.role !== "ADMIN" && leagueCount > 0,
   };
 
   await setAuthCookie(signToken(sessionUser));

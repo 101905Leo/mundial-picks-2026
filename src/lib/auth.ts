@@ -73,7 +73,7 @@ export async function getSessionFromRequest(request: NextRequest) {
     if (!user) return null;
 
     const { _count, ...sessionUser } = user;
-    return { ...sessionUser, hasLeagueAccess: _count.leagues > 0 };
+    return { ...sessionUser, hasLeagueAccess: sessionUser.role !== "ADMIN" && _count.leagues > 0 };
   } catch {
     return null;
   }

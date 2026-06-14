@@ -7,6 +7,13 @@ export async function POST(request: NextRequest) {
   const { user, response } = await requireUser(request);
   if (response) return response;
 
+  if (user!.role === "ADMIN") {
+    return Response.json(
+      { error: "El super administrador no se une a salas como participante. Administra las salas desde el panel." },
+      { status: 403 },
+    );
+  }
+
   const body = await request.json();
   const parsed = joinLeagueSchema.safeParse(body);
 
