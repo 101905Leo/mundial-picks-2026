@@ -473,6 +473,7 @@ export function MundialPicksApp() {
                 initialView="overview"
                 matches={matches}
                 onChanged={loadAdminMatches}
+                user={user}
               />
             ) : null}
           </>

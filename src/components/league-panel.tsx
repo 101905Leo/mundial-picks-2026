@@ -7,7 +7,11 @@ import { FormidableFacts } from "@/components/formidable-facts";
 import { StatisticsPanel } from "@/components/statistics-panel";
 import type { Competition, League, LeagueMember, Match, RankingEntry, User } from "@/components/types";
 
-type Props = { user: User };
+type Props = {
+  user: User;
+  initialLeagueId?: string | null;
+  embedded?: boolean;
+};
 type RoomView = "picks" | "matches" | "facts" | "ranking" | "statistics" | "participants";
 
 type LeagueMessage = {
@@ -55,7 +59,7 @@ function isActiveLeague(league: League) {
   return (league.status ?? "ACTIVE") === "ACTIVE" && !expired;
 }
 
-export function LeaguePanel({ user }: Props) {
+export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: Props) {
   const [leagues, setLeagues] = useState<League[]>([]);
   const [selectedLeague, setSelectedLeague] = useState<League | null>(null);
   const [roomView, setRoomView] = useState<RoomView>("picks");
@@ -95,6 +99,9 @@ export function LeaguePanel({ user }: Props) {
     const loadedActiveLeagues = loadedLeagues.filter(isActiveLeague);
     setLeagues(loadedLeagues);
     setSelectedLeague((current) => {
+      const requestedLeague = initialLeagueId ? loadedLeagues.find((league) => league.id === initialLeagueId) ?? null : null;
+      if (requestedLeague) return requestedLeague;
+      if (embedded) return null;
       if (!current) return isSuperAdmin ? null : loadedActiveLeagues[0] ?? loadedLeagues[0] ?? null;
       return loadedLeagues.find((league) => league.id === current.id) ?? (isSuperAdmin ? null : loadedActiveLeagues[0] ?? loadedLeagues[0] ?? null);
     });
@@ -174,6 +181,18 @@ export function LeaguePanel({ user }: Props) {
   useEffect(() => {
     loadLeagues();
   }, []);
+
+  useEffect(() => {
+    if (!embedded) return;
+    if (!initialLeagueId) {
+      setSelectedLeague(null);
+      return;
+    }
+
+    const nextLeague = leagues.find((league) => league.id === initialLeagueId) ?? null;
+    setSelectedLeague((current) => (current?.id === nextLeague?.id ? current : nextLeague));
+    setRoomView("picks");
+  }, [embedded, initialLeagueId, leagues]);
 
   useEffect(() => {
     loadRoom();
@@ -536,8 +555,8 @@ export function LeaguePanel({ user }: Props) {
       {syncError ? <div className="notice error">{syncError}</div> : null}
 
       {selectedLeague ? (
-        <section className="league-room">
-          {isSuperAdmin ? (
+        <section className={`league-room ${embedded ? "embedded-room-view" : ""}`}>
+          {isSuperAdmin && !embedded ? (
             <div className="panel super-room-selector-bar">
               <div>
                 <span className="market-kicker">Super usuario</span>
@@ -583,11 +602,11 @@ export function LeaguePanel({ user }: Props) {
                 <button className="button secondary" onClick={() => setRoomView("participants")} type="button">Editar sala</button>
                 <button className="button primary" onClick={copyInvitation} type="button">Copiar invitación</button>
                 <button className="button secondary" onClick={shareInvitation} type="button">Compartir por WhatsApp</button>
-                <button className="button secondary" onClick={() => setSelectedLeague(null)} type="button">Salas</button>
+                {!embedded ? <button className="button secondary" onClick={() => setSelectedLeague(null)} type="button">Salas</button> : null}
               </div>
             ) : (
               <div className="room-owner-actions">
-                <button className="button secondary" onClick={() => setSelectedLeague(null)} type="button">Salas</button>
+                {!embedded ? <button className="button secondary" onClick={() => setSelectedLeague(null)} type="button">Salas</button> : null}
               </div>
             )}
           </div>

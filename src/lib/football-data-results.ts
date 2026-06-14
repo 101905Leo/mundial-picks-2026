@@ -30,6 +30,10 @@ type FootballDataResponse = {
 };
 
 type LocalMatch = Awaited<ReturnType<typeof prisma.match.findMany>>[number];
+type FootballDataScore = {
+  home?: number | null;
+  away?: number | null;
+};
 
 function normalizeTeam(value: string) {
   const normalized = value
@@ -57,6 +61,10 @@ function statusFromFootballData(status?: string): MatchStatus | null {
   if (status === "FINISHED") return "FINISHED";
   if (status === "IN_PLAY" || status === "PAUSED") return "LIVE";
   return null;
+}
+
+function firstValidScore(...scores: Array<FootballDataScore | undefined>) {
+  return scores.find((score) => score?.home !== null && score?.home !== undefined && score?.away !== null && score?.away !== undefined) ?? null;
 }
 
 function findMatchingLocalMatches(matches: LocalMatch[], directSourceKey: string | null, fixtureDate: Date, homeKey: string, awayKey: string) {
@@ -117,7 +125,7 @@ export async function updateWorldCupResultsFromFootballData() {
     const awayTeam = fixture.awayTeam?.name || fixture.awayTeam?.shortName;
     const fixtureDate = fixture.utcDate ? new Date(fixture.utcDate) : null;
     const status = statusFromFootballData(fixture.status);
-    const currentScore = fixture.score?.fullTime ?? fixture.score?.regularTime ?? fixture.score?.halfTime;
+    const currentScore = firstValidScore(fixture.score?.fullTime, fixture.score?.regularTime, fixture.score?.halfTime);
     const homeScore = currentScore?.home ?? null;
     const awayScore = currentScore?.away ?? null;
 

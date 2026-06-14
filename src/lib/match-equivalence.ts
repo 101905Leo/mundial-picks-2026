@@ -43,6 +43,14 @@ function kickoffDate(value: Date | string) {
   return value instanceof Date ? value : new Date(value);
 }
 
+function scoreDiffers(left: MatchScore, right: MatchScore) {
+  return (
+    left.homeScore !== null &&
+    left.awayScore !== null &&
+    (left.homeScore !== right.homeScore || left.awayScore !== right.awayScore)
+  );
+}
+
 export function sameMatchByTeamsAndKickoff(left: MatchIdentity, right: MatchIdentity) {
   const bothHaveCompetition = Boolean(left.competitionId && right.competitionId);
   if (bothHaveCompetition && left.competitionId !== right.competitionId) return false;
@@ -61,7 +69,11 @@ export function sameMatchByTeamsAndKickoff(left: MatchIdentity, right: MatchIden
 export function resolveEffectiveMatchScore<T extends MatchScore>(match: T, scoredMatches: MatchScore[]) {
   const equivalent = scoredMatches
     .filter((candidate) => candidate.id !== match.id && sameMatchByTeamsAndKickoff(candidate, match))
-    .sort((left, right) => statusPriority[right.status] - statusPriority[left.status])[0];
+    .sort((left, right) => {
+      const statusDelta = statusPriority[right.status] - statusPriority[left.status];
+      if (statusDelta !== 0) return statusDelta;
+      return Number(scoreDiffers(right, match)) - Number(scoreDiffers(left, match));
+    })[0];
 
   if (!equivalent) return match;
 

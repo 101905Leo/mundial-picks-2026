@@ -106,7 +106,16 @@ export async function syncRoomResultsFromGlobal(options: { roomId?: string } = {
   for (const roomMatch of roomMatches) {
     const sourceMatch = sourceMatches
       .filter((match) => sameMatch(match, roomMatch))
-      .sort((left, right) => sourcePriority(right) - sourcePriority(left))[0];
+      .sort((left, right) => {
+        const priorityDelta = sourcePriority(right) - sourcePriority(left);
+        if (priorityDelta !== 0) return priorityDelta;
+
+        const rightDiffers =
+          right.homeScore !== roomMatch.homeScore || right.awayScore !== roomMatch.awayScore || right.status !== roomMatch.status;
+        const leftDiffers =
+          left.homeScore !== roomMatch.homeScore || left.awayScore !== roomMatch.awayScore || left.status !== roomMatch.status;
+        return Number(rightDiffers) - Number(leftDiffers);
+      })[0];
     if (!sourceMatch) continue;
     matched += 1;
 

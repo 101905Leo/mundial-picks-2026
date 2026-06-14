@@ -1,7 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import type { Competition, Match, RoomPlan } from "@/components/types";
+import { LeaguePanel } from "@/components/league-panel";
+import type { Competition, Match, RoomPlan, User } from "@/components/types";
 import { flagForTeam } from "@/lib/team-flags";
 
 type AdminUser = {
@@ -19,6 +20,7 @@ type Props = {
   matches: Match[];
   onChanged: () => void;
   initialView?: AdminView;
+  user: User;
 };
 
 type AdminView = "overview" | "matches" | "users" | "rooms" | "security";
@@ -147,7 +149,7 @@ function datetimeLocalValue(value: string | null) {
   return offsetDate.toISOString().slice(0, 16);
 }
 
-export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props) {
+export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: Props) {
   const [message, setMessage] = useState("");
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [usersLoaded, setUsersLoaded] = useState(false);
@@ -1980,7 +1982,9 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
                     <button className="button danger" onClick={() => deleteAdminRoom(selectedRoom)} type="button">Eliminar sala</button>
                   </div>
                 </div>
-                  <section className="admin-room-dashboard compact">
+                <LeaguePanel user={user} initialLeagueId={selectedRoom.id} embedded />
+
+                  <section className="admin-room-dashboard compact legacy-admin-room-dashboard">
                     <div className="room-dashboard-bar">
                       <span className="market-kicker">Tablero de {selectedRoom.name}</span>
                       {roomDashboardLoading ? <span className="user-chip">Cargando...</span> : null}
@@ -2346,7 +2350,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
                       <div className="empty">Selecciona una sala para ver su tablero completo.</div>
                     )}
                   </section>
-                  <div className="room-selected-tools">
+                  <div className="room-selected-tools legacy-room-selected-tools">
                     <details className="admin-room-accordion">
                       <summary>Editar datos de la sala seleccionada</summary>
                       <form className="form" onSubmit={updateRoomSettings}>
