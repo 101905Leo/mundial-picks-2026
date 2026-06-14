@@ -6,17 +6,17 @@
   --ink: #f8fafc;
   --muted: #aab4c8;
   --line: rgba(255, 255, 255, 0.1);
-  --primary: #1453ff;
+  --primary: #2f6bff;
   --primary-dark: #07111f;
   --red: #e21e37;
   --gold: #ffcc5c;
   --gold-soft: #ffe7a8;
-  --premium-blue: #1453ff;
-  --premium-blue-soft: #d7e6ff;
-  --premium-blue-glow: rgba(20, 83, 255, 0.36);
-  --premium-cyan: #5ddcff;
+  --premium-blue: #2f6bff;
+  --premium-blue-soft: #dbeafe;
+  --premium-blue-glow: rgba(47, 107, 255, 0.38);
+  --premium-cyan: #38bdf8;
   --blue: var(--premium-blue);
-  --premium-gradient: linear-gradient(135deg, #1453ff 0%, #2aa8ff 58%, #ffcc5c 100%);
+  --premium-gradient: linear-gradient(135deg, #1d4ed8 0%, #38bdf8 58%, #ffcc5c 100%);
   --premium-panel: linear-gradient(145deg, rgba(31, 38, 55, 0.94), rgba(8, 12, 20, 0.96));
   --shadow: 0 18px 60px rgba(0, 0, 0, 0.38);
 }
@@ -3273,6 +3273,10 @@ button {
   background: rgba(5, 7, 13, 0.42);
 }
 
+.room-selected-card {
+  grid-column: 1 / -1;
+}
+
 .admin-room-dashboard {
   background: rgba(5, 7, 13, 0.38);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -3393,6 +3397,42 @@ button {
   min-width: 0;
 }
 
+.admin-room-section summary,
+.admin-room-accordion summary {
+  align-items: center;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  font-weight: 800;
+  gap: 10px;
+  justify-content: space-between;
+  list-style: none;
+}
+
+.admin-room-section summary::-webkit-details-marker,
+.admin-room-accordion summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-room-section summary::after,
+.admin-room-accordion summary::after {
+  color: var(--premium-cyan);
+  content: "Abrir";
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.admin-room-section[open] summary,
+.admin-room-accordion[open] summary {
+  margin-bottom: 12px;
+}
+
+.admin-room-section[open] summary::after,
+.admin-room-accordion[open] summary::after {
+  content: "Cerrar";
+}
+
 .admin-room-section h3 {
   margin-top: 0;
 }
@@ -3424,6 +3464,53 @@ button {
 .admin-room-list p {
   color: #fff;
   margin: 8px 0 0;
+}
+
+.admin-room-match-list article {
+  align-items: center;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.admin-match-teams {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-match-teams span {
+  color: #fff;
+  display: inline-flex;
+  gap: 7px;
+}
+
+.admin-match-teams em {
+  color: var(--muted);
+  font-style: normal;
+  font-weight: 800;
+}
+
+.admin-match-scoreline {
+  align-items: flex-end;
+  display: grid;
+  gap: 2px;
+  justify-items: end;
+}
+
+.admin-match-scoreline strong {
+  color: var(--gold-soft);
+  font-size: 1.18rem;
+}
+
+.admin-room-accordion {
+  background: rgba(12, 17, 28, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.admin-room-accordion + .admin-room-accordion {
+  margin-top: 10px;
 }
 
 .table-scroll {
@@ -4110,18 +4197,21 @@ button {
   }
 
   .match-pick-action .pick-launcher {
-    align-items: center;
+    align-items: stretch;
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
   }
 
   .pick-open-button {
+    flex: 1 1 140px;
     min-height: 38px;
     padding: 8px 12px;
   }
 
   .saved-pick-pill {
+    flex: 1 1 112px;
+    justify-content: center;
     min-height: 36px;
     padding: 6px 10px;
   }
@@ -4129,8 +4219,13 @@ button {
   .official-score,
   .points-cell {
     align-items: center;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 10px;
     display: flex;
     gap: 8px;
+    justify-content: space-between;
+    padding: 8px;
   }
 
   .official-score::before {
@@ -4141,6 +4236,7 @@ button {
   .official-score span {
     min-height: 34px;
     min-width: 42px;
+    padding: 7px;
   }
 
   .pick-form {
@@ -4217,6 +4313,10 @@ button {
 
   .points-cell {
     justify-items: start;
+  }
+
+  .points-cell strong {
+    font-size: 1.1rem;
   }
 
   .payment-gate {

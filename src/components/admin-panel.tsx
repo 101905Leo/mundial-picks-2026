@@ -1931,7 +1931,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
                 </select>
               </div>
               {selectedRoom ? (
-                <div className="admin-user-card active">
+                <div className="admin-user-card active room-selected-card">
                   <div>
                     <strong>{selectedRoom.name}</strong>
                     <span>{selectedRoom.competition?.name ?? "Sin liga"} · Código {selectedRoom.inviteCode}</span>
@@ -2011,7 +2011,9 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
                                 <article><span>Picks</span><strong>{selectedRoomRanking?.predictions ?? selectedRoomUserPredictions.length}</strong></article>
                                 <article><span>Exactos</span><strong>{selectedRoomRanking?.exactScores ?? 0}</strong></article>
                               </div>
-                              <div className="admin-room-user-forms">
+                              <details className="admin-room-accordion" open>
+                                <summary>Acciones del participante seleccionado</summary>
+                                <div className="admin-room-user-forms">
                                 <form className="room-user-mini-form" onSubmit={editUser}>
                                   <input name="editUserId" type="hidden" value={selectedRoomParticipant.id} />
                                   <h4>Editar datos</h4>
@@ -2122,7 +2124,8 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
                                   </div>
                                   <button className="button danger" type="submit">Eliminar pick</button>
                                 </form>
-                              </div>
+                                </div>
+                              </details>
                               <div className="admin-user-actions">
                                 <button
                                   className="button secondary"
@@ -2181,8 +2184,8 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
                         </section>
 
                         <div className="admin-room-grid">
-                          <section className="admin-room-section">
-                            <h3>Ranking de esta sala</h3>
+                          <details className="admin-room-section" open>
+                            <summary>Ranking de esta sala</summary>
                             <div className="table-scroll">
                               <table className="ranking">
                                 <thead>
@@ -2202,10 +2205,10 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
                               </table>
                             </div>
                             {!roomDashboard.ranking.length ? <div className="empty">No hay ranking para esta sala.</div> : null}
-                          </section>
+                          </details>
 
-                          <section className="admin-room-section">
-                            <h3>Participantes</h3>
+                          <details className="admin-room-section">
+                            <summary>Participantes</summary>
                             <div className="admin-room-list">
                               {roomDashboard.participants.map((participant) => (
                                 <article key={participant.id}>
@@ -2219,26 +2222,29 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
                                 </article>
                               ))}
                             </div>
-                          </section>
+                          </details>
 
-                          <section className="admin-room-section">
-                            <h3>Partidos de la sala</h3>
-                            <div className="admin-room-list">
+                          <details className="admin-room-section" open>
+                            <summary>Partidos de la sala</summary>
+                            <div className="admin-room-list admin-room-match-list">
                               {roomDashboard.matches.map((match) => (
                                 <article key={match.id}>
-                                  <strong>{match.homeTeam} vs {match.awayTeam}</strong>
-                                  <span>
-                                    {new Date(match.startsAt).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" })} · {match.status}
-                                    {" · "}
-                                    {match.homeScore !== null && match.awayScore !== null ? `${match.homeScore}-${match.awayScore}` : "Sin marcador"}
-                                  </span>
+                                  <div className="admin-match-teams">
+                                    <span>{flagForTeam(match.homeTeam)} <strong>{match.homeTeam}</strong></span>
+                                    <em>vs</em>
+                                    <span>{flagForTeam(match.awayTeam)} <strong>{match.awayTeam}</strong></span>
+                                  </div>
+                                  <div className="admin-match-scoreline">
+                                    <span>{new Date(match.startsAt).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" })} · {match.status}</span>
+                                    <strong>{match.homeScore !== null && match.awayScore !== null ? `${match.homeScore} - ${match.awayScore}` : "- - -"}</strong>
+                                  </div>
                                 </article>
                               ))}
                             </div>
-                          </section>
+                          </details>
 
-                          <section className="admin-room-section">
-                            <h3>Picks guardados</h3>
+                          <details className="admin-room-section">
+                            <summary>Picks guardados</summary>
                             <div className="admin-room-list compact">
                               {roomDashboard.predictions.map((prediction) => (
                                 <article key={prediction.id}>
@@ -2248,10 +2254,10 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
                               ))}
                             </div>
                             {!roomDashboard.predictions.length ? <div className="empty">No hay picks guardados en esta sala.</div> : null}
-                          </section>
+                          </details>
 
-                          <section className="admin-room-section admin-room-section-wide">
-                            <h3>Chat de la sala</h3>
+                          <details className="admin-room-section admin-room-section-wide">
+                            <summary>Chat de la sala</summary>
                             <div className="admin-room-list compact">
                               {roomDashboard.messages.map((chatMessage) => (
                                 <article key={chatMessage.id}>
@@ -2262,7 +2268,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
                               ))}
                             </div>
                             {!roomDashboard.messages.length ? <div className="empty">No hay mensajes en esta sala.</div> : null}
-                          </section>
+                          </details>
                         </div>
                       </>
                     ) : (
@@ -2270,7 +2276,9 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
                     )}
                   </section>
                   <div className="room-selected-tools">
-                    <form className="form" onSubmit={updateRoomSettings}>
+                    <details className="admin-room-accordion">
+                      <summary>Editar datos de la sala seleccionada</summary>
+                      <form className="form" onSubmit={updateRoomSettings}>
                       <input name="settingsRoomId" type="hidden" value={selectedRoom.id} />
                       <h3>Editar sala seleccionada</h3>
                       <div className="form-row">
@@ -2338,9 +2346,12 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
                         </div>
                       </div>
                       <button className="button primary" type="submit">Guardar sala seleccionada</button>
-                    </form>
+                      </form>
+                    </details>
 
-                    <form className="form" onSubmit={updateRoomAdmin}>
+                    <details className="admin-room-accordion">
+                      <summary>Asignar administrador de sala</summary>
+                      <form className="form" onSubmit={updateRoomAdmin}>
                       <input name="adminRoomId" type="hidden" value={selectedRoom.id} />
                       <h3>Administrador de sala</h3>
                       <div className="form-row">
@@ -2362,7 +2373,8 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms" }: Props)
                         </select>
                       </div>
                       <button className="button primary" type="submit">Guardar rol</button>
-                    </form>
+                      </form>
+                    </details>
                   </div>
                 </div>
               ) : (

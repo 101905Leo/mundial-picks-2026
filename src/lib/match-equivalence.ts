@@ -12,6 +12,12 @@ type MatchScore = MatchIdentity & {
   status: "SCHEDULED" | "LIVE" | "FINISHED";
 };
 
+const statusPriority: Record<MatchScore["status"], number> = {
+  SCHEDULED: 0,
+  LIVE: 1,
+  FINISHED: 2,
+};
+
 export function normalizeTeamName(value: string) {
   const normalized = value
     .normalize("NFD")
@@ -53,15 +59,23 @@ export function sameMatchByTeamsAndKickoff(left: MatchIdentity, right: MatchIden
 }
 
 export function resolveEffectiveMatchScore<T extends MatchScore>(match: T, scoredMatches: MatchScore[]) {
-  if (match.homeScore !== null && match.awayScore !== null) {
-    return match;
-  }
-
-  const equivalent = scoredMatches.find(
-    (candidate) => candidate.id !== match.id && sameMatchByTeamsAndKickoff(candidate, match),
-  );
+  const equivalent = scoredMatches
+    .filter((candidate) => candidate.id !== match.id && sameMatchByTeamsAndKickoff(candidate, match))
+    .sort((left, right) => statusPriority[right.status] - statusPriority[left.status])[0];
 
   if (!equivalent) return match;
+
+  const equivalentIsMoreFinal = statusPriority[equivalent.status] > statusPriority[match.status];
+  const currentHasNoScore = match.homeScore === null || match.awayScore === null;
+  const equivalentHasDifferentFinalScore =
+    equivalent.status === "FINISHED" &&
+    equivalent.homeScore !== null &&
+    equivalent.awayScore !== null &&
+    (match.homeScore !== equivalent.homeScore || match.awayScore !== equivalent.awayScore);
+
+  if (!currentHasNoScore && !equivalentIsMoreFinal && !equivalentHasDifferentFinalScore) {
+    return match;
+  }
 
   return {
     ...match,

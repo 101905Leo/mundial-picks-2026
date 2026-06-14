@@ -45,6 +45,16 @@ function sameMatch(left: ScoredMatch, right: ScoredMatch) {
   return normalizeTeam(left.homeTeam) === normalizeTeam(right.homeTeam) && normalizeTeam(left.awayTeam) === normalizeTeam(right.awayTeam);
 }
 
+const statusPriority: Record<ScoredMatch["status"], number> = {
+  SCHEDULED: 0,
+  LIVE: 1,
+  FINISHED: 2,
+};
+
+function sourcePriority(match: ScoredMatch) {
+  return statusPriority[match.status] * 100 + (match.roomId === null ? 10 : 0) + (match.sourceKey ? 1 : 0);
+}
+
 export async function syncRoomResultsFromGlobal(options: { roomId?: string } = {}) {
   const emptyStats = { matched: 0, updated: 0, alreadySynced: 0 };
   const sourceMatches = await prisma.match.findMany({
@@ -94,7 +104,9 @@ export async function syncRoomResultsFromGlobal(options: { roomId?: string } = {
   let alreadySynced = 0;
 
   for (const roomMatch of roomMatches) {
-    const sourceMatch = sourceMatches.find((match) => sameMatch(match, roomMatch));
+    const sourceMatch = sourceMatches
+      .filter((match) => sameMatch(match, roomMatch))
+      .sort((left, right) => sourcePriority(right) - sourcePriority(left))[0];
     if (!sourceMatch) continue;
     matched += 1;
 
