@@ -110,6 +110,7 @@ export function resolveEffectiveMatchScore<T extends MatchScore>(match: T, score
         homeScore: trustedFinalEquivalent.homeScore,
         awayScore: trustedFinalEquivalent.awayScore,
         status: trustedFinalEquivalent.status,
+        updatedAt: trustedFinalEquivalent.updatedAt,
       };
     }
 
@@ -144,5 +145,6 @@ export function resolveEffectiveMatchScore<T extends MatchScore>(match: T, score
     homeScore: equivalent.homeScore,
     awayScore: equivalent.awayScore,
     status: equivalent.status,
+    updatedAt: equivalent.updatedAt,
   };
 }

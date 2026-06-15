@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/auth";
 import { recalculateFinishedMatchPoints } from "@/lib/recalculate-points";
 import { calculatePredictionPoints } from "@/lib/scoring";
 import { syncRoomResultsFromGlobal } from "@/lib/sync-room-results";
+import { shouldUseManualPoints } from "@/lib/prediction-points";
 import { resultSchema } from "@/lib/validators";
 import { notifyWhatsAppUsers } from "@/lib/whatsapp";
 
@@ -44,12 +45,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         { homeScore: prediction.homeScore, awayScore: prediction.awayScore },
         { homeScore: match.homeScore!, awayScore: match.awayScore! },
       );
+      const keepManualPoints = shouldUseManualPoints(prediction, match);
 
       return prisma.prediction.update({
         where: { id: prediction.id },
         data: {
           lockedAt: parsed.data.isFinal ? prediction.lockedAt ?? new Date() : prediction.lockedAt,
-          points: prediction.manualPoints ?? calculatedPoints,
+          points: keepManualPoints ? prediction.manualPoints! : calculatedPoints,
+          ...(!keepManualPoints ? { manualPoints: null } : {}),
         },
       });
     }),

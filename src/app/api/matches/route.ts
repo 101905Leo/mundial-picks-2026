@@ -10,6 +10,7 @@ type MatchWithPredictions = Awaited<ReturnType<typeof prisma.match.findMany>>[nu
     awayScore: number;
     points: number;
     manualPoints: number | null;
+    updatedAt: Date;
   }>;
 };
 
@@ -82,7 +83,7 @@ export async function GET(request: NextRequest) {
       predictions: user
         ? {
             where: { userId: user.id, roomKey: "GLOBAL" },
-            select: { id: true, homeScore: true, awayScore: true, points: true, manualPoints: true },
+            select: { id: true, homeScore: true, awayScore: true, points: true, manualPoints: true, updatedAt: true },
           }
         : false,
     },

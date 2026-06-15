@@ -79,6 +79,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           awayScore: true,
           points: true,
           manualPoints: true,
+          updatedAt: true,
         },
       },
     },

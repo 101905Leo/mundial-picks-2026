@@ -23,7 +23,8 @@ export async function GET(request: NextRequest) {
           manualPoints: true,
           homeScore: true,
           awayScore: true,
-          match: { select: { status: true, homeScore: true, awayScore: true } },
+          updatedAt: true,
+          match: { select: { status: true, homeScore: true, awayScore: true, updatedAt: true } },
         },
       },
       _count: {
