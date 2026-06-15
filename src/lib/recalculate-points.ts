@@ -1,11 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { calculatePredictionPoints } from "@/lib/scoring";
 import { resolveEffectiveMatchScore, sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
-import { shouldUseManualPoints } from "@/lib/prediction-points";
 
 export async function recalculateFinishedMatchPoints(options: { clearManualPoints?: boolean } = {}) {
   const scoreMatches = await prisma.match.findMany({
     where: {
+      status: "FINISHED",
       homeScore: { not: null },
       awayScore: { not: null },
     },
@@ -50,20 +50,20 @@ export async function recalculateFinishedMatchPoints(options: { clearManualPoint
     if (!hasDirectOrEquivalentScore) continue;
 
     const effectiveMatch = resolveEffectiveMatchScore(prediction.match, scoreMatches);
+    if (effectiveMatch.status !== "FINISHED") continue;
     if (effectiveMatch.homeScore === null || effectiveMatch.awayScore === null) continue;
 
     const calculatedPoints = calculatePredictionPoints(
       { homeScore: prediction.homeScore, awayScore: prediction.awayScore },
       { homeScore: effectiveMatch.homeScore, awayScore: effectiveMatch.awayScore },
     );
-    const keepManualPoints = !options.clearManualPoints && shouldUseManualPoints(prediction, effectiveMatch);
     updated += 1;
     await prisma.prediction.update({
       where: { id: prediction.id },
       data: {
-        lockedAt: effectiveMatch.status === "FINISHED" ? prediction.lockedAt ?? new Date() : prediction.lockedAt,
-        points: keepManualPoints ? prediction.manualPoints! : calculatedPoints,
-        ...(options.clearManualPoints || !keepManualPoints ? { manualPoints: null } : {}),
+        lockedAt: prediction.lockedAt ?? new Date(),
+        points: calculatedPoints,
+        ...(options.clearManualPoints ? { manualPoints: null } : {}),
       },
     });
   }

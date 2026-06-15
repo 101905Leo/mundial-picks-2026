@@ -2,11 +2,10 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { roomGlobalFallbackMatchWhere, roomOwnedMatchWhere } from "@/lib/room-match-scope";
-import { visiblePredictionPoints } from "@/lib/prediction-points";
 import { uniqueRoomPredictions } from "@/lib/room-predictions";
 import { resolveEffectiveMatchScore, sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
 import { removeSuperAdminRoomMemberships } from "@/lib/remove-super-admin-room-memberships";
-import { getPredictionOutcome } from "@/lib/scoring";
+import { calculatePredictionPoints, getPredictionOutcome } from "@/lib/scoring";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { response } = await requireAdmin(request);
@@ -94,6 +93,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }),
     prisma.match.findMany({
       where: {
+        status: "FINISHED",
         homeScore: { not: null },
         awayScore: { not: null },
       },
@@ -123,7 +123,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   ).map((prediction) => ({
     ...prediction,
     match: resolveEffectiveMatchScore(prediction.match, scoredMatches),
-    points: visiblePredictionPoints(prediction, resolveEffectiveMatchScore(prediction.match, scoredMatches)),
+    points: (() => {
+      const effectiveMatch = resolveEffectiveMatchScore(prediction.match, scoredMatches);
+      if (effectiveMatch.status !== "FINISHED" || effectiveMatch.homeScore === null || effectiveMatch.awayScore === null) {
+        return 0;
+      }
+      return calculatePredictionPoints(
+        { homeScore: prediction.homeScore, awayScore: prediction.awayScore },
+        { homeScore: effectiveMatch.homeScore, awayScore: effectiveMatch.awayScore },
+      );
+    })(),
   }));
   const effectiveMatches = matches.map((match) => resolveEffectiveMatchScore(match, scoredMatches));
 
@@ -131,7 +140,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     .map((membership) => {
       const userPredictions = scopedPredictions.filter((prediction) => prediction.userId === membership.userId);
       const finishedPredictions = userPredictions.filter(
-        ({ match }) => match.homeScore !== null && match.awayScore !== null,
+        ({ match }) => match.status === "FINISHED" && match.homeScore !== null && match.awayScore !== null,
       );
       return {
         id: membership.user.id,

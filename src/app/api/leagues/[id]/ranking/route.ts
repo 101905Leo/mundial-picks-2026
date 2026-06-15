@@ -2,10 +2,9 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { matchBelongsToResolvedRoomScope, roomOwnedMatchWhere } from "@/lib/room-match-scope";
-import { visiblePredictionPoints } from "@/lib/prediction-points";
 import { uniqueRoomPredictions } from "@/lib/room-predictions";
 import { resolveEffectiveMatchScore, sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
-import { getPredictionOutcome } from "@/lib/scoring";
+import { calculatePredictionPoints, getPredictionOutcome } from "@/lib/scoring";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { user, response } = await requireUser(request);
@@ -47,7 +46,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
               predictions: {
                 select: {
                   points: true,
-                  manualPoints: true,
                   userId: true,
                   matchId: true,
                   leagueId: true,
@@ -90,6 +88,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const useOwnedMatchesOnly = ownPublishedMatches > 0;
   const scoredMatches = await prisma.match.findMany({
     where: {
+      status: "FINISHED",
       homeScore: { not: null },
       awayScore: { not: null },
     },
@@ -128,11 +127,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         match: resolveEffectiveMatchScore(prediction.match, scoredMatches),
       }));
       const finishedPredictions = scopedPredictions
-        .filter(({ match }) => match.homeScore !== null && match.awayScore !== null)
+        .filter(({ match }) => match.status === "FINISHED" && match.homeScore !== null && match.awayScore !== null)
         .sort((a, b) => new Date(b.match.startsAt).getTime() - new Date(a.match.startsAt).getTime());
       let currentStreak = 0;
       for (const prediction of finishedPredictions) {
-        if (visiblePredictionPoints(prediction, prediction.match) >= 2) currentStreak += 1;
+        const points = calculatePredictionPoints(
+          { homeScore: prediction.homeScore, awayScore: prediction.awayScore },
+          { homeScore: prediction.match.homeScore!, awayScore: prediction.match.awayScore! },
+        );
+        if (points >= 2) currentStreak += 1;
         else break;
       }
 
@@ -143,7 +146,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         entryPaidAt: member.entryPaidAt,
         roomRole: role,
         points: finishedPredictions.reduce(
-          (sum, prediction) => sum + visiblePredictionPoints(prediction, prediction.match),
+          (sum, prediction) =>
+            sum +
+            calculatePredictionPoints(
+              { homeScore: prediction.homeScore, awayScore: prediction.awayScore },
+              { homeScore: prediction.match.homeScore!, awayScore: prediction.match.awayScore! },
+            ),
           0,
         ),
         predictions: scopedPredictions.length,
@@ -165,7 +173,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         createdAt: member.createdAt,
         weeklyPoints: finishedPredictions
           .filter(({ match }) => match.startsAt >= weekStart)
-          .reduce((sum, prediction) => sum + visiblePredictionPoints(prediction, prediction.match), 0),
+          .reduce(
+            (sum, prediction) =>
+              sum +
+              calculatePredictionPoints(
+                { homeScore: prediction.homeScore, awayScore: prediction.awayScore },
+                { homeScore: prediction.match.homeScore!, awayScore: prediction.match.awayScore! },
+              ),
+            0,
+          ),
       };
     })
     .sort(
