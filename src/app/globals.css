@@ -1216,9 +1216,25 @@ button {
   margin-top: 4px;
 }
 
-.legacy-admin-room-dashboard,
 .legacy-room-selected-tools {
   display: none;
+}
+
+.legacy-admin-room-dashboard {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
+.legacy-admin-room-dashboard > .room-dashboard-bar,
+.legacy-admin-room-dashboard > .admin-room-summary,
+.legacy-admin-room-dashboard .admin-room-grid {
+  display: none;
+}
+
+.legacy-admin-room-dashboard .admin-room-user-tools {
+  margin-top: 0;
 }
 
 .super-room-selector-bar {
@@ -1443,24 +1459,49 @@ button {
   align-items: start;
   display: grid;
   gap: 14px;
-  grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.75fr);
+  grid-template-columns: 1fr;
 }
 
 .room-main-content {
   display: grid;
   gap: 14px;
+  grid-column: 1 / -1;
   min-width: 0;
 }
 
 .room-main-chat {
-  max-height: calc(100vh - 170px);
-  position: sticky;
-  top: 82px;
+  max-height: none;
+  position: static;
 }
 
 .room-main-chat .league-chat-messages {
-  max-height: calc(100vh - 430px);
+  max-height: 520px;
   min-height: 260px;
+}
+
+.room-config-drawer {
+  background: rgba(4, 8, 16, 0.5);
+  border: 1px solid rgba(93, 220, 255, 0.13);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+
+.room-config-drawer + .room-config-drawer {
+  margin-top: 12px;
+}
+
+.room-config-drawer summary {
+  color: #fff;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.room-private-match-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 8px;
 }
 
 .room-picks-board {
@@ -3368,6 +3409,39 @@ button {
   grid-template-columns: minmax(0, 1fr) auto auto;
 }
 
+.room-action-strip {
+  align-items: center;
+  border-bottom: 1px solid rgba(93, 220, 255, 0.14);
+  display: grid;
+  gap: 10px;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  padding: 4px 0 10px;
+}
+
+.room-action-strip .admin-user-badges,
+.room-action-strip .admin-user-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.room-action-strip .admin-user-badges span {
+  background: rgba(2, 6, 14, 0.68);
+  border: 1px solid rgba(93, 220, 255, 0.14);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 900;
+  padding: 5px 8px;
+}
+
+.room-action-strip .button {
+  min-height: 34px;
+  padding: 8px 12px;
+}
+
 .room-selected-title {
   min-width: 0;
 }
@@ -4215,6 +4289,7 @@ button {
   .room-selected-tools,
   .room-control-bar,
   .room-selected-card,
+  .room-action-strip,
   .room-match-loader,
   .room-match-control,
   .room-preview-grid,
@@ -4499,10 +4574,47 @@ button {
     z-index: 8;
   }
 
-  .room-mobile-drawer label {
+  .room-mobile-drawer > span {
     color: var(--gold);
     font-size: 0.72rem;
     font-weight: 900;
+    text-transform: uppercase;
+  }
+
+  .room-mobile-cajons {
+    display: grid;
+    gap: 8px;
+  }
+
+  .room-mobile-cajon {
+    align-items: center;
+    background: rgba(5, 9, 18, 0.92);
+    border: 1px solid rgba(191, 219, 254, 0.16);
+    border-radius: 8px;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    min-height: 48px;
+    padding: 10px 12px;
+    text-align: left;
+    width: 100%;
+  }
+
+  .room-mobile-cajon.active {
+    background: linear-gradient(135deg, #1d4ed8, #38bdf8);
+    border-color: rgba(191, 219, 254, 0.42);
+    color: #02111f;
+  }
+
+  .room-mobile-cajon strong {
+    font-size: 0.95rem;
+  }
+
+  .room-mobile-cajon small {
+    color: inherit;
+    font-size: 0.68rem;
+    font-weight: 900;
+    opacity: 0.78;
     text-transform: uppercase;
   }
 
@@ -4510,13 +4622,11 @@ button {
     display: none;
   }
 
-  .league-room-hero {
-    padding: 12px;
-  }
-
-  .league-room-hero h2 {
-    font-size: 1.35rem;
-    line-height: 1.05;
+  .league-room-hero,
+  .league-room-hero .market-kicker,
+  .league-room-hero .muted,
+  .league-room-hero .room-owner-actions {
+    display: none;
   }
 
   .room-status-line,

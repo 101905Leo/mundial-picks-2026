@@ -12,7 +12,7 @@ type Props = {
   initialLeagueId?: string | null;
   embedded?: boolean;
 };
-type RoomView = "picks" | "matches" | "facts" | "ranking" | "statistics" | "participants";
+type RoomView = "picks" | "matches" | "facts" | "ranking" | "statistics" | "participants" | "chat";
 
 type LeagueMessage = {
   id: string;
@@ -393,6 +393,36 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
     setRoomView("matches");
   }
 
+  async function createPrivateMatch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selectedLeague) return;
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const response = await fetch(`/api/leagues/${selectedLeague.id}/matches`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        homeTeam: String(formData.get("homeTeam") ?? ""),
+        awayTeam: String(formData.get("awayTeam") ?? ""),
+        startsAt: String(formData.get("startsAt") ?? ""),
+        group: String(formData.get("group") ?? ""),
+        venue: String(formData.get("venue") ?? ""),
+      }),
+    });
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      setMessage(data.error ?? "No se pudo crear el partido privado");
+      return;
+    }
+
+    form.reset();
+    setMessage(data.message ?? "Partido privado creado en la sala");
+    await loadRoom();
+    setRoomView("matches");
+  }
+
   async function publishRoomMatch(matchId: string, publish: boolean) {
     if (!selectedLeague) return;
 
@@ -458,9 +488,10 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
         : "La sala debe estar activa para guardar picks.";
   const roomTabs: Array<[RoomView, string]> = [
     ["picks", "Picks"],
-    ...(canEditRoomInfo ? ([["matches", "Ligas"]] as Array<[RoomView, string]>) : []),
+    ...(canEditRoomInfo ? ([["matches", "Configurar"]] as Array<[RoomView, string]>) : []),
     ["facts", "Datos"],
     ["ranking", "Ranking"],
+    ["chat", "Chat"],
     ["statistics", "Estadísticas"],
     ["participants", "Participantes"],
   ];
@@ -638,18 +669,20 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
           ) : (
           <>
           <div className="room-mobile-drawer">
-            <label htmlFor="roomMobileView">Sección de la sala</label>
-            <select
-              id="roomMobileView"
-              onChange={(event) => setRoomView(event.target.value as RoomView)}
-              value={roomView}
-            >
+            <span>{selectedLeague.name}</span>
+            <div className="room-mobile-cajons">
               {roomTabs.map(([view, label]) => (
-                <option key={view} value={view}>
-                  {label}
-                </option>
+                <button
+                  className={`room-mobile-cajon ${roomView === view ? "active" : ""}`}
+                  key={view}
+                  onClick={() => setRoomView(view)}
+                  type="button"
+                >
+                  <strong>{label}</strong>
+                  <small>{roomView === view ? "Abierto" : "Tocar para abrir"}</small>
+                </button>
               ))}
-            </select>
+            </div>
           </div>
 
           <nav className="admin-nav room-nav" aria-label="Secciones de la sala">
@@ -705,7 +738,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
                       roomId={selectedLeague.id}
                     />
                   ))}
-                  {!matches.length ? <div className="empty">Esta liga todavía no tiene partidos publicados.</div> : null}
+                  {!matches.length ? <div className="empty">Esta sala todavía no tiene partidos publicados.</div> : null}
                 </div>
               </section>
               <section className="panel room-predictions">
@@ -734,27 +767,57 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
               <section className="panel room-match-admin">
                 <div className="section-title">
                   <div>
-                    <span className="market-kicker">Ligas de la sala</span>
-                    <h3>Cargar calendario y publicar partidos</h3>
+                    <span className="market-kicker">Configuración de sala</span>
+                    <h3>Calendario y partidos</h3>
                   </div>
                 </div>
-                <form className="room-match-loader" onSubmit={importCompetitionMatches}>
-                  <div className="form-row">
-                    <label htmlFor="roomCompetitionId">Liga disponible</label>
-                    <select id="roomCompetitionId" name="competitionId" defaultValue={selectedLeague.competitionId ?? competitions[0]?.id ?? ""} required>
-                      <option value="">Selecciona liga</option>
-                      {competitions.map((competition) => (
-                        <option key={competition.id} value={competition.id}>
-                          {competition.name} · {competition.season}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <button className="button primary" type="submit">Cargar partidos en esta sala</button>
-                </form>
-                <p className="muted">
-                  Los partidos se copian a esta sala como ocultos. Luego publicas solo los que quieras mostrar a sus participantes.
-                </p>
+                <details className="room-config-drawer" open>
+                  <summary>Usar calendario existente</summary>
+                  <form className="room-match-loader" onSubmit={importCompetitionMatches}>
+                    <div className="form-row">
+                      <label htmlFor="roomCompetitionId">Calendario base disponible</label>
+                      <select id="roomCompetitionId" name="competitionId" defaultValue={selectedLeague.competitionId ?? competitions[0]?.id ?? ""} required>
+                        <option value="">Selecciona calendario base</option>
+                        {competitions.map((competition) => (
+                          <option key={competition.id} value={competition.id}>
+                            {competition.name} · {competition.season}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <button className="button primary" type="submit">Cargar partidos en esta sala</button>
+                  </form>
+                </details>
+                <details className="room-config-drawer">
+                  <summary>Crear liga privada</summary>
+                  <form className="room-private-match-form" onSubmit={createPrivateMatch}>
+                    <div className="inline-form">
+                      <div className="form-row">
+                        <label htmlFor="privateHomeTeam">Equipo local</label>
+                        <input id="privateHomeTeam" name="homeTeam" minLength={2} required />
+                      </div>
+                      <div className="form-row">
+                        <label htmlFor="privateAwayTeam">Equipo visitante</label>
+                        <input id="privateAwayTeam" name="awayTeam" minLength={2} required />
+                      </div>
+                    </div>
+                    <div className="inline-form">
+                      <div className="form-row">
+                        <label htmlFor="privateStartsAt">Fecha y hora</label>
+                        <input id="privateStartsAt" name="startsAt" type="datetime-local" required />
+                      </div>
+                      <div className="form-row">
+                        <label htmlFor="privateGroup">Grupo o fase</label>
+                        <input id="privateGroup" name="group" placeholder="Grupo A" />
+                      </div>
+                      <div className="form-row">
+                        <label htmlFor="privateVenue">Lugar</label>
+                        <input id="privateVenue" name="venue" placeholder="Cancha principal" />
+                      </div>
+                    </div>
+                    <button className="button primary" type="submit">Crear partido privado</button>
+                  </form>
+                </details>
               </section>
 
               <section className="panel room-match-admin-list">
@@ -791,7 +854,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
                     </article>
                   ))}
                   {!managedMatches.length ? (
-                    <div className="empty">Carga una liga para crear el calendario propio de esta sala.</div>
+                    <div className="empty">Carga una competición o crea partidos privados para armar el calendario de esta sala.</div>
                   ) : null}
                 </div>
               </section>
@@ -840,6 +903,28 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
             </div>
           ) : null}
 
+          {roomView === "chat" ? (
+            <section className="panel league-chat room-main-chat">
+              <div className="section-title"><div><span className="market-kicker">Chat público</span><h3>Conversación de la sala</h3></div></div>
+              <div className="league-chat-messages" aria-live="polite">
+                {chatMessages.map((chatMessage) => (
+                  <article className="league-chat-message" key={chatMessage.id}>
+                    <div>
+                      <strong>{chatMessage.user.name}</strong>
+                      <time>{new Date(chatMessage.createdAt).toLocaleString("es", { dateStyle: "short", timeStyle: "short" })}</time>
+                    </div>
+                    {chatMessage.body ? <p>{chatMessage.body}</p> : null}
+                  </article>
+                ))}
+                {!chatMessages.length ? <div className="empty">Todavía no hay mensajes.</div> : null}
+              </div>
+              <form className="league-chat-form" onSubmit={sendChatMessage}>
+                <input maxLength={500} name="message" placeholder="Escribe un mensaje..." required />
+                <button className="button primary" type="submit">Enviar</button>
+              </form>
+            </section>
+          ) : null}
+
           {roomView === "participants" ? (
             <div className="league-room-grid">
               <section className="panel">
@@ -872,26 +957,6 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
             </div>
           ) : null}
             </div>
-
-            <section className="panel league-chat room-main-chat">
-              <div className="section-title"><div><span className="market-kicker">Chat público</span><h3>Conversación de la sala</h3></div></div>
-              <div className="league-chat-messages" aria-live="polite">
-                {chatMessages.map((chatMessage) => (
-                  <article className="league-chat-message" key={chatMessage.id}>
-                    <div>
-                      <strong>{chatMessage.user.name}</strong>
-                      <time>{new Date(chatMessage.createdAt).toLocaleString("es", { dateStyle: "short", timeStyle: "short" })}</time>
-                    </div>
-                    {chatMessage.body ? <p>{chatMessage.body}</p> : null}
-                  </article>
-                ))}
-                {!chatMessages.length ? <div className="empty">Todavía no hay mensajes.</div> : null}
-              </div>
-              <form className="league-chat-form" onSubmit={sendChatMessage}>
-                <input maxLength={500} name="message" placeholder="Escribe un mensaje..." required />
-                <button className="button primary" type="submit">Enviar</button>
-              </form>
-            </section>
           </div>
           </>
           )}

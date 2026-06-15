@@ -1962,11 +1962,11 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
               </div>
               {selectedRoom ? (
                 <>
-                <div className="room-selected-card room-selected-card-lean">
+                <div className="room-action-strip">
                   <div className="room-selected-title">
                     <strong>{selectedRoom.name}</strong>
                     <span>
-                      {selectedRoom.competition?.name ?? "Sin liga"} · Código {selectedRoom.inviteCode} ·
+                      {selectedRoom.competition?.name ?? "Sin calendario base"} · Código {selectedRoom.inviteCode} ·
                       {" "}{selectedRoomMemberships.length}/{selectedRoom.maxParticipants} participantes ·
                       {" "}Propietario: {selectedRoom.owner.name}
                     </span>
@@ -2041,7 +2041,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                                 <article><span>Picks</span><strong>{selectedRoomRanking?.predictions ?? selectedRoomUserPredictions.length}</strong></article>
                                 <article><span>Exactos</span><strong>{selectedRoomRanking?.exactScores ?? 0}</strong></article>
                               </div>
-                              <details className="admin-room-accordion" open>
+                              <details className="admin-room-accordion">
                                 <summary>Acciones del participante seleccionado</summary>
                                 <div className="admin-room-user-forms">
                                 <form className="room-user-mini-form" onSubmit={editUser}>
@@ -2481,9 +2481,9 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                 </select>
               </div>
               <div className="form-row">
-                <label htmlFor="manualCompetitionId">Liga</label>
+                <label htmlFor="manualCompetitionId">Calendario base</label>
                 <select id="manualCompetitionId" name="manualCompetitionId" required>
-                  <option value="">Selecciona liga</option>
+                  <option value="">Selecciona calendario base</option>
                   {competitions.map((competition) => (
                     <option key={competition.id} value={competition.id}>{competition.name} · {competition.season}</option>
                   ))}
@@ -2531,9 +2531,9 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                 </select>
               </div>
               <div className="form-row">
-                <label htmlFor="trialCompetitionId">Liga</label>
+                <label htmlFor="trialCompetitionId">Calendario base</label>
                 <select id="trialCompetitionId" name="trialCompetitionId" required>
-                  <option value="">Selecciona liga</option>
+                  <option value="">Selecciona calendario base</option>
                   {competitions.map((competition) => (
                     <option key={competition.id} value={competition.id}>{competition.name} · {competition.season}</option>
                   ))}

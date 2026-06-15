@@ -33,7 +33,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const parsed = importMatchesSchema.safeParse(body);
 
   if (!parsed.success) {
-    return Response.json({ error: "Selecciona una liga valida para cargar partidos." }, { status: 400 });
+    return Response.json({ error: "Selecciona un calendario base valido para cargar partidos." }, { status: 400 });
   }
 
   const league = await getManageableLeague(id, user!.id, user!.role);
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   });
 
   if (!competition) {
-    return Response.json({ error: "Liga no encontrada." }, { status: 404 });
+    return Response.json({ error: "Calendario base no encontrado." }, { status: 404 });
   }
 
   const sourceMatches = await prisma.match.findMany({
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   });
 
   if (!sourceMatches.length) {
-    return Response.json({ error: "Esta liga todavia no tiene calendario base cargado." }, { status: 409 });
+    return Response.json({ error: "Este calendario base todavia no tiene partidos cargados." }, { status: 409 });
   }
 
   const existingRoomMatches = await prisma.match.findMany({
