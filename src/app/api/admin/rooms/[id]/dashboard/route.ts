@@ -3,11 +3,12 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import {
   roomGlobalFallbackMatchWhere,
+  roomMatchScopeWhere,
   roomOwnedMatchWhere,
 } from "@/lib/room-match-scope";
 import { hasRankingScore, rankingPredictionPoints } from "@/lib/prediction-points";
 import { uniqueRoomPredictions } from "@/lib/room-predictions";
-import { resolveEffectiveMatchScore } from "@/lib/match-equivalence";
+import { resolveEffectiveMatchScore, sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
 import { removeSuperAdminRoomMemberships } from "@/lib/remove-super-admin-room-memberships";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -39,11 +40,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const ownPublishedMatches = await prisma.match.count({
     where: { isPublished: true, ...roomOwnedMatchWhere(room) },
   });
+  const ownMatchCount = await prisma.match.count({
+    where: roomOwnedMatchWhere(room),
+  });
   const matchScope = ownPublishedMatches > 0 ? roomOwnedMatchWhere(room) : roomGlobalFallbackMatchWhere(room);
   const visibleMemberships = room.memberships.filter((membership) => membership.user.role !== "ADMIN");
   const memberIds = visibleMemberships.map((membership) => membership.userId);
 
-  const [matches, rawPredictions, messages, scoredMatches] = await Promise.all([
+  const [matches, rawPredictions, messages, scoredMatches, roomScopeMatches] = await Promise.all([
     prisma.match.findMany({
       where: { isPublished: true, ...matchScope },
       orderBy: { startsAt: "asc" },
@@ -65,7 +69,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     prisma.prediction.findMany({
       where: {
         userId: { in: memberIds },
-        OR: [{ leagueId: room.id }, { roomKey: room.id }],
+        OR: [{ leagueId: room.id }, { roomKey: room.id }, { leagueId: null, roomKey: "GLOBAL" }],
       },
       orderBy: [{ match: { startsAt: "asc" } }, { user: { name: "asc" } }],
       include: {
@@ -114,11 +118,38 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         status: true,
       },
     }),
+    prisma.match.findMany({
+      where: roomMatchScopeWhere(room),
+      select: {
+        id: true,
+        competitionId: true,
+        roomId: true,
+        sourceKey: true,
+        homeTeam: true,
+        awayTeam: true,
+        startsAt: true,
+        updatedAt: true,
+        homeScore: true,
+        awayScore: true,
+        status: true,
+      },
+    }),
   ]);
 
   const scopedPredictions = uniqueRoomPredictions(
     rawPredictions.filter((prediction) => {
-      return prediction.leagueId === room.id || prediction.roomKey === room.id;
+      if (prediction.leagueId === room.id || prediction.roomKey === room.id) return true;
+      if (prediction.leagueId !== null || prediction.roomKey !== "GLOBAL") return false;
+
+      return roomScopeMatches.some((candidate) => {
+        const candidateBelongsToRoom = candidate.roomId === room.id;
+        const candidateIsAllowedGlobal = ownMatchCount === 0 && candidate.roomId === null;
+
+        return (
+          (candidateBelongsToRoom || candidateIsAllowedGlobal) &&
+          sameMatchByTeamsAndKickoff(candidate, prediction.match)
+        );
+      });
     }),
     room.id,
   ).map((prediction) => ({
