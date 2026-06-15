@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
-import { matchBelongsToResolvedRoomScope, roomGlobalFallbackMatchWhere, roomOwnedMatchWhere } from "@/lib/room-match-scope";
+import { roomGlobalFallbackMatchWhere, roomOwnedMatchWhere } from "@/lib/room-match-scope";
 import { uniqueRoomPredictions } from "@/lib/room-predictions";
 import { resolveEffectiveMatchScore } from "@/lib/match-equivalence";
 import { removeSuperAdminRoomMemberships } from "@/lib/remove-super-admin-room-memberships";
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     prisma.prediction.findMany({
       where: {
         userId: { in: memberIds },
-        OR: [{ leagueId: room.id }, { roomKey: room.id }, { leagueId: null, roomKey: "GLOBAL" }],
+        OR: [{ leagueId: room.id }, { roomKey: room.id }],
       },
       orderBy: [{ match: { startsAt: "asc" } }, { user: { name: "asc" } }],
       include: {
@@ -114,15 +114,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   ]);
 
   const scopedPredictions = uniqueRoomPredictions(
-    rawPredictions.filter((prediction) => {
-      const belongsToSelectedRoom = prediction.leagueId === room.id || prediction.roomKey === room.id;
-      const belongsToGlobalFallback =
-        prediction.leagueId === null &&
-        prediction.roomKey === "GLOBAL" &&
-        matchBelongsToResolvedRoomScope(prediction.match, room, ownPublishedMatches > 0);
-
-      return belongsToSelectedRoom || belongsToGlobalFallback;
-    }),
+    rawPredictions.filter((prediction) => prediction.leagueId === room.id || prediction.roomKey === room.id),
     room.id,
   ).map((prediction) => ({
     ...prediction,
@@ -153,7 +145,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         isActive: membership.user.isActive,
         entryPaidAt: membership.user.entryPaidAt,
         roomRole: membership.role,
-        predictions: userPredictions.length,
+        predictions: rawPredictions.filter((prediction) => prediction.userId === membership.userId).length,
+        totalPicks: rawPredictions.filter((prediction) => prediction.userId === membership.userId).length,
+        scoredPicks: finishedPredictions.length,
         points: finishedPredictions.reduce((sum, prediction) => sum + prediction.points, 0),
         exactScores: finishedPredictions.filter(
           ({ homeScore, awayScore, match }) =>

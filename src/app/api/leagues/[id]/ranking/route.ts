@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
-import { matchBelongsToResolvedRoomScope, roomOwnedMatchWhere } from "@/lib/room-match-scope";
 import { uniqueRoomPredictions } from "@/lib/room-predictions";
 import { resolveEffectiveMatchScore } from "@/lib/match-equivalence";
 import { calculatePredictionPoints, getPredictionOutcome } from "@/lib/scoring";
@@ -9,6 +8,7 @@ import { calculatePredictionPoints, getPredictionOutcome } from "@/lib/scoring";
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { user, response } = await requireUser(request);
   if (response) return response;
+  const includeDebug = request.nextUrl.searchParams.get("debug") === "1";
 
   const { id } = await params;
   const access = await prisma.league.findUnique({
@@ -45,6 +45,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
               entryPaidAt: true,
               predictions: {
                 select: {
+                  id: true,
                   points: true,
                   userId: true,
                   matchId: true,
@@ -82,10 +83,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return Response.json({ error: "Sala no encontrada" }, { status: 404 });
   }
 
-  const ownPublishedMatches = await prisma.match.count({
-    where: { isPublished: true, ...roomOwnedMatchWhere(league) },
-  });
-  const useOwnedMatchesOnly = ownPublishedMatches > 0;
   const scoredMatches = await prisma.match.findMany({
     where: {
       status: "FINISHED",
@@ -111,15 +108,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     .filter(({ user: member }) => member.role !== "ADMIN")
     .map(({ user: member, role }) => {
       const roomPredictions = member.predictions.filter(
-        ({ match, leagueId, roomKey }) => {
-          const belongsToSelectedRoom = leagueId === league.id || roomKey === league.id;
-          const belongsToGlobalFallback =
-            leagueId === null &&
-            roomKey === "GLOBAL" &&
-            matchBelongsToResolvedRoomScope(match, league, useOwnedMatchesOnly);
-
-          return belongsToSelectedRoom || belongsToGlobalFallback;
-        },
+        ({ leagueId, roomKey }) => leagueId === league.id || roomKey === league.id,
       );
       const scopedPredictions = uniqueRoomPredictions(roomPredictions, league.id).map((prediction) => ({
         ...prediction,
@@ -153,7 +142,45 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             ),
           0,
         ),
-        predictions: scopedPredictions.length,
+        predictions: roomPredictions.length,
+        totalPicks: roomPredictions.length,
+        scoredPicks: finishedPredictions.length,
+        ...(includeDebug
+          ? {
+              rankingDebug: roomPredictions.map((prediction) => {
+                const effectiveMatch = resolveEffectiveMatchScore(prediction.match, scoredMatches);
+                const isSelectedForScoring = scopedPredictions.some((scopedPrediction) => scopedPrediction.id === prediction.id);
+                const isFinished = effectiveMatch.status === "FINISHED";
+                const hasCompleteResult = effectiveMatch.homeScore !== null && effectiveMatch.awayScore !== null;
+                const countsForPoints = isSelectedForScoring && isFinished && hasCompleteResult;
+
+                return {
+                  predictionId: prediction.id,
+                  matchId: prediction.matchId,
+                  userId: prediction.userId,
+                  roomKey: prediction.roomKey,
+                  leagueId: prediction.leagueId,
+                  matchRoomId: prediction.match.roomId,
+                  matchHomeTeam: prediction.match.homeTeam,
+                  matchAwayTeam: prediction.match.awayTeam,
+                  pickHomeScore: prediction.homeScore,
+                  pickAwayScore: prediction.awayScore,
+                  resultHomeScore: effectiveMatch.homeScore,
+                  resultAwayScore: effectiveMatch.awayScore,
+                  status: effectiveMatch.status,
+                  countsForTotalPicks: true,
+                  countsForPoints,
+                  reason: countsForPoints
+                    ? "cuenta para puntos porque pertenece a esta sala y el partido esta FINISHED con marcador completo"
+                    : !isSelectedForScoring
+                      ? "cuenta como pick guardado, pero no para puntos porque hay otro pick elegido para el mismo partido logico"
+                      : !isFinished
+                        ? "cuenta como pick guardado, pero no para puntos porque el partido no esta FINISHED"
+                        : "cuenta como pick guardado, pero no para puntos porque el partido no tiene resultado completo",
+                };
+              }),
+            }
+          : {}),
         exactScores: finishedPredictions.filter(
           ({ homeScore, awayScore, match }) =>
             getPredictionOutcome(
