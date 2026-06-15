@@ -6,6 +6,7 @@ import { visiblePredictionPoints } from "@/lib/prediction-points";
 import { uniqueRoomPredictions } from "@/lib/room-predictions";
 import { resolveEffectiveMatchScore, sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
 import { removeSuperAdminRoomMemberships } from "@/lib/remove-super-admin-room-memberships";
+import { getPredictionOutcome } from "@/lib/scoring";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { response } = await requireAdmin(request);
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       memberships: {
         orderBy: { joinedAt: "asc" },
         include: {
-          user: { select: { id: true, name: true, phone: true, isActive: true, entryPaidAt: true, role: true } },
+          user: { select: { id: true, name: true, phone: true, isActive: true, entryPaidAt: true, role: true, createdAt: true } },
         },
       },
     },
@@ -129,6 +130,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const ranking = visibleMemberships
     .map((membership) => {
       const userPredictions = scopedPredictions.filter((prediction) => prediction.userId === membership.userId);
+      const finishedPredictions = userPredictions.filter(
+        ({ match }) => match.homeScore !== null && match.awayScore !== null,
+      );
       return {
         id: membership.user.id,
         name: membership.user.name,
@@ -137,17 +141,31 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         entryPaidAt: membership.user.entryPaidAt,
         roomRole: membership.role,
         predictions: userPredictions.length,
-        points: userPredictions.reduce((sum, prediction) => sum + prediction.points, 0),
-        exactScores: userPredictions.filter(
-          (prediction) =>
-            prediction.match.homeScore !== null &&
-            prediction.match.awayScore !== null &&
-            prediction.match.homeScore === prediction.homeScore &&
-            prediction.match.awayScore === prediction.awayScore,
+        points: finishedPredictions.reduce((sum, prediction) => sum + prediction.points, 0),
+        exactScores: finishedPredictions.filter(
+          ({ homeScore, awayScore, match }) =>
+            getPredictionOutcome(
+              { homeScore, awayScore },
+              { homeScore: match.homeScore!, awayScore: match.awayScore! },
+            ) === "EXACT",
         ).length,
+        winnerCorrect: finishedPredictions.filter(
+          ({ homeScore, awayScore, match }) =>
+            getPredictionOutcome(
+              { homeScore, awayScore },
+              { homeScore: match.homeScore!, awayScore: match.awayScore! },
+            ) === "WINNER",
+        ).length,
+        createdAt: membership.user.createdAt,
       };
     })
-    .sort((left, right) => right.points - left.points || right.predictions - left.predictions);
+    .sort(
+      (left, right) =>
+        right.points - left.points ||
+        right.exactScores - left.exactScores ||
+        right.winnerCorrect - left.winnerCorrect ||
+        left.createdAt.getTime() - right.createdAt.getTime(),
+    );
 
   return Response.json({
     room,

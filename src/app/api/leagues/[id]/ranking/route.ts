@@ -5,6 +5,7 @@ import { matchBelongsToResolvedRoomScope, roomOwnedMatchWhere } from "@/lib/room
 import { visiblePredictionPoints } from "@/lib/prediction-points";
 import { uniqueRoomPredictions } from "@/lib/room-predictions";
 import { resolveEffectiveMatchScore, sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
+import { getPredictionOutcome } from "@/lib/scoring";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { user, response } = await requireUser(request);
@@ -39,6 +40,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             select: {
               id: true,
               name: true,
+              createdAt: true,
               role: true,
               isActive: true,
               entryPaidAt: true,
@@ -140,25 +142,39 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         isActive: member.isActive,
         entryPaidAt: member.entryPaidAt,
         roomRole: role,
-        points: scopedPredictions.reduce(
+        points: finishedPredictions.reduce(
           (sum, prediction) => sum + visiblePredictionPoints(prediction, prediction.match),
           0,
         ),
         predictions: scopedPredictions.length,
-        exactScores: scopedPredictions.filter(
+        exactScores: finishedPredictions.filter(
           ({ homeScore, awayScore, match }) =>
-            match.homeScore !== null &&
-            match.awayScore !== null &&
-            homeScore === match.homeScore &&
-            awayScore === match.awayScore,
+            getPredictionOutcome(
+              { homeScore, awayScore },
+              { homeScore: match.homeScore!, awayScore: match.awayScore! },
+            ) === "EXACT",
+        ).length,
+        winnerCorrect: finishedPredictions.filter(
+          ({ homeScore, awayScore, match }) =>
+            getPredictionOutcome(
+              { homeScore, awayScore },
+              { homeScore: match.homeScore!, awayScore: match.awayScore! },
+            ) === "WINNER",
         ).length,
         currentStreak,
-        weeklyPoints: scopedPredictions
+        createdAt: member.createdAt,
+        weeklyPoints: finishedPredictions
           .filter(({ match }) => match.startsAt >= weekStart)
           .reduce((sum, prediction) => sum + visiblePredictionPoints(prediction, prediction.match), 0),
       };
     })
-    .sort((a, b) => b.points - a.points || b.predictions - a.predictions);
+    .sort(
+      (a, b) =>
+        b.points - a.points ||
+        b.exactScores - a.exactScores ||
+        b.winnerCorrect - a.winnerCorrect ||
+        a.createdAt.getTime() - b.createdAt.getTime(),
+    );
   const ranking = members;
   const weeklyLeader = [...members].sort((a, b) => b.weeklyPoints - a.weeklyPoints)[0] ?? null;
   const bestActiveStreak = [...members].sort((a, b) => b.currentStreak - a.currentStreak)[0] ?? null;

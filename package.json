@@ -17,7 +17,8 @@
     "native:add:android": "cap add android",
     "native:sync": "cap sync",
     "native:open:ios": "cap open ios",
-    "native:open:android": "cap open android"
+    "native:open:android": "cap open android",
+    "test:scoring": "node --import tsx src/lib/scoring.test.ts"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.0",
