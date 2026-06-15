@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { matchBelongsToResolvedRoomScope, roomOwnedMatchWhere } from "@/lib/room-match-scope";
 import { uniqueRoomPredictions } from "@/lib/room-predictions";
-import { resolveEffectiveMatchScore, sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
+import { resolveEffectiveMatchScore } from "@/lib/match-equivalence";
 import { calculatePredictionPoints, getPredictionOutcome } from "@/lib/scoring";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -117,9 +117,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             leagueId === null &&
             roomKey === "GLOBAL" &&
             matchBelongsToResolvedRoomScope(match, league, useOwnedMatchesOnly);
-          const hasEquivalentScore = scoredMatches.some((candidate) => sameMatchByTeamsAndKickoff(candidate, match));
 
-          return (match.isPublished || hasEquivalentScore) && (belongsToSelectedRoom || belongsToGlobalFallback);
+          return belongsToSelectedRoom || belongsToGlobalFallback;
         },
       );
       const scopedPredictions = uniqueRoomPredictions(roomPredictions, league.id).map((prediction) => ({

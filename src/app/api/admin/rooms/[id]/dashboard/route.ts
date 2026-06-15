@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
-import { roomGlobalFallbackMatchWhere, roomOwnedMatchWhere } from "@/lib/room-match-scope";
+import { matchBelongsToResolvedRoomScope, roomGlobalFallbackMatchWhere, roomOwnedMatchWhere } from "@/lib/room-match-scope";
 import { uniqueRoomPredictions } from "@/lib/room-predictions";
-import { resolveEffectiveMatchScore, sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
+import { resolveEffectiveMatchScore } from "@/lib/match-equivalence";
 import { removeSuperAdminRoomMemberships } from "@/lib/remove-super-admin-room-memberships";
 import { calculatePredictionPoints, getPredictionOutcome } from "@/lib/scoring";
 
@@ -114,11 +114,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   ]);
 
   const scopedPredictions = uniqueRoomPredictions(
-    rawPredictions.filter(
-      (prediction) =>
-        prediction.match.isPublished ||
-        scoredMatches.some((candidate) => sameMatchByTeamsAndKickoff(candidate, prediction.match)),
-    ),
+    rawPredictions.filter((prediction) => {
+      const belongsToSelectedRoom = prediction.leagueId === room.id || prediction.roomKey === room.id;
+      const belongsToGlobalFallback =
+        prediction.leagueId === null &&
+        prediction.roomKey === "GLOBAL" &&
+        matchBelongsToResolvedRoomScope(prediction.match, room, ownPublishedMatches > 0);
+
+      return belongsToSelectedRoom || belongsToGlobalFallback;
+    }),
     room.id,
   ).map((prediction) => ({
     ...prediction,
