@@ -1951,9 +1951,8 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
           <>
             <section className="form room-command-center compact-room-command">
               <div className="room-control-bar">
-                <div className="room-control-field">
-                  <span className="market-kicker">Super usuario</span>
-                  <label htmlFor="superAdminRoomSelector">Sala seleccionada</label>
+                <div className="room-control-field compact-room-picker">
+                  <label htmlFor="superAdminRoomSelector">Sala</label>
                 <select
                   id="superAdminRoomSelector"
                   onChange={(event) => {
@@ -1978,6 +1977,8 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
               </p>
               {selectedRoom ? (
                 <>
+                <details className="room-admin-actions-strip">
+                  <summary>Acciones rápidas de {selectedRoom.name}</summary>
                 <div className="room-action-strip">
                   <div className="room-selected-title">
                     <strong>{selectedRoom.name}</strong>
@@ -1998,6 +1999,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                     <button className="button danger" onClick={() => deleteAdminRoom(selectedRoom)} type="button">Eliminar sala</button>
                   </div>
                 </div>
+                </details>
                 <LeaguePanel user={user} initialLeagueId={selectedRoom.id} embedded />
 
                   <section className="admin-room-dashboard compact legacy-admin-room-dashboard">

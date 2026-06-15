@@ -5,8 +5,8 @@ import { PwaRegister } from "@/components/pwa-register";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Mundial Picks | Salas privadas de quiniela",
-  description: "Crea y administra salas privadas de quiniela con picks, chat y ranking independiente.",
+  title: "Mundial Picks | Salas privadas de picks",
+  description: "Crea y administra salas privadas de picks con chat y ranking independiente.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

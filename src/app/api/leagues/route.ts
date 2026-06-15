@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
           maxParticipants,
           status: "ACTIVE",
           expiresAt: new Date(Date.now() + (plan?.durationDays ?? 365) * 24 * 60 * 60 * 1000),
-          description: parsed.data.description || "Sala privada de quiniela para amigos, familia o compañeros.",
+          description: parsed.data.description || "Sala privada de picks para amigos, familia o compañeros.",
           rules: parsed.data.rules || "El administrador de la sala define las reglas internas para sus participantes.",
           memberships: {
             create: { userId: user!.id, role: "ADMIN" },

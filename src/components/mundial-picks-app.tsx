@@ -214,7 +214,7 @@ export function MundialPicksApp() {
               <section className="landing-grid">
                 <div className="landing-main">
                   <section className="landing-card landing-intro">
-                    <span className="market-kicker">Salas privadas de quiniela</span>
+                    <span className="market-kicker">Salas privadas de picks</span>
                     <h2>Crea tu sala, invita a tu grupo y administra un ranking independiente.</h2>
                     <div className="landing-stats">
                       <div>
@@ -242,7 +242,7 @@ export function MundialPicksApp() {
 
                   <section className="landing-card room-sales-points">
                     <article><strong>Crea tu sala privada</strong><span>Un espacio exclusivo para tu grupo.</span></article>
-                    <article><strong>Organiza tu quiniela</strong><span>Configura reglas y participantes.</span></article>
+                    <article><strong>Organiza tus picks</strong><span>Configura reglas y participantes.</span></article>
                     <article><strong>Reta a tus amigos</strong><span>Comparte el código por WhatsApp.</span></article>
                     <article><strong>Administra tu ranking</strong><span>Consulta puntos, rachas y exactos.</span></article>
                   </section>
@@ -272,7 +272,7 @@ export function MundialPicksApp() {
                   <section className="landing-card public-room-promo">
                     <div>
                       <span className="market-kicker">Alquila una sala para tu grupo</span>
-                      <h2>Tu quiniela, tus participantes y tus reglas</h2>
+                      <h2>Tus picks, tus participantes y tus reglas</h2>
                       <p>
                         Invita amigos o compañeros de trabajo, administra el cupo y consulta un ranking privado.
                       </p>

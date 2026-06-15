@@ -18,7 +18,7 @@ export function PlansPage() {
           <img className="brand-logo-image" src="/logo-copa-mundial-2026.png" alt="" />
           <span>
             <strong>Mundial Picks</strong>
-            <span>Salas privadas de quiniela</span>
+            <span>Salas privadas de picks</span>
           </span>
         </Link>
         <Link className="button secondary" href="/">Volver al inicio</Link>
@@ -26,7 +26,7 @@ export function PlansPage() {
 
       <section className="plans-intro">
         <span className="market-kicker">Alquila una sala para tu grupo</span>
-        <h1>Organiza tu quiniela y administra tu propio ranking</h1>
+        <h1>Organiza tus picks y administra tu propio ranking</h1>
         <p>Crea una sala privada, invita a tus amigos o compañeros y define las reglas internas de tu grupo.</p>
       </section>
 

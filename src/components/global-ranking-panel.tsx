@@ -31,7 +31,7 @@ export function GlobalRankingPanel({ ranking, user, onOpenPicks }: Props) {
           <span className="market-kicker">Mundial Picks 2026</span>
           <h2>Ranking mundial</h2>
           <p>
-            El ranking oficial de la quiniela aparecerá cuando empiece el Mundial. Desde aquí puedes buscar jugadores,
+            El ranking oficial de picks aparecerá cuando empiece el Mundial. Desde aquí puedes buscar jugadores,
             revisar tu posición y ver el Top 100 global.
           </p>
         </div>

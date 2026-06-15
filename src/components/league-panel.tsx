@@ -454,8 +454,10 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
   const nextRoomMatch =
     liveMatches[0] ??
     sortedMatches.find((match) => match.status !== "FINISHED" && new Date(match.startsAt) >= now) ??
-    sortedMatches[0] ??
     null;
+  const lastFinishedMatch = [...sortedMatches]
+    .reverse()
+    .find((match) => match.status === "FINISHED" && match.homeScore !== null && match.awayScore !== null);
   const nextStartsAt = nextRoomMatch ? new Date(nextRoomMatch.startsAt) : null;
   const nextDiff = nextStartsAt ? Math.max(0, nextStartsAt.getTime() - now.getTime()) : 0;
   const nextCountdown = {
@@ -534,7 +536,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
   const roomLiveMatches = matches.filter((match) => match.status === "LIVE").length;
   const roomTabs: Array<[RoomView, string]> = [
     ["home", "Inicio"],
-    ["picks", "Quiniela"],
+    ["picks", "Picks"],
     ["matches", "Calendario"],
     ["facts", "IA"],
     ["ranking", "Ranking"],
@@ -691,7 +693,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
           <section className="panel room-information">
             <div>
               <span className="market-kicker">Información del grupo</span>
-              <h3>{selectedLeague.description || "Sala privada de quiniela"}</h3>
+              <h3>{selectedLeague.description || "Sala privada de picks"}</h3>
               <p>{selectedLeague.rules || "El administrador de la sala todavía no ha publicado reglas internas."}</p>
             </div>
             <p className="room-legal-notice">
@@ -745,7 +747,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
             <div className="room-home-screen">
               <section className="room-next-card">
                 <div className="room-next-card-header">
-                  <span>{nextRoomMatch?.status === "LIVE" ? "Partido en vivo" : "Próximo partido"}</span>
+                  <span>{nextRoomMatch ? (nextRoomMatch.status === "LIVE" ? "Partido en vivo" : "Próximo partido") : lastFinishedMatch ? "Último resultado" : "Actividad de la sala"}</span>
                   <strong>{selectedLeague.name}</strong>
                 </div>
                 {nextRoomMatch ? (
@@ -782,13 +784,47 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
                     )}
                     <div className="room-home-actions">
                       <button className="button primary" onClick={() => setRoomView("picks")} type="button">
-                        {isSuperAdmin ? "Auditar quiniela" : "Hacer predicción"}
+                        {isSuperAdmin ? "Auditar picks" : "Hacer predicción"}
                       </button>
                       <button className="button secondary" onClick={() => setRoomView("ranking")} type="button">Ver ranking</button>
                     </div>
                   </>
+                ) : lastFinishedMatch ? (
+                  <>
+                    <div className="room-next-teams">
+                      <div>
+                        <span>{flagForTeam(lastFinishedMatch.homeTeam)}</span>
+                        <strong>{lastFinishedMatch.homeTeam}</strong>
+                      </div>
+                      <em>{lastFinishedMatch.homeScore} - {lastFinishedMatch.awayScore}</em>
+                      <div>
+                        <span>{flagForTeam(lastFinishedMatch.awayTeam)}</span>
+                        <strong>{lastFinishedMatch.awayTeam}</strong>
+                      </div>
+                    </div>
+                    <p>
+                      Partido finalizado ·{" "}
+                      <strong>{new Date(lastFinishedMatch.startsAt).toLocaleDateString("es", { weekday: "short", day: "2-digit", month: "short" })}</strong>
+                      {lastFinishedMatch.venue ? ` · ${lastFinishedMatch.venue}` : ""}
+                    </p>
+                    <div className="room-home-actions">
+                      <button className="button primary" onClick={() => setRoomView("picks")} type="button">Ver picks</button>
+                      <button className="button secondary" onClick={() => setRoomView("ranking")} type="button">Ver ranking</button>
+                    </div>
+                  </>
                 ) : (
-                  <div className="empty">Esta sala todavía no tiene partidos publicados.</div>
+                  <>
+                    <div className="room-activity-empty">
+                      <strong>{members.length}</strong>
+                      <span>participantes</span>
+                      <strong>{totalPicks}</strong>
+                      <span>picks guardados</span>
+                    </div>
+                    <div className="room-home-actions">
+                      <button className="button primary" onClick={() => setRoomView("matches")} type="button">Ver calendario</button>
+                      <button className="button secondary" onClick={() => setRoomView("ranking")} type="button">Ver ranking</button>
+                    </div>
+                  </>
                 )}
               </section>
 
