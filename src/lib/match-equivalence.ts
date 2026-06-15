@@ -1,9 +1,12 @@
 type MatchIdentity = {
   id?: string;
   competitionId?: string | null;
+  roomId?: string | null;
+  sourceKey?: string | null;
   homeTeam: string;
   awayTeam: string;
   startsAt: Date | string;
+  updatedAt?: Date | string;
 };
 
 type MatchScore = MatchIdentity & {
@@ -43,12 +46,22 @@ function kickoffDate(value: Date | string) {
   return value instanceof Date ? value : new Date(value);
 }
 
-function scoreDiffers(left: MatchScore, right: MatchScore) {
-  return (
-    left.homeScore !== null &&
-    left.awayScore !== null &&
-    (left.homeScore !== right.homeScore || left.awayScore !== right.awayScore)
-  );
+function timestamp(value?: Date | string) {
+  if (!value) return 0;
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+}
+
+function equivalentSourcePriority(candidate: MatchScore, baseMatch: MatchScore) {
+  let priority = statusPriority[candidate.status] * 1000;
+
+  if (candidate.roomId && baseMatch.roomId && candidate.roomId === baseMatch.roomId) priority += 500;
+  if (candidate.roomId === null) priority += 350;
+  if (candidate.sourceKey) priority += 100;
+  if (candidate.competitionId && candidate.competitionId === baseMatch.competitionId) priority += 50;
+  if (candidate.homeScore !== null && candidate.awayScore !== null) priority += 10;
+
+  return priority;
 }
 
 export function sameMatchByTeamsAndKickoff(left: MatchIdentity, right: MatchIdentity) {
@@ -67,23 +80,54 @@ export function sameMatchByTeamsAndKickoff(left: MatchIdentity, right: MatchIden
 }
 
 export function resolveEffectiveMatchScore<T extends MatchScore>(match: T, scoredMatches: MatchScore[]) {
+  if (match.status === "FINISHED" && match.homeScore !== null && match.awayScore !== null) {
+    const trustedFinalEquivalent = scoredMatches
+      .filter(
+        (candidate) =>
+          candidate.id !== match.id &&
+          candidate.roomId === null &&
+          Boolean(candidate.sourceKey) &&
+          candidate.status === "FINISHED" &&
+          candidate.homeScore !== null &&
+          candidate.awayScore !== null &&
+          sameMatchByTeamsAndKickoff(candidate, match),
+      )
+      .sort((left, right) => timestamp(right.updatedAt) - timestamp(left.updatedAt))[0];
+
+    const sameOfficialSource =
+      trustedFinalEquivalent &&
+      Boolean(match.sourceKey) &&
+      trustedFinalEquivalent.sourceKey === match.sourceKey &&
+      match.roomId !== null;
+    const trustedFinalIsNewer =
+      trustedFinalEquivalent &&
+      timestamp(trustedFinalEquivalent.updatedAt) > timestamp(match.updatedAt) &&
+      (trustedFinalEquivalent.homeScore !== match.homeScore || trustedFinalEquivalent.awayScore !== match.awayScore);
+
+    if (sameOfficialSource || trustedFinalIsNewer) {
+      return {
+        ...match,
+        homeScore: trustedFinalEquivalent.homeScore,
+        awayScore: trustedFinalEquivalent.awayScore,
+        status: trustedFinalEquivalent.status,
+      };
+    }
+
+    return match;
+  }
+
   const equivalent = scoredMatches
     .filter((candidate) => candidate.id !== match.id && sameMatchByTeamsAndKickoff(candidate, match))
     .sort((left, right) => {
-      const statusDelta = statusPriority[right.status] - statusPriority[left.status];
-      if (statusDelta !== 0) return statusDelta;
-      return Number(scoreDiffers(right, match)) - Number(scoreDiffers(left, match));
+      const priorityDelta = equivalentSourcePriority(right, match) - equivalentSourcePriority(left, match);
+      if (priorityDelta !== 0) return priorityDelta;
+      return timestamp(right.updatedAt) - timestamp(left.updatedAt);
     })[0];
 
   if (!equivalent) return match;
 
   const equivalentIsMoreFinal = statusPriority[equivalent.status] > statusPriority[match.status];
   const currentHasNoScore = match.homeScore === null || match.awayScore === null;
-  const equivalentHasDifferentFinalScore =
-    equivalent.status === "FINISHED" &&
-    equivalent.homeScore !== null &&
-    equivalent.awayScore !== null &&
-    (match.homeScore !== equivalent.homeScore || match.awayScore !== equivalent.awayScore);
   const equivalentHasDifferentLiveScore =
     equivalent.status === "LIVE" &&
     match.status !== "FINISHED" &&
@@ -91,7 +135,7 @@ export function resolveEffectiveMatchScore<T extends MatchScore>(match: T, score
     equivalent.awayScore !== null &&
     (match.homeScore !== equivalent.homeScore || match.awayScore !== equivalent.awayScore);
 
-  if (!currentHasNoScore && !equivalentIsMoreFinal && !equivalentHasDifferentFinalScore && !equivalentHasDifferentLiveScore) {
+  if (!currentHasNoScore && !equivalentIsMoreFinal && !equivalentHasDifferentLiveScore) {
     return match;
   }
 

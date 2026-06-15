@@ -91,9 +91,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     select: {
       id: true,
       competitionId: true,
+      roomId: true,
+      sourceKey: true,
       homeTeam: true,
       awayTeam: true,
       startsAt: true,
+      updatedAt: true,
       homeScore: true,
       awayScore: true,
       status: true,

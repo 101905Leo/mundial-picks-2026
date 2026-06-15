@@ -52,9 +52,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                   roomKey: true,
                   homeScore: true,
                   awayScore: true,
+                  updatedAt: true,
                   match: {
                     select: {
                       id: true,
+                      sourceKey: true,
                       homeTeam: true,
                       awayTeam: true,
                       roomId: true,
@@ -62,6 +64,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                       isPublished: true,
                       status: true,
                       startsAt: true,
+                      updatedAt: true,
                       homeScore: true,
                       awayScore: true,
                     },
@@ -91,9 +94,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     select: {
       id: true,
       competitionId: true,
+      roomId: true,
+      sourceKey: true,
       homeTeam: true,
       awayTeam: true,
       startsAt: true,
+      updatedAt: true,
       homeScore: true,
       awayScore: true,
       status: true,
