@@ -3537,7 +3537,7 @@ button {
 
 .compact-room-command {
   gap: 10px;
-  padding: 10px;
+  padding: 10px 12px;
 }
 
 .room-control-bar {
@@ -3556,6 +3556,16 @@ button {
   color: var(--muted);
   font-size: 0.82rem;
   font-weight: 800;
+}
+
+.room-loaded-state {
+  background: rgba(47, 107, 255, 0.08);
+  border: 1px solid rgba(93, 220, 255, 0.16);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  margin: 0;
+  padding: 9px 11px;
 }
 
 .admin-room-repair-note {
@@ -3652,7 +3662,7 @@ button {
   gap: 10px;
   grid-column: 1 / -1;
   grid-template-columns: minmax(0, 1fr) auto auto;
-  padding: 4px 0 10px;
+  padding: 2px 0 8px;
 }
 
 .room-action-strip .admin-user-badges,
@@ -4815,9 +4825,9 @@ button {
     bottom: 0;
     box-shadow: 0 -18px 44px rgba(0, 0, 0, 0.42);
     display: grid;
-    gap: 5px;
+    gap: 3px;
     left: 0;
-    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
     position: fixed;
     right: 0;
     top: auto;
@@ -4825,21 +4835,14 @@ button {
   }
 
   .room-mobile-drawer > span {
-    color: var(--gold);
-    font-size: 0.66rem;
-    font-weight: 900;
-    overflow: hidden;
-    text-align: center;
-    text-overflow: ellipsis;
-    text-transform: uppercase;
-    white-space: nowrap;
+    display: none;
   }
 
   .room-mobile-cajons {
     display: grid;
-    gap: 6px;
+    gap: 4px;
     grid-auto-flow: column;
-    grid-auto-columns: minmax(72px, 1fr);
+    grid-auto-columns: minmax(62px, 1fr);
     overflow-x: auto;
     overscroll-behavior-x: contain;
     scrollbar-width: none;
@@ -4853,12 +4856,12 @@ button {
     align-items: center;
     background: transparent;
     border: 0;
-    border-radius: 14px;
+    border-radius: 11px;
     color: #fff;
     display: grid;
     justify-items: center;
-    min-height: 54px;
-    padding: 8px 8px;
+    min-height: 42px;
+    padding: 6px 6px;
     text-align: center;
     width: 100%;
   }
@@ -4870,7 +4873,8 @@ button {
   }
 
   .room-mobile-cajon strong {
-    font-size: 0.78rem;
+    font-size: 0.7rem;
+    line-height: 1.05;
   }
 
   .room-mobile-cajon small {
@@ -4894,13 +4898,13 @@ button {
   }
 
   .room-home-screen {
-    gap: 10px;
+    gap: 8px;
   }
 
   .room-next-card {
-    border-radius: 26px;
-    gap: 13px;
-    padding: 18px 14px;
+    border-radius: 14px;
+    gap: 9px;
+    padding: 12px 10px;
   }
 
   .room-next-card-header {
@@ -4914,14 +4918,14 @@ button {
   }
 
   .room-next-teams span {
-    border-radius: 14px;
-    font-size: 2.3rem;
-    height: 72px;
-    width: 92px;
+    border-radius: 10px;
+    font-size: 1.85rem;
+    height: 56px;
+    width: 74px;
   }
 
   .room-next-teams strong {
-    font-size: 1rem;
+    font-size: 0.88rem;
   }
 
   .room-countdown-grid {
@@ -4929,12 +4933,17 @@ button {
   }
 
   .room-countdown-grid article {
-    border-radius: 16px;
-    padding: 12px 6px;
+    border-radius: 10px;
+    padding: 8px 4px;
   }
 
   .room-countdown-grid strong {
-    font-size: 1.65rem;
+    font-size: 1.22rem;
+  }
+
+  .room-countdown-grid span {
+    font-size: 0.58rem;
+    margin-top: 4px;
   }
 
   .room-home-actions {
@@ -4947,7 +4956,15 @@ button {
   }
 
   .room-home-summary article {
-    padding: 12px;
+    padding: 9px;
+  }
+
+  .room-home-summary span {
+    font-size: 0.7rem;
+  }
+
+  .room-home-summary strong {
+    font-size: 1.18rem;
   }
 
   .room-home-match {

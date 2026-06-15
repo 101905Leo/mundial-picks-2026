@@ -530,6 +530,8 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
       : selectedLeague?.status === "CLOSED"
         ? "Esta sala está cerrada."
         : "La sala debe estar activa para guardar picks.";
+  const roomFinishedMatches = matches.filter((match) => match.status === "FINISHED").length;
+  const roomLiveMatches = matches.filter((match) => match.status === "LIVE").length;
   const roomTabs: Array<[RoomView, string]> = [
     ["home", "Inicio"],
     ["picks", "Quiniela"],
@@ -779,7 +781,9 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
                       </div>
                     )}
                     <div className="room-home-actions">
-                      <button className="button primary" onClick={() => setRoomView("picks")} type="button">Hacer predicción</button>
+                      <button className="button primary" onClick={() => setRoomView("picks")} type="button">
+                        {isSuperAdmin ? "Auditar quiniela" : "Hacer predicción"}
+                      </button>
                       <button className="button secondary" onClick={() => setRoomView("ranking")} type="button">Ver ranking</button>
                     </div>
                   </>
@@ -791,8 +795,17 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
               <section className="panel room-home-summary">
                 <article><span>Participantes</span><strong>{members.length}</strong></article>
                 <article><span>Picks</span><strong>{totalPicks}</strong></article>
-                <article><span>Tu lugar</span><strong>{userRanking ? `#${userRankingIndex + 1}` : "-"}</strong></article>
-                <article><span>Puntos</span><strong>{userRanking?.points ?? 0}</strong></article>
+                {isSuperAdmin ? (
+                  <>
+                    <article><span>En vivo</span><strong>{roomLiveMatches}</strong></article>
+                    <article><span>Finalizados</span><strong>{roomFinishedMatches}</strong></article>
+                  </>
+                ) : (
+                  <>
+                    <article><span>Tu lugar</span><strong>{userRanking ? `#${userRankingIndex + 1}` : "-"}</strong></article>
+                    <article><span>Puntos</span><strong>{userRanking?.points ?? 0}</strong></article>
+                  </>
+                )}
               </section>
 
               <section className="panel room-home-games">
@@ -1008,10 +1021,21 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
           {roomView === "ranking" ? (
             <div className="grid">
               <section className="room-ranking-summary">
-                <article className="panel"><span>Tu lugar</span><strong>{userRanking ? `#${userRankingIndex + 1}` : "-"}</strong></article>
-                <article className="panel"><span>Diferencia con el líder</span><strong>{userRanking ? `${pointsBehindLeader} pts` : "-"}</strong></article>
-                <article className="panel"><span>Racha actual</span><strong>{userRanking?.currentStreak ?? 0}</strong></article>
-                <article className="panel"><span>Marcadores exactos</span><strong>{userRanking?.exactScores ?? 0}</strong></article>
+                {isSuperAdmin ? (
+                  <>
+                    <article className="panel"><span>Miembros</span><strong>{members.length}</strong></article>
+                    <article className="panel"><span>Picks</span><strong>{totalPicks}</strong></article>
+                    <article className="panel"><span>En vivo</span><strong>{roomLiveMatches}</strong></article>
+                    <article className="panel"><span>Finalizados</span><strong>{roomFinishedMatches}</strong></article>
+                  </>
+                ) : (
+                  <>
+                    <article className="panel"><span>Tu lugar</span><strong>{userRanking ? `#${userRankingIndex + 1}` : "-"}</strong></article>
+                    <article className="panel"><span>Diferencia con el líder</span><strong>{userRanking ? `${pointsBehindLeader} pts` : "-"}</strong></article>
+                    <article className="panel"><span>Racha actual</span><strong>{userRanking?.currentStreak ?? 0}</strong></article>
+                    <article className="panel"><span>Marcadores exactos</span><strong>{userRanking?.exactScores ?? 0}</strong></article>
+                  </>
+                )}
               </section>
               <section className="panel room-ranking">
                 <div className="section-title">

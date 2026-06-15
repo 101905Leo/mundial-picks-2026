@@ -277,6 +277,23 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
     );
   }
 
+  async function selectAdminRoom(roomId: string) {
+    setSelectedSettingsRoomId(roomId);
+    setSelectedAdminRoomId(roomId);
+    setSelectedRoomUserId("");
+
+    if (!roomId) {
+      setRoomDashboard(null);
+      setMessage("Selecciona una sala para cargar su tablero.");
+      return;
+    }
+
+    setAdminView("rooms");
+    const room = adminRooms.find((item) => item.id === roomId);
+    setMessage(room ? `Sala cargada: ${room.name}` : "Sala cargada.");
+    await loadRoomDashboard(roomId);
+  }
+
   useEffect(() => {
     loadRooms();
   }, []);
@@ -1190,10 +1207,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
               <button
                 key={room.id}
                 onClick={() => {
-                  setSelectedSettingsRoomId(room.id);
-                  setSelectedAdminRoomId(room.id);
-                  setSelectedRoomUserId("");
-                  setAdminView("rooms");
+                  void selectAdminRoom(room.id);
                 }}
                 type="button"
               >
@@ -1943,10 +1957,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                 <select
                   id="superAdminRoomSelector"
                   onChange={(event) => {
-                    const roomId = event.target.value;
-                    setSelectedSettingsRoomId(roomId);
-                    setSelectedAdminRoomId(roomId);
-                    setSelectedRoomUserId("");
+                    void selectAdminRoom(event.target.value);
                   }}
                   value={selectedRoom?.id ?? ""}
                 >
@@ -1960,6 +1971,11 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                 </div>
                 <button className="button secondary" onClick={loadRooms} type="button">Actualizar salas</button>
               </div>
+              <p className="room-loaded-state">
+                {selectedRoom
+                  ? `Estás administrando "${selectedRoom.name}". El super usuario ve y corrige, pero no compite ni entra como participante.`
+                  : "Escoge una sala para abrir su panel completo."}
+              </p>
               {selectedRoom ? (
                 <>
                 <div className="room-action-strip">
