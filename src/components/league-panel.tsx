@@ -6,13 +6,14 @@ import { RankingTable } from "@/components/ranking-table";
 import { FormidableFacts } from "@/components/formidable-facts";
 import { StatisticsPanel } from "@/components/statistics-panel";
 import type { Competition, League, LeagueMember, Match, RankingEntry, User } from "@/components/types";
+import { flagForTeam } from "@/lib/team-flags";
 
 type Props = {
   user: User;
   initialLeagueId?: string | null;
   embedded?: boolean;
 };
-type RoomView = "picks" | "matches" | "facts" | "ranking" | "statistics" | "participants" | "chat";
+type RoomView = "home" | "picks" | "matches" | "facts" | "ranking" | "statistics" | "participants" | "chat";
 
 type LeagueMessage = {
   id: string;
@@ -62,7 +63,7 @@ function isActiveLeague(league: League) {
 export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: Props) {
   const [leagues, setLeagues] = useState<League[]>([]);
   const [selectedLeague, setSelectedLeague] = useState<League | null>(null);
-  const [roomView, setRoomView] = useState<RoomView>("picks");
+  const [roomView, setRoomView] = useState<RoomView>("home");
   const [matches, setMatches] = useState<Match[]>([]);
   const [managedMatches, setManagedMatches] = useState<Match[]>([]);
   const [competitions, setCompetitions] = useState<Competition[]>([]);
@@ -74,6 +75,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
   const [groupInfo, setGroupInfo] = useState<GroupInfo | null>(null);
   const [message, setMessage] = useState("");
   const [syncError, setSyncError] = useState("");
+  const [now, setNow] = useState(() => new Date());
   const isSuperAdmin = user.role === "ADMIN";
   const isOwner = selectedLeague?.ownerId === user.id;
   const roomMembership = selectedLeague?.memberships?.find((membership) => membership.userId === user.id);
@@ -183,6 +185,11 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
   }, []);
 
   useEffect(() => {
+    const interval = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
     if (!embedded) return;
     if (!initialLeagueId) {
       setSelectedLeague(null);
@@ -191,7 +198,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
 
     const nextLeague = leagues.find((league) => league.id === initialLeagueId) ?? null;
     setSelectedLeague((current) => (current?.id === nextLeague?.id ? current : nextLeague));
-    setRoomView("picks");
+    setRoomView("home");
   }, [embedded, initialLeagueId, leagues]);
 
   useEffect(() => {
@@ -261,7 +268,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
     setMessage(`Entraste a la sala ${data.league.name}`);
     await loadLeagues();
     setSelectedLeague(data.league);
-    setRoomView("picks");
+    setRoomView("home");
     form.reset();
   }
 
@@ -442,7 +449,44 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
     await loadRoom();
   }
 
-  const liveMatches = matches.filter((match) => match.status === "LIVE");
+  const sortedMatches = [...matches].sort((first, second) => new Date(first.startsAt).getTime() - new Date(second.startsAt).getTime());
+  const liveMatches = sortedMatches.filter((match) => match.status === "LIVE");
+  const nextRoomMatch =
+    liveMatches[0] ??
+    sortedMatches.find((match) => match.status !== "FINISHED" && new Date(match.startsAt) >= now) ??
+    sortedMatches[0] ??
+    null;
+  const nextStartsAt = nextRoomMatch ? new Date(nextRoomMatch.startsAt) : null;
+  const nextDiff = nextStartsAt ? Math.max(0, nextStartsAt.getTime() - now.getTime()) : 0;
+  const nextCountdown = {
+    days: Math.floor(nextDiff / 86_400_000),
+    hours: Math.floor((nextDiff % 86_400_000) / 3_600_000),
+    minutes: Math.floor((nextDiff % 3_600_000) / 60_000),
+    seconds: Math.floor((nextDiff % 60_000) / 1000),
+  };
+  const roomMatchesByDay = sortedMatches.reduce<Array<{ key: string; label: string; matches: Match[] }>>((days, match) => {
+    const startsAt = new Date(match.startsAt);
+    const key = startsAt.toISOString().slice(0, 10);
+    const todayKey = now.toISOString().slice(0, 10);
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowKey = tomorrow.toISOString().slice(0, 10);
+    const label =
+      key === todayKey
+        ? "Hoy"
+        : key === tomorrowKey
+          ? "Mañana"
+          : startsAt.toLocaleDateString("es", { weekday: "short", day: "2-digit", month: "short" });
+    const existingDay = days.find((day) => day.key === key);
+
+    if (existingDay) {
+      existingDay.matches.push(match);
+    } else {
+      days.push({ key, label, matches: [match] });
+    }
+
+    return days;
+  }, []);
   const totalPicks = members.reduce((sum, member) => sum + member.predictions, 0);
   const finishedMatches = matches.filter((match) => match.status === "FINISHED").length;
   const availableSpots = selectedLeague ? Math.max(0, selectedLeague.maxParticipants - members.length) : 0;
@@ -487,13 +531,13 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
         ? "Esta sala está cerrada."
         : "La sala debe estar activa para guardar picks.";
   const roomTabs: Array<[RoomView, string]> = [
-    ["picks", "Picks"],
-    ...(canEditRoomInfo ? ([["matches", "Configurar"]] as Array<[RoomView, string]>) : []),
-    ["facts", "Datos"],
+    ["home", "Inicio"],
+    ["picks", "Quiniela"],
+    ["matches", "Calendario"],
+    ["facts", "IA"],
     ["ranking", "Ranking"],
     ["chat", "Chat"],
-    ["statistics", "Estadísticas"],
-    ["participants", "Participantes"],
+    ["participants", canEditRoomInfo ? "Participantes" : "Perfil"],
   ];
 
   function shareRanking() {
@@ -560,7 +604,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
                 key={league.id}
                 onClick={() => {
                   setSelectedLeague(league);
-                  setRoomView("picks");
+                  setRoomView("home");
                 }}
                 type="button"
               >
@@ -601,7 +645,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
                   onChange={(event) => {
                     const league = leagues.find((item) => item.id === event.target.value) ?? selectedLeague;
                     setSelectedLeague(league);
-                    setRoomView("participants");
+                    setRoomView("home");
                   }}
                   value={selectedLeague.id}
                 >
@@ -695,6 +739,102 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
 
           <div className="room-main-layout">
             <div className="room-main-content">
+          {roomView === "home" ? (
+            <div className="room-home-screen">
+              <section className="room-next-card">
+                <div className="room-next-card-header">
+                  <span>{nextRoomMatch?.status === "LIVE" ? "Partido en vivo" : "Próximo partido"}</span>
+                  <strong>{selectedLeague.name}</strong>
+                </div>
+                {nextRoomMatch ? (
+                  <>
+                    <div className="room-next-teams">
+                      <div>
+                        <span>{flagForTeam(nextRoomMatch.homeTeam)}</span>
+                        <strong>{nextRoomMatch.homeTeam}</strong>
+                      </div>
+                      <em>vs</em>
+                      <div>
+                        <span>{flagForTeam(nextRoomMatch.awayTeam)}</span>
+                        <strong>{nextRoomMatch.awayTeam}</strong>
+                      </div>
+                    </div>
+                    <p>
+                      {new Date(nextRoomMatch.startsAt).toLocaleDateString("es", { weekday: "short", day: "2-digit", month: "short" })}
+                      {" · "}
+                      <strong>{new Date(nextRoomMatch.startsAt).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}</strong>
+                      {nextRoomMatch.venue ? ` · ${nextRoomMatch.venue}` : ""}
+                    </p>
+                    {nextRoomMatch.status === "LIVE" ? (
+                      <div className="room-live-score">
+                        <span>Marcador actual</span>
+                        <strong>{nextRoomMatch.homeScore ?? 0} - {nextRoomMatch.awayScore ?? 0}</strong>
+                      </div>
+                    ) : (
+                      <div className="room-countdown-grid" aria-label="Cuenta regresiva">
+                        <article><strong>{String(nextCountdown.days).padStart(2, "0")}</strong><span>Días</span></article>
+                        <article><strong>{String(nextCountdown.hours).padStart(2, "0")}</strong><span>Hrs</span></article>
+                        <article><strong>{String(nextCountdown.minutes).padStart(2, "0")}</strong><span>Min</span></article>
+                        <article><strong>{String(nextCountdown.seconds).padStart(2, "0")}</strong><span>Seg</span></article>
+                      </div>
+                    )}
+                    <div className="room-home-actions">
+                      <button className="button primary" onClick={() => setRoomView("picks")} type="button">Hacer predicción</button>
+                      <button className="button secondary" onClick={() => setRoomView("ranking")} type="button">Ver ranking</button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="empty">Esta sala todavía no tiene partidos publicados.</div>
+                )}
+              </section>
+
+              <section className="panel room-home-summary">
+                <article><span>Participantes</span><strong>{members.length}</strong></article>
+                <article><span>Picks</span><strong>{totalPicks}</strong></article>
+                <article><span>Tu lugar</span><strong>{userRanking ? `#${userRankingIndex + 1}` : "-"}</strong></article>
+                <article><span>Puntos</span><strong>{userRanking?.points ?? 0}</strong></article>
+              </section>
+
+              <section className="panel room-home-games">
+                <div className="section-title">
+                  <div>
+                    <span className="market-kicker">Calendario</span>
+                    <h3>Próximos juegos</h3>
+                  </div>
+                  <button className="button secondary compact-button" onClick={() => setRoomView("matches")} type="button">Ver todo</button>
+                </div>
+                <div className="room-home-day-list">
+                  {roomMatchesByDay.slice(0, 3).map((day) => (
+                    <section key={day.key}>
+                      <header>
+                        <strong>{day.label}</strong>
+                        <span>{day.matches.length} partido{day.matches.length === 1 ? "" : "s"}</span>
+                      </header>
+                      {day.matches.slice(0, 4).map((match) => (
+                        <article className="room-home-match" key={match.id}>
+                          <div>
+                            <span>{flagForTeam(match.homeTeam)}</span>
+                            <strong>{match.homeTeam}</strong>
+                          </div>
+                          <div>
+                            <span>{flagForTeam(match.awayTeam)}</span>
+                            <strong>{match.awayTeam}</strong>
+                          </div>
+                          <small>
+                            {match.status === "FINISHED" && match.homeScore !== null && match.awayScore !== null
+                              ? `${match.homeScore}-${match.awayScore}`
+                              : new Date(match.startsAt).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}
+                          </small>
+                        </article>
+                      ))}
+                    </section>
+                  ))}
+                  {!roomMatchesByDay.length ? <div className="empty">Cuando publiques partidos, aparecerán aquí.</div> : null}
+                </div>
+              </section>
+            </div>
+          ) : null}
+
           {roomView === "picks" ? (
             <div className="grid">
               <section className="panel room-live-inline">
@@ -762,9 +902,9 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
             </div>
           ) : null}
 
-          {roomView === "matches" && canEditRoomInfo ? (
+          {roomView === "matches" ? (
             <div className="grid">
-              <section className="panel room-match-admin">
+              {canEditRoomInfo ? <section className="panel room-match-admin">
                 <div className="section-title">
                   <div>
                     <span className="market-kicker">Configuración de sala</span>
@@ -818,17 +958,17 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
                     <button className="button primary" type="submit">Crear partido privado</button>
                   </form>
                 </details>
-              </section>
+              </section> : null}
 
               <section className="panel room-match-admin-list">
                 <div className="section-title">
                   <div>
-                    <span className="market-kicker">Publicación por sala</span>
-                    <h3>{managedMatches.length} partidos cargados</h3>
+                    <span className="market-kicker">{canEditRoomInfo ? "Publicación por sala" : "Calendario de la sala"}</span>
+                    <h3>{canEditRoomInfo ? managedMatches.length : matches.length} partidos cargados</h3>
                   </div>
                 </div>
                 <div className="room-match-control-list">
-                  {managedMatches.map((match) => (
+                  {(canEditRoomInfo ? managedMatches : matches).map((match) => (
                     <article className={`room-match-control ${match.isPublished ? "published" : "hidden"}`} key={match.id}>
                       <div className="room-match-control-teams">
                         <strong>{match.homeTeam} vs {match.awayTeam}</strong>
@@ -843,17 +983,19 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
                       </div>
                       <div className="room-match-control-actions">
                         <span>{match.isPublished ? "Publicado" : "Oculto"}</span>
-                        <button
-                          className={match.isPublished ? "button secondary" : "button primary"}
-                          onClick={() => publishRoomMatch(match.id, !match.isPublished)}
-                          type="button"
-                        >
-                          {match.isPublished ? "Ocultar" : "Publicar"}
-                        </button>
+                        {canEditRoomInfo ? (
+                          <button
+                            className={match.isPublished ? "button secondary" : "button primary"}
+                            onClick={() => publishRoomMatch(match.id, !match.isPublished)}
+                            type="button"
+                          >
+                            {match.isPublished ? "Ocultar" : "Publicar"}
+                          </button>
+                        ) : null}
                       </div>
                     </article>
                   ))}
-                  {!managedMatches.length ? (
+                  {!(canEditRoomInfo ? managedMatches : matches).length ? (
                     <div className="empty">Carga una competición o crea partidos privados para armar el calendario de esta sala.</div>
                   ) : null}
                 </div>

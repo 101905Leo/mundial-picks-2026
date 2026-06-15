@@ -1455,6 +1455,242 @@ button {
   display: none;
 }
 
+.room-home-screen {
+  display: grid;
+  gap: 14px;
+}
+
+.room-next-card {
+  background:
+    radial-gradient(circle at 18% 0%, rgba(56, 189, 248, 0.2), transparent 36%),
+    radial-gradient(circle at 88% 10%, rgba(244, 189, 79, 0.14), transparent 32%),
+    linear-gradient(145deg, rgba(18, 24, 37, 0.98), rgba(6, 10, 19, 0.98));
+  border: 1px solid rgba(93, 220, 255, 0.2);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 18px;
+  overflow: hidden;
+  padding: clamp(18px, 4vw, 28px);
+  position: relative;
+}
+
+.room-next-card::before {
+  background: linear-gradient(90deg, var(--premium-blue), var(--premium-cyan), var(--gold));
+  content: "";
+  height: 3px;
+  inset: 0 0 auto;
+  position: absolute;
+}
+
+.room-next-card-header {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.room-next-card-header span {
+  color: var(--gold);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.room-next-card-header strong {
+  color: #fff;
+  font-size: 0.92rem;
+}
+
+.room-next-teams {
+  align-items: center;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  text-align: center;
+}
+
+.room-next-teams div {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  min-width: 0;
+}
+
+.room-next-teams span {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  display: inline-flex;
+  font-size: clamp(2.5rem, 8vw, 4rem);
+  height: clamp(72px, 12vw, 104px);
+  justify-content: center;
+  width: clamp(96px, 16vw, 138px);
+}
+
+.room-next-teams strong {
+  color: #fff;
+  font-size: clamp(1.1rem, 3vw, 1.7rem);
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+}
+
+.room-next-teams em {
+  color: var(--muted);
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.room-next-card > p {
+  color: var(--muted);
+  font-size: clamp(0.95rem, 2vw, 1.08rem);
+  margin: 0;
+  text-align: center;
+}
+
+.room-next-card > p strong {
+  color: var(--gold);
+}
+
+.room-countdown-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.room-countdown-grid article,
+.room-live-score {
+  background: rgba(5, 9, 18, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  display: grid;
+  justify-items: center;
+  padding: 14px 10px;
+}
+
+.room-countdown-grid strong,
+.room-live-score strong {
+  color: #fff;
+  font-size: clamp(1.7rem, 5vw, 2.6rem);
+  line-height: 1;
+}
+
+.room-countdown-grid span,
+.room-live-score span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  margin-top: 8px;
+  text-transform: uppercase;
+}
+
+.room-home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.room-home-summary {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.room-home-summary article {
+  background: rgba(5, 9, 18, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.room-home-summary span {
+  color: var(--muted);
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.room-home-summary strong {
+  color: var(--gold-soft);
+  display: block;
+  font-size: 1.6rem;
+  margin-top: 4px;
+}
+
+.room-home-games {
+  display: grid;
+  gap: 12px;
+}
+
+.room-home-day-list {
+  display: grid;
+  gap: 12px;
+}
+
+.room-home-day-list section {
+  display: grid;
+  gap: 8px;
+}
+
+.room-home-day-list header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.room-home-day-list header strong {
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.room-home-day-list header span {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+  padding: 6px 9px;
+}
+
+.room-home-match {
+  align-items: center;
+  background: rgba(5, 9, 18, 0.54);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  padding: 12px;
+}
+
+.room-home-match div {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  min-width: 0;
+}
+
+.room-home-match span {
+  font-size: 1.45rem;
+}
+
+.room-home-match strong {
+  color: #fff;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.room-home-match small {
+  color: var(--gold-soft);
+  font-size: 1rem;
+  font-weight: 900;
+}
+
 .room-main-layout {
   align-items: start;
   display: grid;
@@ -4272,6 +4508,15 @@ button {
 }
 
 @media (max-width: 850px) {
+  .app-shell.action-view {
+    padding-bottom: 92px;
+  }
+
+  .container {
+    gap: 12px;
+    padding-bottom: 104px;
+  }
+
   .topbar,
   .top-actions {
     align-items: flex-start;
@@ -4562,60 +4807,74 @@ button {
 
   .room-mobile-drawer {
     background:
-      linear-gradient(135deg, rgba(47, 107, 255, 0.22), rgba(56, 189, 248, 0.12)),
-      rgba(8, 12, 20, 0.96);
-    border: 1px solid rgba(93, 220, 255, 0.18);
-    border-radius: 8px;
+      linear-gradient(180deg, rgba(11, 16, 28, 0.94), rgba(5, 8, 15, 0.98)),
+      rgba(8, 12, 20, 0.98);
+    border: 1px solid rgba(93, 220, 255, 0.14);
+    border-width: 1px 0 0;
+    border-radius: 0;
+    bottom: 0;
+    box-shadow: 0 -18px 44px rgba(0, 0, 0, 0.42);
     display: grid;
-    gap: 6px;
-    padding: 10px;
-    position: sticky;
-    top: 62px;
-    z-index: 8;
+    gap: 5px;
+    left: 0;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+    position: fixed;
+    right: 0;
+    top: auto;
+    z-index: 40;
   }
 
   .room-mobile-drawer > span {
     color: var(--gold);
-    font-size: 0.72rem;
+    font-size: 0.66rem;
     font-weight: 900;
+    overflow: hidden;
+    text-align: center;
+    text-overflow: ellipsis;
     text-transform: uppercase;
+    white-space: nowrap;
   }
 
   .room-mobile-cajons {
     display: grid;
-    gap: 8px;
+    gap: 6px;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(72px, 1fr);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+
+  .room-mobile-cajons::-webkit-scrollbar {
+    display: none;
   }
 
   .room-mobile-cajon {
     align-items: center;
-    background: rgba(5, 9, 18, 0.92);
-    border: 1px solid rgba(191, 219, 254, 0.16);
-    border-radius: 8px;
+    background: transparent;
+    border: 0;
+    border-radius: 14px;
     color: #fff;
-    display: flex;
-    justify-content: space-between;
-    min-height: 48px;
-    padding: 10px 12px;
-    text-align: left;
+    display: grid;
+    justify-items: center;
+    min-height: 54px;
+    padding: 8px 8px;
+    text-align: center;
     width: 100%;
   }
 
   .room-mobile-cajon.active {
-    background: linear-gradient(135deg, #1d4ed8, #38bdf8);
-    border-color: rgba(191, 219, 254, 0.42);
-    color: #02111f;
+    background: rgba(47, 107, 255, 0.18);
+    border-color: transparent;
+    color: var(--gold);
   }
 
   .room-mobile-cajon strong {
-    font-size: 0.95rem;
+    font-size: 0.78rem;
   }
 
   .room-mobile-cajon small {
-    color: inherit;
-    font-size: 0.68rem;
-    font-weight: 900;
-    opacity: 0.78;
-    text-transform: uppercase;
+    display: none;
   }
 
   .league-room > .room-nav {
@@ -4632,6 +4891,76 @@ button {
   .room-status-line,
   .room-information {
     display: none;
+  }
+
+  .room-home-screen {
+    gap: 10px;
+  }
+
+  .room-next-card {
+    border-radius: 26px;
+    gap: 13px;
+    padding: 18px 14px;
+  }
+
+  .room-next-card-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .room-next-teams {
+    gap: 8px;
+  }
+
+  .room-next-teams span {
+    border-radius: 14px;
+    font-size: 2.3rem;
+    height: 72px;
+    width: 92px;
+  }
+
+  .room-next-teams strong {
+    font-size: 1rem;
+  }
+
+  .room-countdown-grid {
+    gap: 8px;
+  }
+
+  .room-countdown-grid article {
+    border-radius: 16px;
+    padding: 12px 6px;
+  }
+
+  .room-countdown-grid strong {
+    font-size: 1.65rem;
+  }
+
+  .room-home-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .room-home-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .room-home-summary article {
+    padding: 12px;
+  }
+
+  .room-home-match {
+    grid-template-columns: 1fr auto;
+  }
+
+  .room-home-match div {
+    grid-column: 1;
+  }
+
+  .room-home-match small {
+    grid-column: 2;
+    grid-row: 1 / span 2;
   }
 
   .room-owner-actions,
