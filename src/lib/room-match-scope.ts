@@ -1,6 +1,16 @@
+import { sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
+
 type RoomMatchScope = {
   id: string;
   competitionId: string | null;
+};
+
+type RoomMatchIdentity = {
+  roomId: string | null;
+  competitionId: string | null;
+  homeTeam: string;
+  awayTeam: string;
+  startsAt: Date | string;
 };
 
 export function roomMatchScopeWhere(room: RoomMatchScope) {
@@ -32,6 +42,20 @@ export function matchBelongsToRoomScope(
   if (match.roomId === room.id) return true;
   if (match.roomId !== null) return false;
   return room.competitionId ? match.competitionId === room.competitionId : true;
+}
+
+export function matchBelongsToRoomScopeOrEquivalent(
+  match: RoomMatchIdentity,
+  room: RoomMatchScope,
+  roomMatches: RoomMatchIdentity[],
+) {
+  if (matchBelongsToRoomScope(match, room)) return true;
+
+  return roomMatches.some(
+    (candidate) =>
+      matchBelongsToRoomScope(candidate, room) &&
+      sameMatchByTeamsAndKickoff(candidate, match),
+  );
 }
 
 export function matchBelongsToResolvedRoomScope(

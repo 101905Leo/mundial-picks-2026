@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { roomGlobalFallbackMatchWhere, roomOwnedMatchWhere } from "@/lib/room-match-scope";
 import { visiblePredictionPoints } from "@/lib/prediction-points";
 import { uniqueRoomPredictions } from "@/lib/room-predictions";
-import { resolveEffectiveMatchScore } from "@/lib/match-equivalence";
+import { resolveEffectiveMatchScore, sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { user, response } = await requireUser(request);
@@ -103,13 +103,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       Math.abs(right.startsAt.getTime() - now.getTime()),
   );
   const visibleMatches = activeMatches.length ? activeMatches : nearestOpenMatches.slice(0, 1);
-  const visibleMatchIds = visibleMatches.map((match) => match.id);
-
-  const visiblePredictions = visibleMatchIds.length
+  const visiblePredictions = visibleMatches.length
     ? await prisma.prediction.findMany({
         where: {
           userId: { in: memberIds },
-          matchId: { in: visibleMatchIds },
           OR: [{ leagueId: id }, { roomKey: id }, { leagueId: null, roomKey: "GLOBAL" }],
         },
         orderBy: [{ match: { startsAt: "asc" } }, { user: { name: "asc" } }],
@@ -144,9 +141,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         },
       })
     : [];
+  const scopedVisiblePredictions = visiblePredictions.filter((prediction) =>
+    visibleMatches.some(
+      (match) =>
+        prediction.matchId === match.id ||
+        sameMatchByTeamsAndKickoff(prediction.match, match),
+    ),
+  );
   return Response.json({
     matches: visibleMatches,
-    predictions: uniqueRoomPredictions(visiblePredictions, id).map((prediction) => ({
+    predictions: uniqueRoomPredictions(scopedVisiblePredictions, id).map((prediction) => ({
       ...prediction,
       match: resolveEffectiveMatchScore(prediction.match, scoredMatches),
       points: visiblePredictionPoints(prediction, resolveEffectiveMatchScore(prediction.match, scoredMatches)),

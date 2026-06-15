@@ -44,5 +44,5 @@ export function visiblePredictionPoints(prediction: PredictionScore, match: Matc
     );
   }
 
-  return prediction.points;
+  return 0;
 }

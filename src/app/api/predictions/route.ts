@@ -3,7 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { isPickClosed } from "@/lib/pick-lock";
 import { predictionSchema } from "@/lib/validators";
-import { matchBelongsToRoomScope } from "@/lib/room-match-scope";
+import {
+  matchBelongsToRoomScopeOrEquivalent,
+  roomMatchScopeWhere,
+} from "@/lib/room-match-scope";
 
 export async function POST(request: NextRequest) {
   const { user, response } = await requireUser(request);
@@ -40,7 +43,20 @@ export async function POST(request: NextRequest) {
       select: { id: true, competitionId: true },
     });
 
-    const matchBelongsToRoom = roomAccess && matchBelongsToRoomScope(match, roomAccess);
+    const roomMatches = roomAccess
+      ? await prisma.match.findMany({
+          where: roomMatchScopeWhere(roomAccess),
+          select: {
+            roomId: true,
+            competitionId: true,
+            homeTeam: true,
+            awayTeam: true,
+            startsAt: true,
+          },
+        })
+      : [];
+    const matchBelongsToRoom =
+      roomAccess && matchBelongsToRoomScopeOrEquivalent(match, roomAccess, roomMatches);
 
     if (!matchBelongsToRoom) {
       return Response.json({ error: "Este partido no pertenece a tu sala" }, { status: 403 });

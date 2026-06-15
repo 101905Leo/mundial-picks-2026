@@ -3,7 +3,10 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { calculatePredictionPoints } from "@/lib/scoring";
-import { matchBelongsToRoomScope } from "@/lib/room-match-scope";
+import {
+  matchBelongsToRoomScopeOrEquivalent,
+  roomMatchScopeWhere,
+} from "@/lib/room-match-scope";
 import { resolveEffectiveMatchScore } from "@/lib/match-equivalence";
 
 const deletePredictionSchema = z.object({
@@ -93,7 +96,18 @@ export async function PUT(request: NextRequest) {
     if (room.memberships.length === 0) {
       return Response.json({ error: "El participante no pertenece a esta sala" }, { status: 403 });
     }
-    if (!matchBelongsToRoomScope(match, room)) {
+    const roomMatches = await prisma.match.findMany({
+      where: roomMatchScopeWhere(room),
+      select: {
+        roomId: true,
+        competitionId: true,
+        homeTeam: true,
+        awayTeam: true,
+        startsAt: true,
+      },
+    });
+
+    if (!matchBelongsToRoomScopeOrEquivalent(match, room, roomMatches)) {
       return Response.json({ error: "Este partido no pertenece a la sala seleccionada" }, { status: 403 });
     }
   }

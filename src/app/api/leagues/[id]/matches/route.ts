@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { roomGlobalFallbackMatchWhere, roomOwnedMatchWhere } from "@/lib/room-match-scope";
 import { visiblePredictionPoints } from "@/lib/prediction-points";
 import { pickRoomPrediction } from "@/lib/room-predictions";
-import { resolveEffectiveMatchScore } from "@/lib/match-equivalence";
+import { resolveEffectiveMatchScore, sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
 
 const privateMatchSchema = z.object({
   homeTeam: z.string().trim().min(2).max(80),
@@ -58,59 +58,79 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   });
   const matchScope = ownPublishedMatches > 0 ? roomOwnedMatchWhere(league) : roomGlobalFallbackMatchWhere(league);
 
-  const matches = await prisma.match.findMany({
-    where: {
-      ...(includeHidden && canManageRoom ? {} : { isPublished: true }),
-      ...matchScope,
-    },
-    orderBy: { startsAt: "asc" },
-    include: {
-      predictions: {
-        where: {
-          userId: user!.id,
-          OR: [{ leagueId: league.id }, { roomKey: league.id }, { leagueId: null, roomKey: "GLOBAL" }],
-        },
-        select: {
-          id: true,
-          matchId: true,
-          leagueId: true,
-          roomKey: true,
-          homeScore: true,
-          awayScore: true,
-          points: true,
-          manualPoints: true,
-          updatedAt: true,
+  const [matches, scoredMatches, userPredictions] = await Promise.all([
+    prisma.match.findMany({
+      where: {
+        ...(includeHidden && canManageRoom ? {} : { isPublished: true }),
+        ...matchScope,
+      },
+      orderBy: { startsAt: "asc" },
+    }),
+    prisma.match.findMany({
+      where: {
+        homeScore: { not: null },
+        awayScore: { not: null },
+      },
+      select: {
+        id: true,
+        competitionId: true,
+        roomId: true,
+        sourceKey: true,
+        homeTeam: true,
+        awayTeam: true,
+        startsAt: true,
+        updatedAt: true,
+        homeScore: true,
+        awayScore: true,
+        status: true,
+      },
+    }),
+    prisma.prediction.findMany({
+      where: {
+        userId: user!.id,
+        OR: [{ leagueId: league.id }, { roomKey: league.id }, { leagueId: null, roomKey: "GLOBAL" }],
+      },
+      select: {
+        id: true,
+        matchId: true,
+        leagueId: true,
+        roomKey: true,
+        homeScore: true,
+        awayScore: true,
+        points: true,
+        manualPoints: true,
+        updatedAt: true,
+        match: {
+          select: {
+            id: true,
+            competitionId: true,
+            roomId: true,
+            sourceKey: true,
+            homeTeam: true,
+            awayTeam: true,
+            startsAt: true,
+            updatedAt: true,
+            homeScore: true,
+            awayScore: true,
+            status: true,
+          },
         },
       },
-    },
-  });
-  const scoredMatches = await prisma.match.findMany({
-    where: {
-      homeScore: { not: null },
-      awayScore: { not: null },
-    },
-    select: {
-      id: true,
-      competitionId: true,
-      roomId: true,
-      sourceKey: true,
-      homeTeam: true,
-      awayTeam: true,
-      startsAt: true,
-      updatedAt: true,
-      homeScore: true,
-      awayScore: true,
-      status: true,
-    },
-  });
+    }),
+  ]);
 
   return Response.json({
     matches: matches.map((match) => {
       const effectiveMatch = resolveEffectiveMatchScore(match, scoredMatches);
+      const matchingPredictions = userPredictions.filter(
+        (prediction) =>
+          prediction.matchId === match.id ||
+          sameMatchByTeamsAndKickoff(prediction.match, effectiveMatch),
+      );
       return {
         ...effectiveMatch,
         predictions: (() => {
-          const prediction = pickRoomPrediction(match.predictions, league.id);
+          const prediction = pickRoomPrediction(matchingPredictions, league.id);
           return prediction ? [{ ...prediction, points: visiblePredictionPoints(prediction, effectiveMatch) }] : [];
         })(),
       };
