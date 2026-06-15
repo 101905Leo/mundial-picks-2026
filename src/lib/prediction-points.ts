@@ -46,3 +46,23 @@ export function visiblePredictionPoints(prediction: PredictionScore, match: Matc
 
   return 0;
 }
+
+export function hasRankingScore(match: MatchScore) {
+  return (
+    (match.status === "LIVE" || match.status === "FINISHED") &&
+    match.homeScore !== null &&
+    match.awayScore !== null
+  );
+}
+
+export function rankingPredictionPoints(
+  prediction: Pick<PredictionScore, "homeScore" | "awayScore">,
+  match: MatchScore,
+) {
+  if (!hasRankingScore(match)) return 0;
+
+  return calculatePredictionPoints(
+    { homeScore: prediction.homeScore, awayScore: prediction.awayScore },
+    { homeScore: match.homeScore!, awayScore: match.awayScore! },
+  );
+}

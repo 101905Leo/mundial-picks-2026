@@ -2,9 +2,8 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { recalculateFinishedMatchPoints } from "@/lib/recalculate-points";
-import { calculatePredictionPoints } from "@/lib/scoring";
 import { syncRoomResultsFromGlobal } from "@/lib/sync-room-results";
-import { shouldUseManualPoints } from "@/lib/prediction-points";
+import { rankingPredictionPoints } from "@/lib/prediction-points";
 import { resultSchema } from "@/lib/validators";
 import { notifyWhatsAppUsers } from "@/lib/whatsapp";
 
@@ -41,18 +40,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
   await Promise.all(
     match.predictions.map((prediction) => {
-      const calculatedPoints = calculatePredictionPoints(
-        { homeScore: prediction.homeScore, awayScore: prediction.awayScore },
-        { homeScore: match.homeScore!, awayScore: match.awayScore! },
-      );
-      const keepManualPoints = shouldUseManualPoints(prediction, match);
+      const calculatedPoints = rankingPredictionPoints(prediction, match);
 
       return prisma.prediction.update({
         where: { id: prediction.id },
         data: {
           lockedAt: parsed.data.isFinal ? prediction.lockedAt ?? new Date() : prediction.lockedAt,
-          points: keepManualPoints ? prediction.manualPoints! : calculatedPoints,
-          ...(!keepManualPoints ? { manualPoints: null } : {}),
+          points: calculatedPoints,
         },
       });
     }),
@@ -61,7 +55,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   const roomSync = match.roomId === null
     ? await syncRoomResultsFromGlobal()
     : { matched: 0, updated: 0, alreadySynced: 0 };
-  const roomPredictionsRecalculated = roomSync.updated > 0 ? await recalculateFinishedMatchPoints() : 0;
+  const roomPredictionsRecalculated = await recalculateFinishedMatchPoints();
 
   await notifyWhatsAppUsers(
     parsed.data.isFinal

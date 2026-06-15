@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
-import { visiblePredictionPoints } from "@/lib/prediction-points";
+import { hasRankingScore, rankingPredictionPoints } from "@/lib/prediction-points";
 import type { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -17,8 +17,6 @@ export async function GET(request: NextRequest) {
       predictions: {
         where: { roomKey: "GLOBAL", match: { isPublished: true } },
         select: {
-          points: true,
-          manualPoints: true,
           homeScore: true,
           awayScore: true,
           updatedAt: true,
@@ -29,16 +27,22 @@ export async function GET(request: NextRequest) {
   });
 
   const ranking = users
-    .map((user) => ({
-      id: user.id,
-      name: user.name,
-      points: user.predictions.reduce(
-        (sum, prediction) => sum + visiblePredictionPoints(prediction, prediction.match),
-        0,
-      ),
-      predictions: user.predictions.length,
-    }))
-    .sort((a, b) => b.points - a.points || b.predictions - a.predictions);
+    .map((user) => {
+      const scoredPredictions = user.predictions.filter((prediction) => hasRankingScore(prediction.match));
+
+      return {
+        id: user.id,
+        name: user.name,
+        points: user.predictions.reduce(
+          (sum, prediction) => sum + rankingPredictionPoints(prediction, prediction.match),
+          0,
+        ),
+        predictions: user.predictions.length,
+        scoredPredictions: scoredPredictions.length,
+      };
+    })
+    .sort((a, b) => b.points - a.points || b.scoredPredictions - a.scoredPredictions)
+    .map(({ scoredPredictions: _scoredPredictions, ...item }) => item);
 
   return Response.json({ ranking });
 }
