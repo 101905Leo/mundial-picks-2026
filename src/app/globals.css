@@ -2859,71 +2859,86 @@ button {
 
 .prediction-modal-backdrop {
   align-items: center;
-  background: rgba(0, 0, 0, 0.72);
-  backdrop-filter: blur(14px);
+  background: rgba(2, 6, 23, 0.72);
+  backdrop-filter: blur(18px);
   display: grid;
   inset: 0;
   justify-items: center;
-  padding: 18px;
+  padding: 22px;
   position: fixed;
   z-index: 80;
 }
 
 .prediction-modal {
   background:
-    radial-gradient(circle at 24% 38%, rgba(47, 107, 255, 0.14), transparent 26%),
-    linear-gradient(180deg, rgba(20, 22, 24, 0.99), rgba(8, 9, 11, 0.99));
-  border: 1px solid rgba(255, 255, 255, 0.11);
-  border-radius: 26px;
-  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.62);
+    radial-gradient(circle at 22% 8%, rgba(59, 130, 246, 0.22), transparent 34%),
+    linear-gradient(180deg, #1a2642 0%, #17223d 46%, #111a31 100%);
+  border: 1px solid rgba(147, 197, 253, 0.16);
+  border-radius: 34px;
+  box-shadow: 0 36px 110px rgba(0, 0, 0, 0.68);
   color: #fff;
   display: grid;
-  gap: 22px;
-  max-height: min(92vh, 860px);
-  max-width: 760px;
+  gap: 24px;
+  max-height: min(92vh, 820px);
+  max-width: 620px;
   overflow: auto;
-  padding: 28px;
-  width: min(100%, 760px);
+  padding: 30px;
+  width: min(100%, 620px);
+}
+
+.prediction-drag-handle {
+  background: rgba(226, 232, 240, 0.28);
+  border-radius: 999px;
+  display: none;
+  height: 6px;
+  justify-self: center;
+  width: 76px;
 }
 
 .prediction-modal-header {
   align-items: start;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   display: grid;
   gap: 18px;
   grid-template-columns: minmax(0, 1fr) auto;
-  margin: -28px -28px 0;
-  padding: 28px;
 }
 
 .prediction-modal-header h3 {
-  font-size: clamp(1.7rem, 4vw, 2.65rem);
+  font-size: clamp(2rem, 5vw, 3.05rem);
   line-height: 1;
-  margin: 5px 0 10px;
+  margin: 0 0 12px;
 }
 
-.prediction-modal-header p {
+.prediction-meta {
+  align-items: center;
   color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   font-weight: 800;
   margin: 0;
 }
 
-.prediction-modal-header p strong {
-  background: rgba(47, 107, 255, 0.14);
-  border: 1px solid rgba(191, 219, 254, 0.28);
+.prediction-meta span,
+.prediction-meta strong {
   border-radius: 999px;
-  color: #2f6bff;
   display: inline-flex;
-  margin-right: 8px;
-  padding: 7px 12px;
+  line-height: 1;
+}
+
+.prediction-meta strong {
+  background: rgba(250, 204, 21, 0.12);
+  border: 1px solid rgba(250, 204, 21, 0.24);
+  color: var(--gold-soft);
+  display: inline-flex;
+  padding: 8px 13px;
 }
 
 .prediction-close {
   align-items: center;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.11);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 18px;
-  color: #9ca3b8;
+  color: #cbd5e1;
   cursor: pointer;
   display: grid;
   font-size: 2rem;
@@ -2935,33 +2950,34 @@ button {
 }
 
 .prediction-teams {
-  align-items: center;
+  align-items: start;
   display: grid;
-  gap: 18px;
+  gap: 14px;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  padding-top: 6px;
 }
 
 .prediction-team {
   align-items: center;
   display: grid;
-  gap: 10px;
+  gap: 12px;
   justify-items: center;
   min-width: 0;
 }
 
 .prediction-flag {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
+  background: transparent;
+  border: 0;
   display: grid;
-  font-size: 3rem;
-  height: 88px;
+  font-size: 3.45rem;
+  height: 72px;
   place-items: center;
-  width: 120px;
+  width: 96px;
 }
 
 .prediction-team > strong {
-  font-size: clamp(1.15rem, 3vw, 1.7rem);
+  font-size: clamp(1.2rem, 3vw, 1.65rem);
+  line-height: 1.05;
   text-align: center;
 }
 
@@ -2972,39 +2988,50 @@ button {
 }
 
 .prediction-divider {
-  color: #80879a;
-  font-size: 2rem;
+  align-self: center;
+  color: #8b94aa;
+  font-size: 3.2rem;
   font-weight: 900;
+  padding-top: 74px;
 }
 
 .prediction-stepper {
   align-items: center;
   display: grid;
-  gap: 12px;
-  grid-template-columns: 48px 72px 48px;
+  gap: 14px;
+  grid-template-columns: 54px 96px 54px;
 }
 
 .prediction-stepper button {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(226, 232, 240, 0.13);
+  border-radius: 18px;
   color: #fff;
   cursor: pointer;
-  font-size: 1.55rem;
-  height: 48px;
-  width: 48px;
+  font-size: 1.65rem;
+  font-weight: 900;
+  height: 54px;
+  width: 54px;
 }
 
 .prediction-stepper strong {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(191, 219, 254, 0.34);
-  border-radius: 20px;
-  box-shadow: 0 0 28px rgba(47, 107, 255, 0.18);
-  color: #2f6bff;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: #f8fafc;
   display: grid;
-  font-size: 2.2rem;
-  min-height: 70px;
+  font-size: 4.35rem;
+  line-height: 0.95;
+  min-height: 78px;
   place-items: center;
+}
+
+.prediction-note {
+  color: #a8b3ca;
+  font-size: 1rem;
+  font-weight: 700;
+  margin: -4px 0 0;
+  text-align: center;
 }
 
 .quick-picks,
@@ -3071,9 +3098,34 @@ button {
 }
 
 .prediction-submit {
-  border-radius: 999px;
+  background: linear-gradient(135deg, #ffe066, #f6c945);
+  border: 0;
+  border-radius: 24px;
+  color: #09111f;
+  cursor: pointer;
+  font-size: 1.2rem;
+  font-weight: 950;
+  min-height: 68px;
+  width: 100%;
+}
+
+.prediction-ai-button {
+  background: rgba(255, 255, 255, 0.065);
+  border: 1px solid rgba(226, 232, 240, 0.13);
+  border-radius: 20px;
+  color: #f8fafc;
+  cursor: pointer;
   font-size: 1.05rem;
-  min-height: 62px;
+  font-weight: 900;
+  min-height: 58px;
+  width: 100%;
+}
+
+.prediction-ai-panel {
+  border-top: 1px solid rgba(226, 232, 240, 0.1);
+  display: grid;
+  gap: 18px;
+  padding-top: 18px;
 }
 
 .prediction-helper,
@@ -5167,47 +5219,116 @@ button {
 
   .prediction-modal-backdrop {
     align-items: end;
-    padding: 10px;
+    padding: 0;
   }
 
   .prediction-modal {
-    border-radius: 24px 24px 18px 18px;
-    gap: 18px;
-    max-height: 94vh;
-    padding: 20px;
+    border-bottom: 0;
+    border-radius: 30px 30px 0 0;
+    gap: 22px;
+    max-height: 88dvh;
+    max-width: 100%;
+    padding: 22px 20px 28px;
+    width: 100%;
+  }
+
+  .prediction-drag-handle {
+    display: block;
   }
 
   .prediction-modal-header {
-    margin: -20px -20px 0;
-    padding: 20px;
+    gap: 10px;
+    grid-template-columns: minmax(0, 1fr) 44px;
+  }
+
+  .prediction-modal-header h3 {
+    font-size: 2.05rem;
+    margin-bottom: 10px;
+  }
+
+  .prediction-meta {
+    font-size: 0.86rem;
+    gap: 6px;
+  }
+
+  .prediction-meta span:nth-of-type(n + 3) {
+    display: none;
   }
 
   .prediction-close {
     border-radius: 14px;
-    height: 50px;
-    width: 50px;
+    font-size: 1.75rem;
+    height: 44px;
+    width: 44px;
   }
 
   .prediction-teams {
-    gap: 12px;
-    grid-template-columns: 1fr;
+    gap: 8px;
+    grid-template-columns: minmax(0, 1fr) 18px minmax(0, 1fr);
   }
 
   .prediction-divider {
-    display: none;
+    display: block;
+    font-size: 2.2rem;
+    padding-top: 104px;
   }
 
   .prediction-team {
-    background: rgba(255, 255, 255, 0.035);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 18px;
-    padding: 14px;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    gap: 10px;
+    padding: 0;
   }
 
   .prediction-flag {
-    font-size: 2.35rem;
-    height: 72px;
-    width: 100px;
+    font-size: 3rem;
+    height: 58px;
+    width: 74px;
+  }
+
+  .prediction-team > strong {
+    font-size: 1rem;
+    min-height: 34px;
+  }
+
+  .prediction-stepper {
+    gap: 10px;
+    grid-template-columns: 52px 52px;
+    justify-content: center;
+  }
+
+  .prediction-stepper strong {
+    font-size: 4.4rem;
+    grid-column: 1 / -1;
+    grid-row: 1;
+    min-height: 74px;
+  }
+
+  .prediction-stepper button:first-child {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .prediction-stepper button:last-child {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .prediction-note {
+    font-size: 0.94rem;
+    margin-top: -8px;
+  }
+
+  .prediction-submit {
+    border-radius: 22px;
+    font-size: 1.08rem;
+    min-height: 62px;
+  }
+
+  .prediction-ai-button {
+    border-radius: 18px;
+    min-height: 54px;
   }
 
   .quick-picks > div,
