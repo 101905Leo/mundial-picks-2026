@@ -40,6 +40,7 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
   const prediction = match.predictions?.[0];
   const [message, setMessage] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [aiPreviewOpen, setAiPreviewOpen] = useState(false);
   const [homePick, setHomePick] = useState(prediction?.homeScore ?? 0);
   const [awayPick, setAwayPick] = useState(prediction?.awayScore ?? 0);
   const startsAt = new Date(match.startsAt);
@@ -142,6 +143,7 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
               disabled={inputDisabled}
               onClick={() => {
                 setMessage("");
+                setAiPreviewOpen(false);
                 setModalOpen(true);
               }}
               type="button"
@@ -222,13 +224,14 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
                 </div>
               </div>
             </div>
-            <p className="prediction-helper prediction-edit-note">Puedes editar tu pronóstico hasta 1 hora antes del partido.</p>
 
             <section className="quick-picks">
               <span>Predicciones rápidas</span>
               <div>
                 {quickPicks.map((quickPick) => (
                   <button
+                    aria-pressed={homePick === quickPick.homeScore && awayPick === quickPick.awayScore}
+                    className={homePick === quickPick.homeScore && awayPick === quickPick.awayScore ? "quick-pick-button selected" : "quick-pick-button"}
                     key={quickPick.label}
                     onClick={() => {
                       setHomePick(quickPick.homeScore);
@@ -241,6 +244,36 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
                   </button>
                 ))}
               </div>
+            </section>
+
+            <section className="possible-points" aria-label="Puntos posibles">
+              <span>Puntos posibles</span>
+              <div>
+                <p><strong>🎯 Marcador exacto:</strong> <span>+5 pts</span></p>
+                <p><strong>✅ Ganador correcto:</strong> <span>+3 pts</span></p>
+                <p><strong>📊 Diferencia correcta:</strong> <span>+2 pts</span></p>
+                <p><strong>👀 Participación:</strong> <span>+1 pt</span></p>
+              </div>
+            </section>
+
+            <p className="prediction-helper prediction-edit-note">Puedes editar tu pronóstico hasta 1 hora antes del partido.</p>
+
+            <section className={`ai-preview ${aiPreviewOpen ? "open" : ""}`}>
+              <button
+                aria-controls={`ai-preview-${match.id}`}
+                aria-expanded={aiPreviewOpen}
+                className="ai-preview-toggle"
+                onClick={() => setAiPreviewOpen((open) => !open)}
+                type="button"
+              >
+                <span>✨ Previa con IA</span>
+                <strong>{aiPreviewOpen ? "−" : "+"}</strong>
+              </button>
+              {aiPreviewOpen ? (
+                <p className="ai-preview-content" id={`ai-preview-${match.id}`}>
+                  Análisis disponible antes del partido.
+                </p>
+              ) : null}
             </section>
 
             <section className="prediction-trend">
