@@ -1238,13 +1238,10 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
               </div>
               <div className="admin-action-grid">
                 <button className="button primary" onClick={updateResults} type="button">
-                  Actualizar resultados
+                  Actualizar marcadores y puntos
                 </button>
                 <button className="button secondary" onClick={() => recalculate()} type="button">
-                  Recalcular puntos
-                </button>
-                <button className="button secondary" onClick={() => recalculate({ clearManualPoints: true })} type="button">
-                  Recalcular automático
+                  Recalcular puntos guardados
                 </button>
                 <button className="button secondary" onClick={importWorldCupCalendar} type="button">
                   Cargar calendario
