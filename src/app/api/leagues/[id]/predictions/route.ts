@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { roomGlobalFallbackMatchWhere, roomOwnedMatchWhere } from "@/lib/room-match-scope";
-import { visiblePredictionPoints } from "@/lib/prediction-points";
+import { rankingPredictionPoints } from "@/lib/prediction-points";
 import { uniqueRoomPredictions } from "@/lib/room-predictions";
 import { resolveEffectiveMatchScore, sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
 
@@ -69,6 +69,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }),
     prisma.match.findMany({
       where: {
+        status: { in: ["LIVE", "FINISHED"] },
         homeScore: { not: null },
         awayScore: { not: null },
       },
@@ -118,8 +119,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           roomKey: true,
           homeScore: true,
           awayScore: true,
-          points: true,
-          manualPoints: true,
           updatedAt: true,
           user: { select: { id: true, name: true } },
           match: {
@@ -153,7 +152,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     predictions: uniqueRoomPredictions(scopedVisiblePredictions, id).map((prediction) => ({
       ...prediction,
       match: resolveEffectiveMatchScore(prediction.match, scoredMatches),
-      points: visiblePredictionPoints(prediction, resolveEffectiveMatchScore(prediction.match, scoredMatches)),
+      points: rankingPredictionPoints(prediction, resolveEffectiveMatchScore(prediction.match, scoredMatches)),
     })),
   });
 }

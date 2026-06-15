@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { roomGlobalFallbackMatchWhere, roomOwnedMatchWhere } from "@/lib/room-match-scope";
-import { visiblePredictionPoints } from "@/lib/prediction-points";
+import { rankingPredictionPoints } from "@/lib/prediction-points";
 import { pickRoomPrediction } from "@/lib/room-predictions";
 import { resolveEffectiveMatchScore, sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
 
@@ -68,6 +68,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }),
     prisma.match.findMany({
       where: {
+        status: { in: ["LIVE", "FINISHED"] },
         homeScore: { not: null },
         awayScore: { not: null },
       },
@@ -97,8 +98,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         roomKey: true,
         homeScore: true,
         awayScore: true,
-        points: true,
-        manualPoints: true,
         updatedAt: true,
         match: {
           select: {
@@ -131,7 +130,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         ...effectiveMatch,
         predictions: (() => {
           const prediction = pickRoomPrediction(matchingPredictions, league.id);
-          return prediction ? [{ ...prediction, points: visiblePredictionPoints(prediction, effectiveMatch) }] : [];
+          return prediction ? [{ ...prediction, points: rankingPredictionPoints(prediction, effectiveMatch) }] : [];
         })(),
       };
     }),
