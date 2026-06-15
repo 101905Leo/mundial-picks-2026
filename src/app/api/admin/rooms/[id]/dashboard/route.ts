@@ -2,10 +2,10 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { roomGlobalFallbackMatchWhere, roomOwnedMatchWhere } from "@/lib/room-match-scope";
+import { visiblePredictionPoints } from "@/lib/prediction-points";
 import { uniqueRoomPredictions } from "@/lib/room-predictions";
-import { resolveEffectiveMatchScore } from "@/lib/match-equivalence";
+import { resolveEffectiveMatchScore, sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
 import { removeSuperAdminRoomMemberships } from "@/lib/remove-super-admin-room-memberships";
-import { calculatePredictionPoints, getPredictionOutcome } from "@/lib/scoring";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { response } = await requireAdmin(request);
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       memberships: {
         orderBy: { joinedAt: "asc" },
         include: {
-          user: { select: { id: true, name: true, phone: true, isActive: true, entryPaidAt: true, role: true, createdAt: true } },
+          user: { select: { id: true, name: true, phone: true, isActive: true, entryPaidAt: true, role: true } },
         },
       },
     },
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     prisma.prediction.findMany({
       where: {
         userId: { in: memberIds },
-        OR: [{ leagueId: room.id }, { roomKey: room.id }],
+        OR: [{ leagueId: room.id }, { roomKey: room.id }, { leagueId: null, roomKey: "GLOBAL" }],
       },
       orderBy: [{ match: { startsAt: "asc" } }, { user: { name: "asc" } }],
       include: {
@@ -93,7 +93,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }),
     prisma.match.findMany({
       where: {
-        status: "FINISHED",
         homeScore: { not: null },
         awayScore: { not: null },
       },
@@ -114,30 +113,22 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   ]);
 
   const scopedPredictions = uniqueRoomPredictions(
-    rawPredictions.filter((prediction) => prediction.leagueId === room.id || prediction.roomKey === room.id),
+    rawPredictions.filter(
+      (prediction) =>
+        prediction.match.isPublished ||
+        scoredMatches.some((candidate) => sameMatchByTeamsAndKickoff(candidate, prediction.match)),
+    ),
     room.id,
   ).map((prediction) => ({
     ...prediction,
     match: resolveEffectiveMatchScore(prediction.match, scoredMatches),
-    points: (() => {
-      const effectiveMatch = resolveEffectiveMatchScore(prediction.match, scoredMatches);
-      if (effectiveMatch.status !== "FINISHED" || effectiveMatch.homeScore === null || effectiveMatch.awayScore === null) {
-        return 0;
-      }
-      return calculatePredictionPoints(
-        { homeScore: prediction.homeScore, awayScore: prediction.awayScore },
-        { homeScore: effectiveMatch.homeScore, awayScore: effectiveMatch.awayScore },
-      );
-    })(),
+    points: visiblePredictionPoints(prediction, resolveEffectiveMatchScore(prediction.match, scoredMatches)),
   }));
   const effectiveMatches = matches.map((match) => resolveEffectiveMatchScore(match, scoredMatches));
 
   const ranking = visibleMemberships
     .map((membership) => {
       const userPredictions = scopedPredictions.filter((prediction) => prediction.userId === membership.userId);
-      const finishedPredictions = userPredictions.filter(
-        ({ match }) => match.status === "FINISHED" && match.homeScore !== null && match.awayScore !== null,
-      );
       return {
         id: membership.user.id,
         name: membership.user.name,
@@ -145,34 +136,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         isActive: membership.user.isActive,
         entryPaidAt: membership.user.entryPaidAt,
         roomRole: membership.role,
-        predictions: rawPredictions.filter((prediction) => prediction.userId === membership.userId).length,
-        totalPicks: rawPredictions.filter((prediction) => prediction.userId === membership.userId).length,
-        scoredPicks: finishedPredictions.length,
-        points: finishedPredictions.reduce((sum, prediction) => sum + prediction.points, 0),
-        exactScores: finishedPredictions.filter(
-          ({ homeScore, awayScore, match }) =>
-            getPredictionOutcome(
-              { homeScore, awayScore },
-              { homeScore: match.homeScore!, awayScore: match.awayScore! },
-            ) === "EXACT",
+        predictions: userPredictions.length,
+        points: userPredictions.reduce((sum, prediction) => sum + prediction.points, 0),
+        exactScores: userPredictions.filter(
+          (prediction) =>
+            prediction.match.homeScore !== null &&
+            prediction.match.awayScore !== null &&
+            prediction.match.homeScore === prediction.homeScore &&
+            prediction.match.awayScore === prediction.awayScore,
         ).length,
-        winnerCorrect: finishedPredictions.filter(
-          ({ homeScore, awayScore, match }) =>
-            getPredictionOutcome(
-              { homeScore, awayScore },
-              { homeScore: match.homeScore!, awayScore: match.awayScore! },
-            ) === "WINNER",
-        ).length,
-        createdAt: membership.user.createdAt,
       };
     })
-    .sort(
-      (left, right) =>
-        right.points - left.points ||
-        right.exactScores - left.exactScores ||
-        right.winnerCorrect - left.winnerCorrect ||
-        left.createdAt.getTime() - right.createdAt.getTime(),
-    );
+    .sort((left, right) => right.points - left.points || right.predictions - left.predictions);
 
   return Response.json({
     room,

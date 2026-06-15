@@ -3,8 +3,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { calculatePredictionPoints } from "@/lib/scoring";
-import { matchBelongsToRoomScope, roomMatchScopeWhere } from "@/lib/room-match-scope";
-import { resolveEffectiveMatchScore, sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
+import { matchBelongsToRoomScope } from "@/lib/room-match-scope";
+import { resolveEffectiveMatchScore } from "@/lib/match-equivalence";
 
 const deletePredictionSchema = z.object({
   userId: z.string().min(1),
@@ -61,7 +61,7 @@ export async function PUT(request: NextRequest) {
         })
       : Promise.resolve(null),
     prisma.match.findMany({
-      where: { status: "FINISHED", homeScore: { not: null }, awayScore: { not: null } },
+      where: { homeScore: { not: null }, awayScore: { not: null } },
       select: {
         id: true,
         competitionId: true,
@@ -93,24 +93,7 @@ export async function PUT(request: NextRequest) {
     if (room.memberships.length === 0) {
       return Response.json({ error: "El participante no pertenece a esta sala" }, { status: 403 });
     }
-    const directRoomMatch = matchBelongsToRoomScope(match, room);
-    const equivalentRoomMatch =
-      directRoomMatch ||
-      (await prisma.match.findMany({
-        where: roomMatchScopeWhere(room),
-        select: {
-          id: true,
-          competitionId: true,
-          roomId: true,
-          sourceKey: true,
-          homeTeam: true,
-          awayTeam: true,
-          startsAt: true,
-          updatedAt: true,
-        },
-      })).some((candidate) => sameMatchByTeamsAndKickoff(candidate, match));
-
-    if (!equivalentRoomMatch) {
+    if (!matchBelongsToRoomScope(match, room)) {
       return Response.json({ error: "Este partido no pertenece a la sala seleccionada" }, { status: 403 });
     }
   }
@@ -119,7 +102,7 @@ export async function PUT(request: NextRequest) {
   const effectiveMatch = resolveEffectiveMatchScore(match, scoredMatches);
 
   const calculatedPoints =
-    effectiveMatch.status === "FINISHED" && effectiveMatch.homeScore !== null && effectiveMatch.awayScore !== null
+    effectiveMatch.homeScore !== null && effectiveMatch.awayScore !== null
       ? calculatePredictionPoints(
           { homeScore: parsed.data.homeScore, awayScore: parsed.data.awayScore },
           { homeScore: effectiveMatch.homeScore, awayScore: effectiveMatch.awayScore },
