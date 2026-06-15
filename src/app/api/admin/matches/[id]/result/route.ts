@@ -21,15 +21,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   const { id } = await params;
   const existingMatch = await prisma.match.findUnique({
     where: { id },
-    select: { id: true, isPublished: true },
+    select: { id: true },
   });
 
   if (!existingMatch) {
     return Response.json({ error: "Partido no encontrado" }, { status: 404 });
-  }
-
-  if (!existingMatch.isPublished) {
-    return Response.json({ error: "Publica el partido antes de actualizar su marcador" }, { status: 409 });
   }
 
   const match = await prisma.match.update({

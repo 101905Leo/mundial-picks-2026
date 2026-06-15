@@ -1488,63 +1488,69 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                       </div>
                     </details>
                     <div className="publish-list compact">
-                      {selectedPublishDay.matches.map((match) => (
-                        <article className={`publish-card ${match.isPublished ? "published" : ""}`} key={match.id}>
-                          <div className="publish-match-main">
-                            <div className="publish-time">
-                              {new Date(match.startsAt).toLocaleTimeString("es-CO", {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                                timeZone: "America/Bogota",
-                              })}
+                      {selectedPublishDay.matches.map((match) => {
+                        const hasScore = match.homeScore !== null && match.awayScore !== null;
+                        const canCloseMatch = hasScore && match.status !== "FINISHED";
+
+                        return (
+                          <article className={`publish-card ${match.isPublished ? "published" : ""}`} key={match.id}>
+                            <div className="publish-match-main">
+                              <div className="publish-time">
+                                {new Date(match.startsAt).toLocaleTimeString("es-CO", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                  timeZone: "America/Bogota",
+                                })}
+                              </div>
+                              <div className="publish-teams">
+                                <span>
+                                  <strong>{flagForTeam(match.homeTeam)}</strong>
+                                  {match.homeTeam}
+                                </span>
+                                <small>vs</small>
+                                <span>
+                                  <strong>{flagForTeam(match.awayTeam)}</strong>
+                                  {match.awayTeam}
+                                </span>
+                              </div>
                             </div>
-                            <div className="publish-teams">
-                              <span>
-                                <strong>{flagForTeam(match.homeTeam)}</strong>
-                                {match.homeTeam}
-                              </span>
-                              <small>vs</small>
-                              <span>
-                                <strong>{flagForTeam(match.awayTeam)}</strong>
-                                {match.awayTeam}
-                              </span>
+                            <div className="publish-meta">
+                              {match.group ? <span>{match.group}</span> : null}
+                              <span>{hasScore ? `${match.homeScore}-${match.awayScore}` : "Sin marcador"}</span>
+                              <strong className={match.isPublished ? "status-live" : "status-hidden"}>
+                                {match.isPublished ? "Publicado" : "Oculto"}
+                              </strong>
                             </div>
-                          </div>
-                          <div className="publish-meta">
-                            {match.group ? <span>{match.group}</span> : null}
-                            <strong className={match.isPublished ? "status-live" : "status-hidden"}>
-                              {match.isPublished ? "Publicado" : "Oculto"}
-                            </strong>
-                          </div>
-                          <div className="publish-actions">
-                            {match.isPublished ? (
+                            <div className="publish-actions">
+                              {match.isPublished ? (
+                                <button
+                                  className="button secondary"
+                                  onClick={() => publishMatch(match, false)}
+                                  type="button"
+                                >
+                                  Ocultar
+                                </button>
+                              ) : (
+                                <button
+                                  className="button primary"
+                                  onClick={() => publishMatch(match, true)}
+                                  type="button"
+                                >
+                                  Publicar
+                                </button>
+                              )}
                               <button
-                                className="button secondary"
-                                onClick={() => publishMatch(match, false)}
+                                className="button danger"
+                                disabled={!canCloseMatch}
+                                onClick={() => closeMatch(match)}
                                 type="button"
                               >
-                                Ocultar
+                                {match.status === "FINISHED" ? "Cerrado" : hasScore ? "Cerrar" : "Sin marcador"}
                               </button>
-                            ) : (
-                              <button
-                                className="button primary"
-                                onClick={() => publishMatch(match, true)}
-                                type="button"
-                              >
-                                Publicar
-                              </button>
-                            )}
-                            <button
-                              className="button danger"
-                              disabled={!match.isPublished || match.status === "FINISHED"}
-                              onClick={() => closeMatch(match)}
-                              type="button"
-                            >
-                              Cerrar
-                            </button>
-                          </div>
-                        </article>
-                      ))}
+                            </div>
+                          </article>
+                        );
+                      })}
                     </div>
                   </section>
                 ) : null}
