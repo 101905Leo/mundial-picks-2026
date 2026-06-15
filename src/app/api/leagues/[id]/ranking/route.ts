@@ -2,9 +2,10 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { roomMatchScopeWhere } from "@/lib/room-match-scope";
-import { hasRankingScore, rankingPredictionPoints } from "@/lib/prediction-points";
+import { hasRankingScore } from "@/lib/prediction-points";
 import { uniqueRoomPredictions } from "@/lib/room-predictions";
 import { resolveEffectiveMatchScore, sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
+import { roomMatchForPrediction, roomPredictionPoints } from "@/lib/room-scoring";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { user, response } = await requireUser(request);
@@ -119,6 +120,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       },
     }),
   ]);
+  const effectiveRoomMatches = roomScopeMatches.map((match) => resolveEffectiveMatchScore(match, scoredMatches));
   const weekStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const members = league.memberships
     .filter(({ user: member }) => member.role !== "ADMIN")
@@ -141,18 +143,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       );
       const scopedPredictions = uniqueRoomPredictions(roomPredictions, league.id).map((prediction) => ({
         ...prediction,
-        match: resolveEffectiveMatchScore(prediction.match, scoredMatches),
+        match: roomMatchForPrediction(prediction, effectiveRoomMatches, scoredMatches),
       }));
       const scoredPredictions = scopedPredictions.filter(({ match }) => hasRankingScore(match));
       const latestScoredPredictions = scoredPredictions
         .sort((a, b) => new Date(b.match.startsAt).getTime() - new Date(a.match.startsAt).getTime());
       let currentStreak = 0;
       for (const prediction of latestScoredPredictions) {
-        if (rankingPredictionPoints(prediction, prediction.match) >= 2) currentStreak += 1;
+        if (roomPredictionPoints(prediction, prediction.match) >= 2) currentStreak += 1;
         else break;
       }
       const points = scopedPredictions.reduce(
-        (sum, prediction) => sum + rankingPredictionPoints(prediction, prediction.match),
+        (sum, prediction) => sum + roomPredictionPoints(prediction, prediction.match),
         0,
       );
       const exactScores = scoredPredictions.filter(
@@ -174,7 +176,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         currentStreak,
         weeklyPoints: scopedPredictions
           .filter(({ match }) => match.startsAt >= weekStart)
-          .reduce((sum, prediction) => sum + rankingPredictionPoints(prediction, prediction.match), 0),
+          .reduce((sum, prediction) => sum + roomPredictionPoints(prediction, prediction.match), 0),
       };
     })
     .sort(

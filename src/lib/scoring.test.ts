@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { calculatePredictionPoints } from "./scoring";
 import { rankingPredictionPoints } from "./prediction-points";
+import { roomPredictionPoints } from "./room-scoring";
 
 const colombiaMexico = { homeScore: 2, awayScore: 1 };
 assert.equal(calculatePredictionPoints({ homeScore: 2, awayScore: 1 }, colombiaMexico), 5);
@@ -55,6 +56,28 @@ assert.equal(
     status: "SCHEDULED",
     homeScore: null,
     awayScore: null,
+  }),
+  0,
+);
+assert.equal(
+  roomPredictionPoints({ homeScore: 0, awayScore: 1 }, {
+    homeTeam: "Belgium",
+    awayTeam: "Egypt",
+    startsAt: new Date(),
+    status: "LIVE",
+    homeScore: 0,
+    awayScore: 1,
+  }),
+  5,
+);
+assert.equal(
+  roomPredictionPoints({ homeScore: 0, awayScore: 1 }, {
+    homeTeam: "Belgium",
+    awayTeam: "Egypt",
+    startsAt: new Date(),
+    status: "SCHEDULED",
+    homeScore: 0,
+    awayScore: 1,
   }),
   0,
 );

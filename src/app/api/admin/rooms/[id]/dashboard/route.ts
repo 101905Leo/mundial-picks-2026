@@ -6,10 +6,11 @@ import {
   roomMatchScopeWhere,
   roomOwnedMatchWhere,
 } from "@/lib/room-match-scope";
-import { hasRankingScore, rankingPredictionPoints } from "@/lib/prediction-points";
+import { hasRankingScore } from "@/lib/prediction-points";
 import { uniqueRoomPredictions } from "@/lib/room-predictions";
 import { resolveEffectiveMatchScore, sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
 import { removeSuperAdminRoomMemberships } from "@/lib/remove-super-admin-room-memberships";
+import { roomMatchForPrediction, roomPredictionPoints } from "@/lib/room-scoring";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { response } = await requireAdmin(request);
@@ -136,6 +137,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }),
   ]);
 
+  const effectiveRoomScopeMatches = roomScopeMatches.map((match) => resolveEffectiveMatchScore(match, scoredMatches));
   const scopedPredictions = uniqueRoomPredictions(
     rawPredictions.filter((prediction) => {
       if (prediction.leagueId === room.id || prediction.roomKey === room.id) return true;
@@ -152,11 +154,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       });
     }),
     room.id,
-  ).map((prediction) => ({
-    ...prediction,
-    match: resolveEffectiveMatchScore(prediction.match, scoredMatches),
-    points: rankingPredictionPoints(prediction, resolveEffectiveMatchScore(prediction.match, scoredMatches)),
-  }));
+  ).map((prediction) => {
+    const match = roomMatchForPrediction(prediction, effectiveRoomScopeMatches, scoredMatches);
+
+    return {
+      ...prediction,
+      match,
+      points: roomPredictionPoints(prediction, match),
+    };
+  });
   const effectiveMatches = matches.map((match) => resolveEffectiveMatchScore(match, scoredMatches));
 
   const ranking = visibleMemberships

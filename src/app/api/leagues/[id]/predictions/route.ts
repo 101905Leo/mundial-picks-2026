@@ -2,30 +2,9 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { roomGlobalFallbackMatchWhere, roomOwnedMatchWhere } from "@/lib/room-match-scope";
-import { calculatePredictionPoints } from "@/lib/scoring";
 import { uniqueRoomPredictions } from "@/lib/room-predictions";
 import { resolveEffectiveMatchScore, sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
-
-type LivePrediction = {
-  homeScore: number;
-  awayScore: number;
-};
-
-type LiveMatchScore = {
-  status: "SCHEDULED" | "LIVE" | "FINISHED";
-  homeScore: number | null;
-  awayScore: number | null;
-};
-
-function livePredictionPoints(prediction: LivePrediction, match: LiveMatchScore) {
-  if (match.status !== "LIVE" && match.status !== "FINISHED") return 0;
-  if (match.homeScore === null || match.awayScore === null) return 0;
-
-  return calculatePredictionPoints(
-    { homeScore: prediction.homeScore, awayScore: prediction.awayScore },
-    { homeScore: match.homeScore, awayScore: match.awayScore },
-  );
-}
+import { roomMatchForPrediction, roomPredictionPoints } from "@/lib/room-scoring";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { user, response } = await requireUser(request);
@@ -161,19 +140,21 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         },
       })
     : [];
-  const scopedVisiblePredictions = visiblePredictions.filter((prediction) =>
-    visibleMatches.some(
-      (match) =>
-        prediction.matchId === match.id ||
-        sameMatchByTeamsAndKickoff(prediction.match, match),
-    ),
-  );
+  const scopedVisiblePredictions = visiblePredictions
+    .map((prediction) => {
+      const match = roomMatchForPrediction(prediction, visibleMatches, scoredMatches);
+      const belongsToVisibleMatch = visibleMatches.some(
+        (visibleMatch) => match.id === visibleMatch.id || sameMatchByTeamsAndKickoff(match, visibleMatch),
+      );
+
+      return belongsToVisibleMatch ? { ...prediction, match } : null;
+    })
+    .filter((prediction): prediction is NonNullable<typeof prediction> => Boolean(prediction));
   return Response.json({
     matches: visibleMatches,
     predictions: uniqueRoomPredictions(scopedVisiblePredictions, id).map((prediction) => ({
       ...prediction,
-      match: resolveEffectiveMatchScore(prediction.match, scoredMatches),
-      points: livePredictionPoints(prediction, resolveEffectiveMatchScore(prediction.match, scoredMatches)),
+      points: roomPredictionPoints(prediction, prediction.match),
     })),
   });
 }
