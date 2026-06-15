@@ -182,13 +182,16 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
           <form className="prediction-modal" onSubmit={savePrediction} role="dialog" aria-modal="true" aria-label="Hacer predicción">
             <input name="homeScore" type="hidden" value={homePick} />
             <input name="awayScore" type="hidden" value={awayPick} />
+            <span className="prediction-drag-handle" aria-hidden="true" />
             <header className="prediction-modal-header">
               <div>
-                <span className="market-kicker">Predicción</span>
-                <h3>Hacer predicción</h3>
-                <p>
+                <span className="market-kicker">Tu pronóstico</span>
+                <h3>Tu pronóstico</h3>
+                <p className="prediction-match-info">
+                  {match.group ? <span>{match.group}</span> : null}
+                  <span>{startsAt.toLocaleDateString("es", { weekday: "short", day: "2-digit", month: "short" })}</span>
                   <strong>{startsAt.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}</strong>
-                  {match.group ? ` · ${match.group}` : ""}
+                  {match.venue ? <span>{match.venue}</span> : null}
                 </p>
               </div>
               <button className="prediction-close" onClick={() => setModalOpen(false)} type="button" aria-label="Cerrar">
@@ -202,9 +205,9 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
                 <strong>{match.homeTeam}</strong>
                 <small>Local</small>
                 <div className="prediction-stepper">
-                  <button onClick={() => setHomePick((score) => Math.max(0, score - 1))} type="button">−</button>
+                  <button aria-label={`Restar gol a ${match.homeTeam}`} onClick={() => setHomePick((score) => Math.max(0, score - 1))} type="button">−</button>
                   <strong>{homePick}</strong>
-                  <button onClick={() => setHomePick((score) => score + 1)} type="button">+</button>
+                  <button aria-label={`Sumar gol a ${match.homeTeam}`} onClick={() => setHomePick((score) => score + 1)} type="button">+</button>
                 </div>
               </div>
               <span className="prediction-divider">-</span>
@@ -213,12 +216,13 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
                 <strong>{match.awayTeam}</strong>
                 <small>Visitante</small>
                 <div className="prediction-stepper">
-                  <button onClick={() => setAwayPick((score) => Math.max(0, score - 1))} type="button">−</button>
+                  <button aria-label={`Restar gol a ${match.awayTeam}`} onClick={() => setAwayPick((score) => Math.max(0, score - 1))} type="button">−</button>
                   <strong>{awayPick}</strong>
-                  <button onClick={() => setAwayPick((score) => score + 1)} type="button">+</button>
+                  <button aria-label={`Sumar gol a ${match.awayTeam}`} onClick={() => setAwayPick((score) => score + 1)} type="button">+</button>
                 </div>
               </div>
             </div>
+            <p className="prediction-helper prediction-edit-note">Puedes editar tu pronóstico hasta 1 hora antes del partido.</p>
 
             <section className="quick-picks">
               <span>Predicciones rápidas</span>
@@ -258,9 +262,8 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
             </section>
 
             <button className="button primary prediction-submit" type="submit">
-              Confirmar predicción
+              Guardar pronóstico
             </button>
-            <p className="prediction-helper">Podrás editar tu predicción hasta 5 minutos antes del partido.</p>
             {message ? <p className="prediction-error">{message}</p> : null}
           </form>
         </div>

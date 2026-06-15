@@ -2858,110 +2858,128 @@ button {
 }
 
 .prediction-modal-backdrop {
-  align-items: center;
-  background: rgba(0, 0, 0, 0.72);
-  backdrop-filter: blur(14px);
+  align-items: end;
+  background: rgba(2, 6, 23, 0.76);
+  backdrop-filter: blur(16px);
   display: grid;
   inset: 0;
   justify-items: center;
-  padding: 18px;
+  padding: 18px 18px 0;
   position: fixed;
   z-index: 80;
 }
 
 .prediction-modal {
   background:
-    radial-gradient(circle at 24% 38%, rgba(47, 107, 255, 0.14), transparent 26%),
-    linear-gradient(180deg, rgba(20, 22, 24, 0.99), rgba(8, 9, 11, 0.99));
-  border: 1px solid rgba(255, 255, 255, 0.11);
-  border-radius: 26px;
-  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.62);
+    radial-gradient(circle at 18% 0%, rgba(47, 107, 255, 0.22), transparent 34%),
+    linear-gradient(180deg, #17223d 0%, #101829 54%, #080d18 100%);
+  border: 1px solid rgba(191, 219, 254, 0.14);
+  border-bottom: 0;
+  border-radius: 30px 30px 0 0;
+  box-shadow: 0 -20px 80px rgba(0, 0, 0, 0.58);
   color: #fff;
   display: grid;
-  gap: 22px;
-  max-height: min(92vh, 860px);
-  max-width: 760px;
+  gap: 24px;
+  max-height: min(90dvh, 820px);
+  max-width: 640px;
   overflow: auto;
-  padding: 28px;
-  width: min(100%, 760px);
+  overscroll-behavior: contain;
+  padding: 16px 28px calc(28px + env(safe-area-inset-bottom));
+  width: min(100%, 640px);
+}
+
+.prediction-drag-handle {
+  background: rgba(226, 232, 240, 0.28);
+  border-radius: 999px;
+  display: block;
+  height: 5px;
+  justify-self: center;
+  width: 72px;
 }
 
 .prediction-modal-header {
   align-items: start;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   display: grid;
-  gap: 18px;
+  gap: 14px;
   grid-template-columns: minmax(0, 1fr) auto;
-  margin: -28px -28px 0;
-  padding: 28px;
 }
 
 .prediction-modal-header h3 {
-  font-size: clamp(1.7rem, 4vw, 2.65rem);
+  font-size: clamp(2rem, 5vw, 2.75rem);
   line-height: 1;
-  margin: 5px 0 10px;
+  margin: 5px 0 12px;
 }
 
-.prediction-modal-header p {
+.prediction-match-info {
+  align-items: center;
   color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   font-weight: 800;
   margin: 0;
 }
 
-.prediction-modal-header p strong {
-  background: rgba(47, 107, 255, 0.14);
-  border: 1px solid rgba(191, 219, 254, 0.28);
+.prediction-match-info span,
+.prediction-match-info strong {
   border-radius: 999px;
-  color: #2f6bff;
   display: inline-flex;
-  margin-right: 8px;
+  line-height: 1;
+}
+
+.prediction-match-info strong {
+  background: rgba(255, 204, 92, 0.13);
+  border: 1px solid rgba(255, 204, 92, 0.28);
+  color: var(--gold-soft);
   padding: 7px 12px;
 }
 
 .prediction-close {
   align-items: center;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.11);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 18px;
-  color: #9ca3b8;
+  color: #cbd5e1;
   cursor: pointer;
   display: grid;
-  font-size: 2rem;
+  font-size: 1.85rem;
   font-weight: 400;
-  height: 58px;
+  height: 52px;
   line-height: 1;
   place-items: center;
-  width: 58px;
+  width: 52px;
 }
 
 .prediction-teams {
-  align-items: center;
+  align-items: start;
   display: grid;
-  gap: 18px;
+  gap: 16px;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
 }
 
 .prediction-team {
   align-items: center;
   display: grid;
-  gap: 10px;
+  gap: 12px;
   justify-items: center;
   min-width: 0;
 }
 
 .prediction-flag {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 18px;
   display: grid;
-  font-size: 3rem;
-  height: 88px;
+  font-size: 3.25rem;
+  height: 84px;
   place-items: center;
-  width: 120px;
+  width: 112px;
 }
 
 .prediction-team > strong {
-  font-size: clamp(1.15rem, 3vw, 1.7rem);
+  font-size: clamp(1.18rem, 3vw, 1.65rem);
+  line-height: 1.05;
+  min-height: 36px;
   text-align: center;
 }
 
@@ -2972,39 +2990,51 @@ button {
 }
 
 .prediction-divider {
-  color: #80879a;
-  font-size: 2rem;
+  align-self: center;
+  color: #8c95aa;
+  font-size: 2.55rem;
   font-weight: 900;
+  padding-top: 96px;
 }
 
 .prediction-stepper {
   align-items: center;
   display: grid;
-  gap: 12px;
-  grid-template-columns: 48px 72px 48px;
+  gap: 14px;
+  grid-template-columns: 54px 100px 54px;
+  justify-content: center;
 }
 
 .prediction-stepper button {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.075);
+  border: 1px solid rgba(226, 232, 240, 0.14);
+  border-radius: 18px;
   color: #fff;
   cursor: pointer;
-  font-size: 1.55rem;
-  height: 48px;
-  width: 48px;
+  font-size: 1.65rem;
+  font-weight: 950;
+  height: 54px;
+  width: 54px;
 }
 
 .prediction-stepper strong {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(191, 219, 254, 0.34);
-  border-radius: 20px;
-  box-shadow: 0 0 28px rgba(47, 107, 255, 0.18);
-  color: #2f6bff;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: #f8fafc;
   display: grid;
-  font-size: 2.2rem;
-  min-height: 70px;
+  font-size: 4.15rem;
+  line-height: 0.95;
+  min-height: 78px;
   place-items: center;
+}
+
+.prediction-edit-note {
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  margin: -6px 0 0;
+  padding: 12px 14px;
 }
 
 .quick-picks,
@@ -3071,9 +3101,16 @@ button {
 }
 
 .prediction-submit {
-  border-radius: 999px;
-  font-size: 1.05rem;
-  min-height: 62px;
+  background: linear-gradient(135deg, #ffe36e, #ffcc5c);
+  border: 0;
+  border-radius: 24px;
+  color: #08111f;
+  font-size: 1.12rem;
+  font-weight: 950;
+  justify-content: center;
+  min-height: 68px;
+  text-align: center;
+  width: 100%;
 }
 
 .prediction-helper,
@@ -5167,47 +5204,106 @@ button {
 
   .prediction-modal-backdrop {
     align-items: end;
-    padding: 10px;
+    padding: 0;
   }
 
   .prediction-modal {
-    border-radius: 24px 24px 18px 18px;
-    gap: 18px;
-    max-height: 94vh;
-    padding: 20px;
+    border-radius: 30px 30px 0 0;
+    gap: 20px;
+    max-height: 88dvh;
+    max-width: 100%;
+    padding: 16px 18px calc(22px + env(safe-area-inset-bottom));
+    width: 100%;
   }
 
   .prediction-modal-header {
-    margin: -20px -20px 0;
-    padding: 20px;
+    gap: 10px;
+    grid-template-columns: minmax(0, 1fr) 44px;
+  }
+
+  .prediction-modal-header h3 {
+    font-size: 2rem;
+    margin-bottom: 10px;
+  }
+
+  .prediction-match-info {
+    font-size: 0.83rem;
+    gap: 6px;
+  }
+
+  .prediction-match-info span:nth-of-type(n + 3) {
+    display: none;
   }
 
   .prediction-close {
     border-radius: 14px;
-    height: 50px;
-    width: 50px;
+    font-size: 1.65rem;
+    height: 44px;
+    width: 44px;
   }
 
   .prediction-teams {
-    gap: 12px;
-    grid-template-columns: 1fr;
+    gap: 8px;
+    grid-template-columns: minmax(0, 1fr) 16px minmax(0, 1fr);
   }
 
   .prediction-divider {
-    display: none;
+    display: block;
+    font-size: 2rem;
+    padding-top: 104px;
   }
 
   .prediction-team {
-    background: rgba(255, 255, 255, 0.035);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 18px;
-    padding: 14px;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    gap: 10px;
+    padding: 0;
   }
 
   .prediction-flag {
-    font-size: 2.35rem;
-    height: 72px;
-    width: 100px;
+    border-radius: 16px;
+    font-size: 2.65rem;
+    height: 62px;
+    width: 82px;
+  }
+
+  .prediction-team > strong {
+    font-size: 1rem;
+    min-height: 34px;
+  }
+
+  .prediction-stepper {
+    gap: 10px;
+    grid-template-columns: 52px 52px;
+  }
+
+  .prediction-stepper strong {
+    font-size: 4rem;
+    grid-column: 1 / -1;
+    grid-row: 1;
+    min-height: 70px;
+  }
+
+  .prediction-stepper button:first-child {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .prediction-stepper button:last-child {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .prediction-edit-note {
+    font-size: 0.86rem;
+    margin-top: -8px;
+  }
+
+  .prediction-submit {
+    border-radius: 22px;
+    font-size: 1.02rem;
+    min-height: 62px;
   }
 
   .quick-picks > div,
