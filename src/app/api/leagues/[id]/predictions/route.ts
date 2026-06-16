@@ -4,7 +4,32 @@ import { requireUser } from "@/lib/auth";
 import { roomGlobalFallbackMatchWhere, roomOwnedMatchWhere } from "@/lib/room-match-scope";
 import { uniqueRoomPredictions } from "@/lib/room-predictions";
 import { resolveEffectiveMatchScore, sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
-import { roomMatchForPrediction, roomPredictionPoints } from "@/lib/room-scoring";
+import { roomMatchForPrediction } from "@/lib/room-scoring";
+import { calculatePredictionPoints } from "@/lib/scoring";
+
+type LivePointsMatch = {
+  id?: string;
+  competitionId?: string | null;
+  roomId?: string | null;
+  sourceKey?: string | null;
+  homeTeam: string;
+  awayTeam: string;
+  startsAt: Date | string;
+  updatedAt?: Date | string;
+  status: "SCHEDULED" | "LIVE" | "FINISHED";
+  homeScore: number | null;
+  awayScore: number | null;
+};
+
+function livePredictionPoints(prediction: { homeScore: number; awayScore: number }, match: LivePointsMatch) {
+  if (match.status !== "LIVE" && match.status !== "FINISHED") return 0;
+  if (match.homeScore === null || match.awayScore === null) return 0;
+
+  return calculatePredictionPoints(
+    { homeScore: prediction.homeScore, awayScore: prediction.awayScore },
+    { homeScore: match.homeScore, awayScore: match.awayScore },
+  );
+}
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { user, response } = await requireUser(request);
@@ -152,9 +177,22 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     .filter((prediction): prediction is NonNullable<typeof prediction> => Boolean(prediction));
   return Response.json({
     matches: visibleMatches,
-    predictions: uniqueRoomPredictions(scopedVisiblePredictions, id).map((prediction) => ({
-      ...prediction,
-      points: roomPredictionPoints(prediction, prediction.match),
-    })),
+    predictions: uniqueRoomPredictions(scopedVisiblePredictions, id).map((prediction) => {
+      const points = livePredictionPoints(prediction, prediction.match);
+
+      return {
+        ...prediction,
+        points,
+        debug: {
+          predictionId: prediction.id,
+          predictionMatchId: prediction.matchId,
+          resolvedMatchId: prediction.match.id,
+          matchStatus: prediction.match.status,
+          realHomeScore: prediction.match.homeScore,
+          realAwayScore: prediction.match.awayScore,
+          calculatedPoints: points,
+        },
+      };
+    }),
   });
 }
