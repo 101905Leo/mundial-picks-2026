@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { LeaguePanel } from "@/components/league-panel";
 import type { Competition, Match, RoomPlan, User } from "@/components/types";
+import { matchStatusLabel, roomStatusLabel } from "@/lib/status-labels";
 import { flagForTeam } from "@/lib/team-flags";
 
 type AdminUser = {
@@ -169,6 +170,9 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
   const resultLoadedMatches = matches.filter((match) => match.homeScore !== null && match.awayScore !== null).length;
   const activeUsers = users.filter((user) => user.isActive).length;
   const editableResultMatches = matches.filter((match) => match.isPublished);
+  const matchesWithScoreNotClosed = matches
+    .filter((match) => match.homeScore !== null && match.awayScore !== null && match.status !== "FINISHED")
+    .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
   const playedPublishedMatches = matches
     .filter((match) => match.isPublished && new Date(match.startsAt) <= new Date())
     .sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime());
@@ -290,7 +294,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
 
     setAdminView("rooms");
     const room = adminRooms.find((item) => item.id === roomId);
-    setMessage(room ? `Sala cargada: ${room.name}` : "Sala cargada.");
+    setMessage(room ? `Sala seleccionada: ${room.name}` : "Sala seleccionada.");
     await loadRoomDashboard(roomId);
   }
 
@@ -1133,6 +1137,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
         <div>
           <span className="market-kicker">Control general</span>
           <h2>Panel administrador</h2>
+          <p>Control general de Mundial Picks</p>
         </div>
       </div>
       {message ? <div className="notice">{message}</div> : null}
@@ -1172,14 +1177,14 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
           onClick={() => setAdminView("overview")}
           type="button"
         >
-          Inicio
+          Resumen
         </button>
         <button
           className={`tab ${adminView === "matches" ? "active" : ""}`}
           onClick={() => setAdminView("matches")}
           type="button"
         >
-          Ligas
+          Herramientas
         </button>
         <button
           className={`tab ${adminView === "users" ? "active" : ""}`}
@@ -1212,7 +1217,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                 type="button"
               >
                 <strong>{room.name}</strong>
-                <span>{room.inviteCode} · {room.status}</span>
+                <span>{room.inviteCode} · {roomStatusLabel(room.status)}</span>
               </button>
             ))}
             {!adminRooms.length ? <span>No hay salas creadas</span> : null}
@@ -1274,6 +1279,35 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                 <li>Los pagos se administran por plan de sala, no por usuario.</li>
               </ol>
             </section>
+            <section className="form result-audit">
+              <div className="section-title">
+                <div>
+                  <span className="market-kicker">Revisión urgente</span>
+                  <h3>Partidos con marcador sin finalizar</h3>
+                  <p className="muted">Si un partido ya terminó, debe quedar como finalizado para que los puntos sean definitivos.</p>
+                </div>
+              </div>
+              <div className="admin-user-list">
+                {matchesWithScoreNotClosed.map((match) => (
+                  <article className="admin-user-card inactive" key={match.id}>
+                    <div>
+                      <strong>{match.homeTeam} vs {match.awayTeam}</strong>
+                      <span>{new Date(match.startsAt).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" })}</span>
+                    </div>
+                    <div className="admin-user-stats">
+                      <span>
+                        <strong>{match.homeScore}-{match.awayScore}</strong>
+                        Marcador
+                      </span>
+                    </div>
+                    <div className="admin-user-badges">
+                      <span>{matchStatusLabel(match.status)}</span>
+                    </div>
+                  </article>
+                ))}
+                {!matchesWithScoreNotClosed.length ? <div className="empty">No hay partidos con marcador pendientes de finalizar.</div> : null}
+              </div>
+            </section>
             <section className="form room-admin-overview">
               <div className="section-title">
                 <div>
@@ -1291,7 +1325,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                     </div>
                     <div>
                       <strong>{room.name}</strong>
-                      <span>{room.status} · {room.inviteCode}</span>
+                      <span>{roomStatusLabel(room.status)} · {room.inviteCode}</span>
                     </div>
                   </article>
                 ))}
@@ -1770,7 +1804,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                   <option value="">Selecciona partido</option>
                   {matches.map((match) => (
                     <option key={match.id} value={match.id}>
-                      {match.homeTeam} vs {match.awayTeam} · {match.status}
+                      {match.homeTeam} vs {match.awayTeam} · {matchStatusLabel(match.status)}
                       {match.isPublished ? "" : " · oculto"}
                     </option>
                   ))}
@@ -1811,7 +1845,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                   <option value="">Selecciona partido</option>
                   {matches.map((match) => (
                     <option key={match.id} value={match.id}>
-                      {match.homeTeam} vs {match.awayTeam} · {match.status}
+                      {match.homeTeam} vs {match.awayTeam} · {matchStatusLabel(match.status)}
                       {match.isPublished ? "" : " · oculto"}
                     </option>
                   ))}
@@ -1953,25 +1987,28 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
         {adminView === "rooms" ? (
           <>
             <section className="form room-command-center compact-room-command">
-              <div className="room-control-bar">
-                <div className="room-control-field compact-room-picker">
-                  <label htmlFor="superAdminRoomSelector">Sala</label>
-                <select
-                  id="superAdminRoomSelector"
-                  onChange={(event) => {
-                    void selectAdminRoom(event.target.value);
-                  }}
-                  value={selectedRoom?.id ?? ""}
-                >
-                  <option value="">Selecciona sala</option>
-                  {adminRooms.map((room) => (
-                    <option key={room.id} value={room.id}>
-                      {room.name} · {room.inviteCode} · {room.status}
-                    </option>
-                  ))}
-                </select>
+              <div className="room-command-header">
+                <div>
+                  <span className="market-kicker">Sala seleccionada</span>
+                  <h3>Gestión de sala</h3>
                 </div>
-                <button className="button secondary" onClick={loadRooms} type="button">Actualizar salas</button>
+                <div className="room-picker-shell">
+                  <label htmlFor="superAdminRoomSelector">Cambiar sala</label>
+                  <select
+                    id="superAdminRoomSelector"
+                    onChange={(event) => {
+                      void selectAdminRoom(event.target.value);
+                    }}
+                    value={selectedRoom?.id ?? ""}
+                  >
+                    <option value="">Selecciona sala</option>
+                    {adminRooms.map((room) => (
+                      <option key={room.id} value={room.id}>
+                        {room.name} · {room.inviteCode} · {roomStatusLabel(room.status)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <p className="room-loaded-state">
                 {selectedRoom
@@ -1980,29 +2017,46 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
               </p>
               {selectedRoom ? (
                 <>
-                <details className="room-admin-actions-strip">
-                  <summary>Acciones rápidas de {selectedRoom.name}</summary>
-                <div className="room-action-strip">
-                  <div className="room-selected-title">
+                <section className="selected-room-card">
+                  <div className="selected-room-main">
+                    <span className="market-kicker">Sala seleccionada</span>
                     <strong>{selectedRoom.name}</strong>
-                    <span>
-                      {selectedRoom.competition?.name ?? "Sin calendario base"} · Código {selectedRoom.inviteCode} ·
-                      {" "}{selectedRoomMemberships.length}/{selectedRoom.maxParticipants} participantes ·
-                      {" "}Propietario: {selectedRoom.owner.name}
-                    </span>
+                    <small>{selectedRoom.competition?.name ?? "Sin calendario base"} · Propietario: {selectedRoom.owner.name}</small>
                   </div>
-                  <div className="admin-user-badges">
-                    <span>{selectedRoom.paymentStatus === "TRIAL" ? "Prueba gratis" : selectedRoom.paidAt ? "Pagada" : "Pago pendiente"}</span>
-                    <span>{selectedRoom.status === "ACTIVE" ? "Activa" : selectedRoom.status === "EXPIRED" ? "Vencida" : selectedRoom.status === "SUSPENDED" ? "Suspendida" : "Cerrada"}</span>
-                    {selectedRoom.expiresAt ? <span>Vence: {new Date(selectedRoom.expiresAt).toLocaleDateString("es")}</span> : null}
+                  <div className="selected-room-metrics">
+                    <span><small>Código</small><strong>{selectedRoom.inviteCode}</strong></span>
+                    <span><small>Estado</small><strong>{roomStatusLabel(selectedRoom.status)}</strong></span>
+                    <span><small>Participantes</small><strong>{selectedRoomMemberships.length}/{selectedRoom.maxParticipants}</strong></span>
+                    <span><small>Partidos publicados</small><strong>{roomDashboard?.matches.filter((match) => match.isPublished).length ?? "-"}</strong></span>
                   </div>
-                  <div className="admin-user-actions">
+                  <div className="selected-room-actions">
+                    <button
+                      className="button secondary"
+                      onClick={() => document.getElementById("superAdminRoomSelector")?.focus()}
+                      type="button"
+                    >
+                      Cambiar sala
+                    </button>
+                    <button className="button primary" onClick={() => syncSelectedRoomResults(selectedRoom)} type="button">
+                      Sincronizar resultados de sala
+                    </button>
                     <button className="button secondary" onClick={() => copyRoomInvitation(selectedRoom)} type="button">Copiar invitación</button>
-                    <button className="button primary" onClick={() => syncSelectedRoomResults(selectedRoom)} type="button">Sincronizar resultados de esta sala</button>
                     <button className="button danger" onClick={() => deleteAdminRoom(selectedRoom)} type="button">Eliminar sala</button>
                   </div>
-                </div>
-                </details>
+                  <div className="selected-room-status">
+                    <span>{selectedRoom.paymentStatus === "TRIAL" ? "Prueba gratis" : selectedRoom.paidAt ? "Pagada" : "Pago pendiente"}</span>
+                    {selectedRoom.expiresAt ? <span>Vence: {new Date(selectedRoom.expiresAt).toLocaleDateString("es")}</span> : null}
+                  </div>
+                </section>
+                <nav className="admin-nav room-nav selected-room-tabs" aria-label="Gestión interna de sala">
+                  <span className="tab active">Inicio</span>
+                  <span className="tab">Calendario</span>
+                  <span className="tab">Picks</span>
+                  <span className="tab">Ranking</span>
+                  <span className="tab">Participantes</span>
+                  <span className="tab">Chat</span>
+                  <span className="tab">IA</span>
+                </nav>
                 <LeaguePanel user={user} initialLeagueId={selectedRoom.id} embedded />
 
                   <section className="admin-room-dashboard compact legacy-admin-room-dashboard">
@@ -2115,7 +2169,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                                       <option value="">Selecciona partido</option>
                                       {roomDashboard.matches.map((match) => (
                                         <option key={match.id} value={match.id}>
-                                          {match.homeTeam} vs {match.awayTeam} · {match.status}
+                                          {match.homeTeam} vs {match.awayTeam} · {matchStatusLabel(match.status)}
                                           {match.homeScore !== null && match.awayScore !== null ? ` · ${match.homeScore}-${match.awayScore}` : ""}
                                         </option>
                                       ))}
@@ -2221,7 +2275,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                                     <article key={prediction.id}>
                                       <strong>{prediction.match.homeTeam} vs {prediction.match.awayTeam}</strong>
                                       <span>
-                                        Pick {prediction.homeScore}-{prediction.awayScore} · {prediction.points} pts · {prediction.match.status}
+                                        Pick {prediction.homeScore}-{prediction.awayScore} · {prediction.points} pts · {matchStatusLabel(prediction.match.status)}
                                       </span>
                                     </article>
                                   ))}
@@ -2240,7 +2294,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                             <div className="room-panel-preview">
                               <nav className="admin-nav room-nav preview" aria-label="Vista de sala">
                                 <span className="tab active">Picks</span>
-                                <span className="tab">Ligas</span>
+                                <span className="tab">Calendario</span>
                                 <span className="tab">Ranking</span>
                                 <span className="tab">Estadísticas</span>
                                 <span className="tab">Participantes</span>
@@ -2268,7 +2322,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                                       <span>{flagForTeam(match.awayTeam)} <strong>{match.awayTeam}</strong></span>
                                     </div>
                                     <div className="admin-match-scoreline">
-                                      <span>{match.status}</span>
+                                      <span>{matchStatusLabel(match.status)}</span>
                                       <strong>{match.homeScore !== null && match.awayScore !== null ? `${match.homeScore} - ${match.awayScore}` : "- -"}</strong>
                                     </div>
                                   </article>
@@ -2331,7 +2385,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                                     <span>{flagForTeam(match.awayTeam)} <strong>{match.awayTeam}</strong></span>
                                   </div>
                                   <div className="admin-match-scoreline">
-                                    <span>{new Date(match.startsAt).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" })} · {match.status}</span>
+                                    <span>{new Date(match.startsAt).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" })} · {matchStatusLabel(match.status)}</span>
                                     <strong>{match.homeScore !== null && match.awayScore !== null ? `${match.homeScore} - ${match.awayScore}` : "- - -"}</strong>
                                   </div>
                                 </article>
