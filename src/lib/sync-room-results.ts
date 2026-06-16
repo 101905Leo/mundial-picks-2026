@@ -1,143 +1,225 @@
+import type { MatchStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
 
-type ScoredMatch = {
+type MatchForSync = {
   id: string;
   roomId: string | null;
   competitionId: string | null;
-  sourceKey?: string | null;
+  sourceKey: string | null;
   homeTeam: string;
   awayTeam: string;
   startsAt: Date;
   homeScore: number | null;
   awayScore: number | null;
-  status: "SCHEDULED" | "LIVE" | "FINISHED";
+  status: MatchStatus;
 };
 
-function normalizeTeam(value: string) {
-  const normalized = value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "");
+type SyncIssue = {
+  globalMatchId: string;
+  roomMatchId?: string;
+  roomId?: string | null;
+  match: string;
+  startsAt: string;
+  reason: string;
+  globalScore?: string;
+  roomScore?: string;
+  globalStatus?: MatchStatus;
+  roomStatus?: MatchStatus;
+};
 
-  const aliases: Record<string, string> = {
-    usa: "unitedstates",
-    unitedstatesofamerica: "unitedstates",
-    usmnt: "unitedstates",
-    korearepublic: "southkorea",
-    republicofkorea: "southkorea",
-    iriran: "iran",
-    coteivoire: "ivorycoast",
-    ctedivoire: "ivorycoast",
+function scoreLabel(match: Pick<MatchForSync, "homeScore" | "awayScore">) {
+  if (match.homeScore === null || match.awayScore === null) return "sin marcador";
+  return `${match.homeScore}-${match.awayScore}`;
+}
+
+function scoreIsComplete(match: Pick<MatchForSync, "homeScore" | "awayScore">) {
+  return match.homeScore !== null && match.awayScore !== null;
+}
+
+function matchLabel(match: Pick<MatchForSync, "homeTeam" | "awayTeam">) {
+  return `${match.homeTeam} vs ${match.awayTeam}`;
+}
+
+function findGlobalEquivalent(roomMatch: MatchForSync, globalMatches: MatchForSync[]) {
+  const candidates = globalMatches.filter((globalMatch) => sameMatchByTeamsAndKickoff(globalMatch, roomMatch));
+
+  if (candidates.length <= 1) {
+    return { match: candidates[0] ?? null, hasConflict: false };
+  }
+
+  const sameCompetition = candidates.filter(
+    (globalMatch) =>
+      Boolean(globalMatch.competitionId && roomMatch.competitionId) &&
+      globalMatch.competitionId === roomMatch.competitionId,
+  );
+  const preferred = sameCompetition.length === 1 ? sameCompetition[0] : null;
+
+  return {
+    match: preferred,
+    hasConflict: !preferred,
   };
-
-  return aliases[normalized] ?? normalized;
 }
 
-function closeKickoff(left: Date, right: Date) {
-  return Math.abs(left.getTime() - right.getTime()) <= 18 * 60 * 60 * 1000;
-}
-
-function sameMatch(left: ScoredMatch, right: ScoredMatch) {
-  const bothHaveCompetition = Boolean(left.competitionId && right.competitionId);
-  if (bothHaveCompetition && left.competitionId !== right.competitionId) return false;
-  if (!closeKickoff(left.startsAt, right.startsAt)) return false;
-  return normalizeTeam(left.homeTeam) === normalizeTeam(right.homeTeam) && normalizeTeam(left.awayTeam) === normalizeTeam(right.awayTeam);
-}
-
-const statusPriority: Record<ScoredMatch["status"], number> = {
-  SCHEDULED: 0,
-  LIVE: 1,
-  FINISHED: 2,
-};
-
-function sourcePriority(match: ScoredMatch) {
-  return statusPriority[match.status] * 100 + (match.roomId === null ? 10 : 0) + (match.sourceKey ? 1 : 0);
-}
-
-export async function syncRoomResultsFromGlobal(options: { roomId?: string } = {}) {
-  const emptyStats = { matched: 0, updated: 0, alreadySynced: 0 };
-  const sourceMatches = await prisma.match.findMany({
-    where: {
-      roomId: options.roomId ? { not: options.roomId } : null,
-      homeScore: { not: null },
-      awayScore: { not: null },
-    },
-    select: {
-      id: true,
-      sourceKey: true,
-      roomId: true,
-      competitionId: true,
-      homeTeam: true,
-      awayTeam: true,
-      startsAt: true,
-      homeScore: true,
-      awayScore: true,
-      status: true,
-    },
-  });
-
-  if (!sourceMatches.length) return emptyStats;
-  const competitionIds = [...new Set(sourceMatches.map((match) => match.competitionId).filter(Boolean) as string[])];
-
-  const roomMatches = await prisma.match.findMany({
-    where: {
-      roomId: options.roomId ? options.roomId : { not: null },
-      OR: competitionIds.length ? [{ competitionId: { in: competitionIds } }, { competitionId: null }] : undefined,
-    },
-    select: {
-      id: true,
-      sourceKey: true,
-      roomId: true,
-      competitionId: true,
-      homeTeam: true,
-      awayTeam: true,
-      startsAt: true,
-      homeScore: true,
-      awayScore: true,
-      status: true,
-    },
-  });
+export async function syncRoomMatchesFromGlobalResults(options: { roomId?: string } = {}) {
+  const [globalMatches, roomMatches] = await Promise.all([
+    prisma.match.findMany({
+      where: { roomId: null },
+      select: {
+        id: true,
+        roomId: true,
+        competitionId: true,
+        sourceKey: true,
+        homeTeam: true,
+        awayTeam: true,
+        startsAt: true,
+        homeScore: true,
+        awayScore: true,
+        status: true,
+      },
+      orderBy: { startsAt: "asc" },
+    }),
+    prisma.match.findMany({
+      where: { roomId: options.roomId ? options.roomId : { not: null } },
+      select: {
+        id: true,
+        roomId: true,
+        competitionId: true,
+        sourceKey: true,
+        homeTeam: true,
+        awayTeam: true,
+        startsAt: true,
+        homeScore: true,
+        awayScore: true,
+        status: true,
+      },
+      orderBy: { startsAt: "asc" },
+    }),
+  ]);
 
   let matched = 0;
   let updated = 0;
   let alreadySynced = 0;
+  let finishedSynced = 0;
+  let liveSynced = 0;
+  let scheduledSynced = 0;
+  const missingGlobalScore: SyncIssue[] = [];
+  const conflicts: SyncIssue[] = [];
+  const errors: SyncIssue[] = [];
 
   for (const roomMatch of roomMatches) {
-    const sourceMatch = sourceMatches
-      .filter((match) => sameMatch(match, roomMatch))
-      .sort((left, right) => {
-        const priorityDelta = sourcePriority(right) - sourcePriority(left);
-        if (priorityDelta !== 0) return priorityDelta;
+    const { match: globalMatch, hasConflict } = findGlobalEquivalent(roomMatch, globalMatches);
 
-        const rightDiffers =
-          right.homeScore !== roomMatch.homeScore || right.awayScore !== roomMatch.awayScore || right.status !== roomMatch.status;
-        const leftDiffers =
-          left.homeScore !== roomMatch.homeScore || left.awayScore !== roomMatch.awayScore || left.status !== roomMatch.status;
-        return Number(rightDiffers) - Number(leftDiffers);
-      })[0];
-    if (!sourceMatch) continue;
+    if (hasConflict) {
+      conflicts.push({
+        globalMatchId: "",
+        roomMatchId: roomMatch.id,
+        roomId: roomMatch.roomId,
+        match: matchLabel(roomMatch),
+        startsAt: roomMatch.startsAt.toISOString(),
+        reason: "Mas de un partido global equivalente",
+        roomScore: scoreLabel(roomMatch),
+        roomStatus: roomMatch.status,
+      });
+      continue;
+    }
+
+    if (!globalMatch) continue;
     matched += 1;
 
+    const globalHasScore = scoreIsComplete(globalMatch);
+    if (!globalHasScore) {
+      missingGlobalScore.push({
+        globalMatchId: globalMatch.id,
+        roomMatchId: roomMatch.id,
+        roomId: roomMatch.roomId,
+        match: matchLabel(globalMatch),
+        startsAt: globalMatch.startsAt.toISOString(),
+        reason: "El partido global equivalente no tiene marcador completo",
+        globalScore: scoreLabel(globalMatch),
+        roomScore: scoreLabel(roomMatch),
+        globalStatus: globalMatch.status,
+        roomStatus: roomMatch.status,
+      });
+    }
+
     if (
-      roomMatch.homeScore === sourceMatch.homeScore &&
-      roomMatch.awayScore === sourceMatch.awayScore &&
-      roomMatch.status === sourceMatch.status
+      globalHasScore &&
+      scoreIsComplete(roomMatch) &&
+      (roomMatch.homeScore !== globalMatch.homeScore || roomMatch.awayScore !== globalMatch.awayScore)
     ) {
+      conflicts.push({
+        globalMatchId: globalMatch.id,
+        roomMatchId: roomMatch.id,
+        roomId: roomMatch.roomId,
+        match: matchLabel(globalMatch),
+        startsAt: globalMatch.startsAt.toISOString(),
+        reason: "La sala tenia marcador diferente al global; se sincroniza con el global",
+        globalScore: scoreLabel(globalMatch),
+        roomScore: scoreLabel(roomMatch),
+        globalStatus: globalMatch.status,
+        roomStatus: roomMatch.status,
+      });
+    }
+
+    const scoreNeedsUpdate =
+      globalHasScore &&
+      (roomMatch.homeScore !== globalMatch.homeScore || roomMatch.awayScore !== globalMatch.awayScore);
+    const statusNeedsUpdate = roomMatch.status !== globalMatch.status;
+    const needsUpdate = scoreNeedsUpdate || statusNeedsUpdate;
+
+    if (!needsUpdate) {
       alreadySynced += 1;
       continue;
     }
 
-    await prisma.match.update({
-      where: { id: roomMatch.id },
-      data: {
-        homeScore: sourceMatch.homeScore,
-        awayScore: sourceMatch.awayScore,
-        status: sourceMatch.status,
-      },
-    });
-    updated += 1;
+    try {
+      await prisma.match.update({
+        where: { id: roomMatch.id },
+        data: {
+          status: globalMatch.status,
+          ...(globalHasScore
+            ? {
+                homeScore: globalMatch.homeScore,
+                awayScore: globalMatch.awayScore,
+              }
+            : {}),
+        },
+      });
+      updated += 1;
+      if (globalMatch.status === "FINISHED") finishedSynced += 1;
+      if (globalMatch.status === "LIVE") liveSynced += 1;
+      if (globalMatch.status === "SCHEDULED") scheduledSynced += 1;
+    } catch (error) {
+      errors.push({
+        globalMatchId: globalMatch.id,
+        roomMatchId: roomMatch.id,
+        roomId: roomMatch.roomId,
+        match: matchLabel(globalMatch),
+        startsAt: globalMatch.startsAt.toISOString(),
+        reason: error instanceof Error ? error.message : "Error desconocido al sincronizar",
+        globalScore: scoreLabel(globalMatch),
+        roomScore: scoreLabel(roomMatch),
+        globalStatus: globalMatch.status,
+        roomStatus: roomMatch.status,
+      });
+    }
   }
 
-  return { matched, updated, alreadySynced };
+  return {
+    checked: roomMatches.length,
+    matched,
+    updated,
+    alreadySynced,
+    finishedSynced,
+    liveSynced,
+    scheduledSynced,
+    missingGlobalScore,
+    conflicts,
+    errors,
+  };
+}
+
+export async function syncRoomResultsFromGlobal(options: { roomId?: string } = {}) {
+  return syncRoomMatchesFromGlobalResults(options);
 }
