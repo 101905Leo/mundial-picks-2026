@@ -173,9 +173,6 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
   const matchesWithScoreNotClosed = matches
     .filter((match) => match.homeScore !== null && match.awayScore !== null && match.status !== "FINISHED")
     .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
-  const playedPublishedMatches = matches
-    .filter((match) => match.isPublished && new Date(match.startsAt) <= new Date())
-    .sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime());
   const matchDays = [...matches]
     .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())
     .reduce<Array<{ date: string; label: string; matches: Match[]; published: number }>>((days, match) => {
@@ -199,11 +196,6 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
     adminRooms.find((room) => room.id === selectedAdminRoomId) ??
     null;
   const selectedRoomMemberships = selectedRoom?.memberships.filter((membership) => membership.user.role !== "ADMIN") ?? [];
-  const roomAdminRows = adminRooms.flatMap((room) =>
-    room.memberships
-      .filter((membership) => membership.role === "ADMIN" && membership.user.role !== "ADMIN")
-      .map((membership) => ({ room, user: membership.user })),
-  );
   const selectedRoomParticipant =
     roomDashboard?.participants.find((participant) => participant.id === selectedRoomUserId) ?? null;
   const selectedRoomRanking =
@@ -713,6 +705,23 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
     onChanged();
   }
 
+  async function syncAllRoomResults() {
+    setMessage("Sincronizando resultados de salas...");
+    const response = await fetch("/api/admin/sync-room-results", { method: "POST" });
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      setMessage(data.error ?? "No se pudieron sincronizar las salas");
+      return;
+    }
+
+    const result = data.result ?? {};
+    setMessage(
+      `Salas revisadas: ${result.checked ?? 0}. Actualizadas: ${result.updated ?? 0}. Ya sincronizadas: ${result.alreadySynced ?? 0}.`,
+    );
+    onChanged();
+  }
+
   async function importWorldCupCalendar() {
     setMessage("Cargando calendario oficial...");
     const response = await fetch("/api/admin/import-worldcup-calendar", { method: "POST" });
@@ -1137,40 +1146,10 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
         <div>
           <span className="market-kicker">Control general</span>
           <h2>Panel administrador</h2>
-          <p>Control general de Mundial Picks</p>
+          <p>Control general de Mundial Picks 2026</p>
         </div>
       </div>
       {message ? <div className="notice">{message}</div> : null}
-      {adminView !== "rooms" ? (
-        <div className="admin-overview">
-          <article>
-            <span>Partidos publicados</span>
-            <strong>
-              {publishedMatches}/{matches.length}
-            </strong>
-          </article>
-          <article>
-            <span>Marcadores cargados</span>
-            <strong>{resultLoadedMatches}</strong>
-          </article>
-          <article>
-            <span>Usuarios activos</span>
-            <strong>{usersLoaded ? activeUsers : "-"}</strong>
-          </article>
-          <article>
-            <span>Salas activas</span>
-            <strong>{roomSummary.activeRooms || "-"}</strong>
-          </article>
-          <article>
-            <span>Salas vencidas</span>
-            <strong>{roomSummary.expiredRooms}</strong>
-          </article>
-          <article>
-            <span>Ingresos por salas</span>
-            <strong>{new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(roomSummary.incomeInCents / 100)}</strong>
-          </article>
-        </div>
-      ) : null}
       <div className="admin-nav" aria-label="Secciones del administrador">
         <button
           className={`tab ${adminView === "overview" ? "active" : ""}`}
@@ -1233,142 +1212,145 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
       </div>
       <div className="grid two-columns">
         {adminView === "overview" ? (
-          <>
-            <section className="form admin-quick-actions">
-              <div className="section-title">
-                <div>
-                  <span className="market-kicker">Operación diaria</span>
-                  <h3>Acciones rápidas</h3>
-                </div>
-              </div>
-              <div className="admin-action-grid">
-                <button className="button primary" onClick={updateResults} type="button">
-                  Actualizar marcadores y puntos
-                </button>
-                <button className="button secondary" onClick={() => recalculate()} type="button">
-                  Recalcular puntos guardados
-                </button>
-                <button className="button secondary" onClick={importWorldCupCalendar} type="button">
-                  Cargar calendario
-                </button>
-                <button className="button secondary" onClick={testWhatsApp} type="button">
-                  Probar WhatsApp
-                </button>
-                <button
-                  className="button primary"
-                  onClick={async () => {
-                    setAdminView("rooms");
-                    await loadRooms();
-                  }}
-                  type="button"
-                >
-                  Administrar salas
-                </button>
-                <a className="button secondary" href="/api/admin/export" download>
-                  Descargar Excel
-                </a>
+          <div className="admin-summary">
+            <section className="form admin-summary-section admin-summary-status">
+              <span className="market-kicker">Estado general</span>
+              <div className="admin-overview">
+                <article>
+                  <span>Partidos publicados</span>
+                  <strong>
+                    {publishedMatches}/{matches.length}
+                  </strong>
+                </article>
+                <article>
+                  <span>Marcadores cargados</span>
+                  <strong>{resultLoadedMatches}</strong>
+                </article>
+                <article>
+                  <span>Usuarios activos</span>
+                  <strong>{usersLoaded ? activeUsers : "-"}</strong>
+                </article>
+                <article>
+                  <span>Salas activas</span>
+                  <strong>{roomSummary.activeRooms || "-"}</strong>
+                </article>
               </div>
             </section>
-            <section className="form admin-guide">
-              <span className="market-kicker">Estado del sistema</span>
-              <h3>Orden recomendado</h3>
-              <ol>
-                <li>Publica únicamente los partidos que quieres mostrar.</li>
-                <li>La actualización automática consulta resultados cada 15 minutos.</li>
-                <li>Usa la actualización manual solo para comprobar o corregir.</li>
-                <li>Los pagos se administran por plan de sala, no por usuario.</li>
-              </ol>
-            </section>
-            <section className="form result-audit">
-              <div className="section-title">
-                <div>
-                  <span className="market-kicker">Revisión urgente</span>
-                  <h3>Partidos con marcador sin finalizar</h3>
-                  <p className="muted">Si un partido ya terminó, debe quedar como finalizado para que los puntos sean definitivos.</p>
-                </div>
-              </div>
-              <div className="admin-user-list">
-                {matchesWithScoreNotClosed.map((match) => (
-                  <article className="admin-user-card inactive" key={match.id}>
+
+            <div className="admin-summary-layout">
+              <div className="admin-summary-main">
+                <section className="form admin-summary-section">
+                  <div className="section-title">
                     <div>
-                      <strong>{match.homeTeam} vs {match.awayTeam}</strong>
-                      <span>{new Date(match.startsAt).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" })}</span>
+                      <span className="market-kicker">Operación diaria</span>
+                      <h3>Acciones principales</h3>
                     </div>
-                    <div className="admin-user-stats">
-                      <span>
-                        <strong>{match.homeScore}-{match.awayScore}</strong>
-                        Marcador
-                      </span>
+                  </div>
+                  <div className="admin-action-grid admin-action-grid-primary">
+                    <button className="button primary" onClick={updateResults} type="button">
+                      Actualizar resultados
+                    </button>
+                    <button className="button primary" onClick={() => recalculate()} type="button">
+                      Recalcular ranking
+                    </button>
+                    <button className="button primary" onClick={syncAllRoomResults} type="button">
+                      Sincronizar salas
+                    </button>
+                  </div>
+                </section>
+
+                <section className="form admin-summary-section">
+                  <span className="market-kicker">Gestión</span>
+                  <div className="admin-action-grid admin-action-grid-secondary">
+                    <button
+                      className="button secondary"
+                      onClick={async () => {
+                        setAdminView("rooms");
+                        await loadRooms();
+                      }}
+                      type="button"
+                    >
+                      Administrar salas
+                    </button>
+                    <button
+                      className="button secondary"
+                      onClick={async () => {
+                        setAdminView("users");
+                        if (!usersLoaded) await loadUsers();
+                      }}
+                      type="button"
+                    >
+                      Usuarios
+                    </button>
+                    <a className="button secondary" href="/api/admin/export" download>
+                      Descargar Excel
+                    </a>
+                  </div>
+                </section>
+
+                <section className="form admin-summary-section admin-tools-section">
+                  <span className="market-kicker">Herramientas</span>
+                  <div className="admin-action-grid admin-action-grid-tools">
+                    <button className="button secondary" onClick={importWorldCupCalendar} type="button">
+                      Cargar calendario
+                    </button>
+                    <button className="button secondary" onClick={testWhatsApp} type="button">
+                      Probar WhatsApp
+                    </button>
+                  </div>
+                </section>
+              </div>
+
+              <aside className="admin-summary-side">
+                <section className="form admin-guide admin-guide-compact">
+                  <span className="market-kicker">Guía rápida</span>
+                  <ol>
+                    <li>Publica los partidos.</li>
+                    <li>Actualiza resultados.</li>
+                    <li>Recalcula ranking si es necesario.</li>
+                    <li>Sincroniza salas.</li>
+                  </ol>
+                </section>
+
+                <section className="form admin-alert-card">
+                  <div>
+                    <span className="market-kicker">Revisión urgente</span>
+                    <h3>Alertas</h3>
+                  </div>
+                  {matchesWithScoreNotClosed.length ? (
+                    <div className="admin-alert-list">
+                      {matchesWithScoreNotClosed.slice(0, 4).map((match) => (
+                        <article key={match.id}>
+                          <div>
+                            <strong>{match.homeTeam} vs {match.awayTeam}</strong>
+                            <span>{match.homeScore}-{match.awayScore} · {matchStatusLabel(match.status)}</span>
+                          </div>
+                        </article>
+                      ))}
+                      {matchesWithScoreNotClosed.length > 4 ? (
+                        <small>+{matchesWithScoreNotClosed.length - 4} partido(s) pendientes de revisar.</small>
+                      ) : null}
                     </div>
-                    <div className="admin-user-badges">
-                      <span>{matchStatusLabel(match.status)}</span>
-                    </div>
+                  ) : (
+                    <p className="admin-alert-empty">Sin alertas pendientes.</p>
+                  )}
+                </section>
+
+                <section className="form admin-secondary-metrics">
+                  <article>
+                    <span>Salas vencidas</span>
+                    <strong>{roomSummary.expiredRooms}</strong>
                   </article>
-                ))}
-                {!matchesWithScoreNotClosed.length ? <div className="empty">No hay partidos con marcador pendientes de finalizar.</div> : null}
-              </div>
-            </section>
-            <section className="form room-admin-overview">
-              <div className="section-title">
-                <div>
-                  <span className="market-kicker">Administradores de sala</span>
-                  <h3>Responsables por sala</h3>
-                  <p className="muted">Aquí solo ves administradores de salas. Los participantes se gestionan al entrar a cada sala.</p>
-                </div>
-              </div>
-              <div className="admin-room-list">
-                {roomAdminRows.map(({ room, user: roomUser }) => (
-                  <article key={`${room.id}-${roomUser.id}`}>
-                    <div>
-                      <strong>{roomUser.name}</strong>
-                      <span>{roomUser.phone}</span>
-                    </div>
-                    <div>
-                      <strong>{room.name}</strong>
-                      <span>{roomStatusLabel(room.status)} · {room.inviteCode}</span>
-                    </div>
+                  <article>
+                    <span>Ingresos por salas</span>
+                    <strong>
+                      {new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(roomSummary.incomeInCents / 100)}
+                    </strong>
                   </article>
-                ))}
-                {!roomAdminRows.length ? <div className="empty">Todavía no hay administradores de sala visibles.</div> : null}
-              </div>
-            </section>
-            <section className="form result-audit">
-              <div className="section-title">
-                <div>
-                  <span className="market-kicker">Revisión de marcadores</span>
-                  <h3>Partidos publicados que ya comenzaron</h3>
-                </div>
-              </div>
-              <div className="admin-user-list">
-                {playedPublishedMatches.map((match) => {
-                  const hasScore = match.homeScore !== null && match.awayScore !== null;
-                  const statusLabel = !hasScore
-                    ? "Falta marcador"
-                    : match.status === "FINISHED"
-                    ? "Cerrado"
-                    : match.status === "LIVE"
-                    ? "En vivo"
-                    : "Marcador cargado, falta cerrar";
-                  return (
-                    <article className={`admin-user-card ${hasScore ? "active" : "inactive"}`} key={match.id}>
-                      <div>
-                        <strong>{match.homeTeam} vs {match.awayTeam}</strong>
-                        <span>{new Date(match.startsAt).toLocaleString("es", { dateStyle: "short", timeStyle: "short" })}</span>
-                      </div>
-                      <div className="admin-user-stats">
-                        <span>
-                          <strong>{hasScore ? `${match.homeScore}-${match.awayScore}` : "--"}</strong>
-                          Marcador
-                        </span>
-                      </div>
-                      <div className="admin-user-badges"><span>{statusLabel}</span></div>
-                    </article>
-                  );
-                })}
-                {!playedPublishedMatches.length ? <div className="empty">No hay partidos publicados que ya hayan comenzado.</div> : null}
-              </div>
-            </section>
-          </>
+                </section>
+              </aside>
+            </div>
+          </div>
         ) : null}
         {adminView === "matches" ? (
           <>

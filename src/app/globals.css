@@ -3312,6 +3312,21 @@ button {
   width: 60px;
 }
 
+.admin-summary {
+  display: grid;
+  gap: 14px;
+  grid-column: 1 / -1;
+}
+
+.admin-summary-section {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-summary-status {
+  padding-bottom: 16px;
+}
+
 .admin-overview {
   display: grid;
   gap: 10px;
@@ -3338,6 +3353,19 @@ button {
   color: var(--gold-soft);
   font-size: clamp(1.55rem, 3vw, 2.35rem);
   line-height: 1;
+}
+
+.admin-summary-layout {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
+}
+
+.admin-summary-main,
+.admin-summary-side {
+  align-content: start;
+  display: grid;
+  gap: 14px;
 }
 
 .admin-nav {
@@ -3401,11 +3429,6 @@ button {
   font-size: 0.8rem;
 }
 
-.admin-quick-actions,
-.admin-guide {
-  min-height: 230px;
-}
-
 .admin-action-grid {
   display: grid;
   gap: 10px;
@@ -3413,17 +3436,104 @@ button {
 }
 
 .admin-action-grid .button {
-  min-height: 64px;
+  min-height: 54px;
   white-space: normal;
+}
+
+.admin-action-grid-primary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.admin-action-grid-primary .button {
+  font-size: 0.98rem;
+  min-height: 66px;
+}
+
+.admin-action-grid-secondary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.admin-action-grid-secondary .button,
+.admin-action-grid-tools .button {
+  font-size: 0.9rem;
+  min-height: 46px;
+}
+
+.admin-action-grid-tools {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .admin-guide ol {
   color: var(--muted);
   display: grid;
-  gap: 12px;
+  gap: 8px;
   line-height: 1.45;
-  margin: 14px 0 0;
+  margin: 10px 0 0;
   padding-left: 22px;
+}
+
+.admin-guide-compact {
+  min-height: auto;
+}
+
+.admin-alert-card {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-alert-card h3 {
+  margin: 4px 0 0;
+}
+
+.admin-alert-list {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-alert-list article {
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 214, 102, 0.16);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.admin-alert-list strong,
+.admin-alert-list span {
+  display: block;
+}
+
+.admin-alert-list span,
+.admin-alert-list small,
+.admin-alert-empty {
+  color: var(--muted);
+  font-size: 0.86rem;
+  margin: 0;
+}
+
+.admin-secondary-metrics {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-secondary-metrics article {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+}
+
+.admin-secondary-metrics span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.admin-secondary-metrics strong {
+  color: var(--gold-soft);
+  font-size: 1.25rem;
 }
 
 .publish-manager {
@@ -4922,15 +5032,16 @@ button {
   .room-command-header,
   .selected-room-card,
   .selected-room-metrics,
-  .room-match-loader,
-  .room-match-control,
-  .room-preview-grid,
-  .super-room-selector-bar,
-  .admin-room-summary,
-  .admin-room-user-forms,
-  .admin-room-grid {
-    grid-template-columns: 1fr;
-  }
+	  .room-match-loader,
+	  .room-match-control,
+	  .room-preview-grid,
+	  .super-room-selector-bar,
+	  .admin-room-summary,
+	  .admin-room-user-forms,
+	  .admin-room-grid,
+	  .admin-summary-layout {
+	    grid-template-columns: 1fr;
+	  }
 
   .landing-grid,
   .landing-stats,
@@ -4980,11 +5091,15 @@ button {
     grid-template-columns: 1fr;
   }
 
-  .room-management .inline-form,
-  .admin-action-grid,
-  .competition-create .inline-form {
-    grid-template-columns: 1fr;
-  }
+	  .room-management .inline-form,
+	  .admin-action-grid,
+	  .admin-action-grid-primary,
+	  .admin-action-grid-secondary,
+	  .admin-action-grid-tools,
+	  .admin-secondary-metrics,
+	  .competition-create .inline-form {
+	    grid-template-columns: 1fr;
+	  }
 
   .room-owner-actions {
     justify-items: start;
