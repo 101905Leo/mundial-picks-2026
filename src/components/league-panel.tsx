@@ -6,6 +6,7 @@ import { RankingTable } from "@/components/ranking-table";
 import { FormidableFacts } from "@/components/formidable-facts";
 import { StatisticsPanel } from "@/components/statistics-panel";
 import type { Competition, League, LeagueMember, Match, RankingEntry, User } from "@/components/types";
+import { matchStatusLabel, roomStatusLabel } from "@/lib/status-labels";
 import { flagForTeam } from "@/lib/team-flags";
 
 type Props = {
@@ -581,7 +582,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
                 <option value="">Selecciona sala</option>
                 {selectableLeagues.map((league) => (
                   <option key={league.id} value={league.id}>
-                    {league.name} · {league.inviteCode} · {league.status ?? "ACTIVE"}
+                    {league.name} · {league.inviteCode} · {roomStatusLabel(league.status)}
                   </option>
                 ))}
               </select>
@@ -655,7 +656,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
                 >
                   {selectableLeagues.map((league) => (
                     <option key={league.id} value={league.id}>
-                      {league.name} · {league.inviteCode} · {league.status ?? "ACTIVE"}
+                      {league.name} · {league.inviteCode} · {roomStatusLabel(league.status)}
                     </option>
                   ))}
                 </select>
@@ -671,7 +672,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
               </p>
               <div className="room-status-line">
                 <span>{selectedLeague.plan?.name ?? "Sala privada"}</span>
-                <span>Estado: {selectedLeague.status === "ACTIVE" ? "Activa" : selectedLeague.status === "CLOSED" ? "Cerrada" : selectedLeague.status ?? "Activa"}</span>
+                <span>Estado: {roomStatusLabel(selectedLeague.status)}</span>
                 {selectedLeague.expiresAt ? <span>Vence: {new Date(selectedLeague.expiresAt).toLocaleDateString("es")}</span> : null}
               </div>
             </div>
@@ -1028,7 +1029,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
                       </div>
                       <div className="room-match-control-score">
                         <strong>{match.homeScore !== null && match.awayScore !== null ? `${match.homeScore}-${match.awayScore}` : "--"}</strong>
-                        <span>{match.status}</span>
+                        <span>{matchStatusLabel(match.status)}</span>
                       </div>
                       <div className="room-match-control-actions">
                         <span>{match.isPublished ? "Publicado" : "Oculto"}</span>

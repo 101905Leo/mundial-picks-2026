@@ -298,6 +298,9 @@ export function MundialPicksApp() {
                       picks hasta 5 minutos antes del inicio.
                     </p>
                     <p className="score-note">
+                      Se aplica una sola regla por pick, en este orden: marcador exacto, diferencia correcta, ganador correcto y participación.
+                    </p>
+                    <p className="score-note">
                       En partidos definidos por penales, cuenta el marcador antes de la tanda de penales.
                     </p>
                     <div className="score-rules">
@@ -308,16 +311,16 @@ export function MundialPicksApp() {
                         <small>Ejemplo: predices 2-1 y termina 2-1.</small>
                       </article>
                       <article>
-                        <strong>3</strong>
-                        <h3>Ganador correcto</h3>
-                        <p>Acertaste quién gana o si empatan, aunque el marcador sea diferente.</p>
-                        <small>Ejemplo: predices 2-0 y termina 1-0.</small>
-                      </article>
-                      <article>
                         <strong>2</strong>
                         <h3>Diferencia correcta</h3>
-                        <p>Acertaste la diferencia de goles, pero no el ganador exacto por regla anterior.</p>
+                        <p>Acertaste la diferencia de goles, pero no el marcador exacto.</p>
                         <small>Ejemplo: predices 3-1 y termina 2-0.</small>
+                      </article>
+                      <article>
+                        <strong>3</strong>
+                        <h3>Ganador correcto</h3>
+                        <p>Acertaste quién gana o si empatan, sin marcador exacto ni diferencia correcta.</p>
+                        <small>Ejemplo: predices 2-0 y termina 1-0.</small>
                       </article>
                       <article>
                         <strong>1</strong>
