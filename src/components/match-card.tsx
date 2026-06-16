@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import type { Match } from "@/components/types";
 import { isPickClosed } from "@/lib/pick-lock";
+import { matchStatusLabel } from "@/lib/status-labels";
 import { flagForTeam } from "@/lib/team-flags";
 
 type Props = {
@@ -28,12 +29,6 @@ function trendForMatch(match: Match) {
     draw: Math.round((draw / total) * 100),
     away: Math.round((away / total) * 100),
   };
-}
-
-function matchStatusLabel(status: Match["status"]) {
-  if (status === "LIVE") return "En vivo";
-  if (status === "FINISHED") return "Finalizado";
-  return "Programado";
 }
 
 export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSaved, roomId }: Props) {
@@ -85,6 +80,8 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
         body: JSON.stringify({
           matchId: match.id,
           roomId,
+          leagueId: roomId,
+          roomKey: roomId ?? "GLOBAL",
           homeScore: Number(formData.get("homeScore")),
           awayScore: Number(formData.get("awayScore")),
         }),
@@ -250,8 +247,8 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
               <span>Puntos posibles</span>
               <div>
                 <p><strong>🎯 Marcador exacto:</strong> <span>+5 pts</span></p>
-                <p><strong>✅ Ganador correcto:</strong> <span>+3 pts</span></p>
                 <p><strong>📊 Diferencia correcta:</strong> <span>+2 pts</span></p>
+                <p><strong>✅ Ganador correcto:</strong> <span>+3 pts</span></p>
                 <p><strong>👀 Participación:</strong> <span>+1 pt</span></p>
               </div>
             </section>
