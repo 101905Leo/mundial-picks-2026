@@ -169,6 +169,12 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
   const publishedMatches = matches.filter((match) => match.isPublished).length;
   const resultLoadedMatches = matches.filter((match) => match.homeScore !== null && match.awayScore !== null).length;
   const activeUsers = users.filter((user) => user.isActive).length;
+  const liveMatch = matches
+    .filter((match) => match.isPublished && match.status === "LIVE")
+    .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())[0];
+  const nextScheduledMatch = matches
+    .filter((match) => match.isPublished && match.status === "SCHEDULED")
+    .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())[0];
   const editableResultMatches = matches.filter((match) => match.isPublished);
   const matchesWithScoreNotClosed = matches
     .filter((match) => match.homeScore !== null && match.awayScore !== null && match.status !== "FINISHED")
@@ -1159,11 +1165,14 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
           Resumen
         </button>
         <button
-          className={`tab ${adminView === "matches" ? "active" : ""}`}
-          onClick={() => setAdminView("matches")}
+          className={`tab ${adminView === "rooms" ? "active" : ""}`}
+          onClick={async () => {
+            setAdminView("rooms");
+            await loadRooms();
+          }}
           type="button"
         >
-          Herramientas
+          Salas
         </button>
         <button
           className={`tab ${adminView === "users" ? "active" : ""}`}
@@ -1176,14 +1185,11 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
           Usuarios
         </button>
         <button
-          className={`tab ${adminView === "rooms" ? "active" : ""}`}
-          onClick={async () => {
-            setAdminView("rooms");
-            await loadRooms();
-          }}
+          className={`tab ${adminView === "matches" ? "active" : ""}`}
+          onClick={() => setAdminView("matches")}
           type="button"
         >
-          Salas
+          Herramientas
         </button>
         <button
           className={`tab ${adminView === "security" ? "active" : ""}`}
@@ -1222,23 +1228,33 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
 
             <div className="admin-summary-layout">
               <div className="admin-summary-main">
-                <section className="form admin-summary-section">
+                <section className="form admin-summary-section admin-operational-card">
                   <div className="section-title">
                     <div>
-                      <span className="market-kicker">Operación diaria</span>
-                      <h3>Acciones principales</h3>
+                      <span className="market-kicker">Estado operativo</span>
+                      <h3>{liveMatch ? "Partido en vivo" : nextScheduledMatch ? "Próximo partido" : "Operación estable"}</h3>
                     </div>
                   </div>
-                  <div className="admin-action-grid admin-action-grid-primary">
-                    <button className="button primary" onClick={updateResults} type="button">
-                      Actualizar resultados
-                    </button>
-                    <button className="button primary" onClick={() => recalculate()} type="button">
-                      Recalcular ranking
-                    </button>
-                    <button className="button primary" onClick={syncAllRoomResults} type="button">
-                      Sincronizar salas
-                    </button>
+                  <div className="admin-operational-status">
+                    {liveMatch ?? nextScheduledMatch ? (
+                      <article>
+                        <strong>{(liveMatch ?? nextScheduledMatch)?.homeTeam} vs {(liveMatch ?? nextScheduledMatch)?.awayTeam}</strong>
+                        <span>
+                          {matchStatusLabel((liveMatch ?? nextScheduledMatch)?.status ?? "SCHEDULED")}
+                          {" · "}
+                          {new Date((liveMatch ?? nextScheduledMatch)?.startsAt ?? Date.now()).toLocaleString("es-CO", {
+                            dateStyle: "short",
+                            timeStyle: "short",
+                          })}
+                        </span>
+                      </article>
+                    ) : (
+                      <p>Sin alertas operativas por ahora.</p>
+                    )}
+                    <article>
+                      <strong>{matchesWithScoreNotClosed.length}</strong>
+                      <span>partidos pendientes por cerrar</span>
+                    </article>
                   </div>
                 </section>
 
@@ -1265,21 +1281,36 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                     >
                       Usuarios
                     </button>
-                    <a className="button secondary" href="/api/admin/export" download>
-                      Descargar Excel
-                    </a>
+                    <button className="button secondary" onClick={() => setAdminView("matches")} type="button">
+                      Ligas / competiciones
+                    </button>
                   </div>
                 </section>
 
                 <section className="form admin-summary-section admin-tools-section">
-                  <span className="market-kicker">Herramientas</span>
+                  <div>
+                    <span className="market-kicker">Mantenimiento del sistema</span>
+                    <h3>Herramientas técnicas</h3>
+                  </div>
                   <div className="admin-action-grid admin-action-grid-tools">
-                    <button className="button secondary" onClick={importWorldCupCalendar} type="button">
+                    <button className="button admin-tool-button" onClick={updateResults} type="button">
+                      Actualizar resultados
+                    </button>
+                    <button className="button admin-tool-button" onClick={() => recalculate()} type="button">
+                      Recalcular ranking
+                    </button>
+                    <button className="button admin-tool-button" onClick={syncAllRoomResults} type="button">
+                      Sincronizar salas
+                    </button>
+                    <button className="button admin-tool-button" onClick={importWorldCupCalendar} type="button">
                       Cargar calendario
                     </button>
-                    <button className="button secondary" onClick={testWhatsApp} type="button">
+                    <button className="button admin-tool-button" onClick={testWhatsApp} type="button">
                       Probar WhatsApp
                     </button>
+                    <a className="button admin-tool-button" href="/api/admin/export" download>
+                      Descargar Excel
+                    </a>
                   </div>
                 </section>
               </div>
@@ -1954,8 +1985,8 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
             <section className="form admin-rooms-workspace">
               <div className="section-title admin-rooms-title">
                 <div>
-                  <h3>Gestión de sala</h3>
-                  <p className="muted">Administra la sala seleccionada, sus participantes, calendario, picks y ranking.</p>
+                  <h3>Gestión de salas</h3>
+                  <p className="muted">Administra salas, invitaciones, participantes y herramientas de operación.</p>
                 </div>
               </div>
 
@@ -2017,8 +2048,8 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
 	                  <div className="admin-room-action-layout compact-room-actions">
 	                    <section className="form admin-room-action-card primary-room-actions">
 	                      <div>
-	                        <span className="market-kicker">Acciones rápidas</span>
-	                        <h4>Administra resultados, invitaciones y configuración de la sala.</h4>
+	                        <span className="market-kicker">Acciones de sala</span>
+	                        <h4>Opera la sala seleccionada sin mezclarla con otras salas.</h4>
 	                      </div>
 	                      <div className="admin-room-action-grid compact-actions-grid">
 	                        <button className="button primary" onClick={() => syncSelectedRoomResults(selectedRoom)} type="button">
