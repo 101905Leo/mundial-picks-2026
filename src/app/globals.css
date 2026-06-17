@@ -1860,7 +1860,7 @@ button {
 }
 
 .room-home-summary.compact-home-summary {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .room-home-summary article {
@@ -1965,6 +1965,211 @@ button {
   gap: 14px;
   grid-column: 1 / -1;
   min-width: 0;
+}
+
+.room-player-header {
+  align-items: center;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, auto) auto;
+  padding: 16px;
+}
+
+.room-player-title h2 {
+  font-size: clamp(1.35rem, 2.6vw, 2rem);
+  line-height: 1.05;
+  margin: 5px 0;
+}
+
+.room-player-title p {
+  margin: 0;
+}
+
+.room-player-metrics {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.room-player-metrics article {
+  background: rgba(5, 9, 18, 0.62);
+  border: 1px solid rgba(93, 220, 255, 0.13);
+  border-radius: 8px;
+  min-width: 82px;
+  padding: 10px 12px;
+}
+
+.room-player-metrics span {
+  color: var(--muted);
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.room-player-metrics strong {
+  color: #fff;
+  display: block;
+  font-size: 1rem;
+  margin-top: 3px;
+}
+
+.room-header-actions {
+  align-items: stretch;
+  justify-items: stretch;
+}
+
+.room-home-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.75fr);
+}
+
+.room-home-primary,
+.room-home-sidebar {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.room-featured-match {
+  min-height: 0;
+}
+
+.room-featured-match .room-next-teams em {
+  color: var(--gold-soft);
+  font-size: clamp(1.4rem, 3.4vw, 2.35rem);
+  letter-spacing: 0;
+  min-width: 54px;
+  text-transform: none;
+}
+
+.room-my-pick-pill {
+  align-items: center;
+  background: rgba(5, 9, 18, 0.72);
+  border: 1px solid rgba(244, 189, 79, 0.24);
+  border-radius: 999px;
+  display: inline-flex;
+  gap: 10px;
+  justify-self: center;
+  padding: 9px 14px;
+}
+
+.room-my-pick-pill span {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.room-my-pick-pill strong {
+  color: var(--gold-soft);
+  font-size: 1.25rem;
+}
+
+.room-home-actions.single-action {
+  justify-content: center;
+}
+
+.room-home-actions.single-action .button {
+  min-width: min(100%, 280px);
+}
+
+.compact-room-games .room-home-day-list {
+  gap: 8px;
+}
+
+.room-ranking-preview,
+.room-recent-picks {
+  align-content: start;
+  display: grid;
+  gap: 12px;
+}
+
+.room-ranking-card-list {
+  display: grid;
+  gap: 8px;
+}
+
+.room-ranking-card-list article {
+  align-items: center;
+  background: rgba(5, 9, 18, 0.56);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  padding: 10px 12px;
+}
+
+.room-ranking-card-list article.current-user {
+  border-color: rgba(244, 189, 79, 0.42);
+  box-shadow: inset 3px 0 0 var(--gold);
+}
+
+.room-ranking-card-list span {
+  color: var(--gold-soft);
+  font-weight: 900;
+}
+
+.room-ranking-card-list strong {
+  color: #fff;
+  overflow-wrap: anywhere;
+}
+
+.room-ranking-card-list em {
+  color: var(--muted);
+  font-style: normal;
+  font-weight: 900;
+}
+
+.compact-prediction-list {
+  gap: 8px;
+}
+
+.compact-prediction-list .room-prediction {
+  padding: 10px 12px;
+}
+
+.room-more-info {
+  display: grid;
+  gap: 12px;
+}
+
+.room-more-info article {
+  background: rgba(5, 9, 18, 0.54);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.room-more-info h4 {
+  color: #fff;
+  margin: 4px 0 8px;
+}
+
+.room-more-info p {
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.room-chat-fab {
+  align-items: center;
+  background: linear-gradient(135deg, var(--premium-blue), var(--premium-cyan));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.35);
+  color: #06101e;
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: 900;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 18px;
+  position: fixed;
+  right: 20px;
+  z-index: 35;
 }
 
 .room-main-chat {
@@ -6007,11 +6212,55 @@ button {
     display: none;
   }
 
-  .league-room-hero,
-  .league-room-hero .market-kicker,
-  .league-room-hero .muted,
-  .league-room-hero .room-owner-actions {
+  .league-room-hero {
+    display: grid;
+  }
+
+  .league-room-hero .market-kicker {
     display: none;
+  }
+
+  .room-player-header {
+    border-radius: 14px;
+    gap: 10px;
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+
+  .room-player-title h2 {
+    font-size: 1.15rem;
+    margin: 2px 0;
+  }
+
+  .room-player-title .muted {
+    display: block;
+    font-size: 0.75rem;
+  }
+
+  .room-player-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .room-player-metrics article {
+    min-width: 0;
+    padding: 8px;
+  }
+
+  .room-player-metrics span {
+    font-size: 0.6rem;
+  }
+
+  .room-player-metrics strong {
+    font-size: 0.86rem;
+  }
+
+  .room-header-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .room-header-actions .button {
+    width: 100%;
   }
 
   .room-status-line,
@@ -6021,6 +6270,10 @@ button {
 
   .room-home-screen {
     gap: 8px;
+  }
+
+  .room-home-grid {
+    grid-template-columns: 1fr;
   }
 
   .room-next-card {
@@ -6073,12 +6326,16 @@ button {
     grid-template-columns: 1fr 1fr;
   }
 
+  .room-home-actions.single-action {
+    grid-template-columns: 1fr;
+  }
+
   .room-home-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .room-home-summary.compact-home-summary {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .room-home-summary article {
@@ -6150,6 +6407,21 @@ button {
   .room-owner-actions,
   .room-owner-actions .button {
     width: 100%;
+  }
+
+  .room-ranking-card-list article,
+  .compact-prediction-list .room-prediction {
+    border-radius: 12px;
+  }
+
+  .room-more-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .room-chat-fab {
+    bottom: calc(72px + env(safe-area-inset-bottom));
+    min-height: 44px;
+    right: 12px;
   }
 
   .market-columns {

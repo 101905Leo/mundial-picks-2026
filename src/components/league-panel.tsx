@@ -525,6 +525,29 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
   const savedPicks = matches.flatMap((match) =>
     (match.predictions ?? []).map((prediction) => ({ match, prediction })),
   );
+  const featuredPrediction = nextRoomMatch?.predictions?.[0] ?? null;
+  const featuredActionLabel = nextRoomMatch
+    ? nextRoomMatch.status === "LIVE"
+      ? featuredPrediction
+        ? "Ver partido"
+        : "Ver en vivo"
+      : featuredPrediction
+        ? "Editar pronóstico"
+        : "Hacer pronóstico"
+    : "Ver calendario";
+  const nextPendingPick = sortedMatches.find(
+    (match) => match.status !== "FINISHED" && !(match.predictions ?? []).length,
+  );
+  const upcomingRoomMatches = sortedMatches
+    .filter((match) => match.status !== "FINISHED")
+    .slice(0, 3);
+  const rankingPreview = ranking.slice(0, 5);
+  const recentUserPicks = [...savedPicks]
+    .sort((first, second) => new Date(second.match.startsAt).getTime() - new Date(first.match.startsAt).getTime())
+    .slice(0, 3);
+  const livePredictionMatchIds = new Set(liveMatches.map((match) => match.id));
+  const liveRoomPredictions = predictions.filter((prediction) => livePredictionMatchIds.has(prediction.match.id));
+  const previewPredictions = (liveRoomPredictions.length ? liveRoomPredictions : predictions).slice(0, 5);
   const predictionMatchLabel = predictionMatches.length
     ? predictionMatches
         .map((match) => {
@@ -538,6 +561,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
     : "";
   const userRankingIndex = ranking.findIndex((entry) => entry.id === user.id);
   const userRanking = userRankingIndex >= 0 ? ranking[userRankingIndex] : null;
+  const userPickCount = userRanking?.predictions ?? savedPicks.length;
   const leader = ranking[0] ?? null;
   const pointsBehindLeader = userRanking && leader ? Math.max(0, leader.points - userRanking.points) : 0;
   const roomHasExpired = Boolean(selectedLeague?.expiresAt && new Date(selectedLeague.expiresAt) <= new Date());
@@ -708,46 +732,22 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
               </div>
             </div>
           ) : null}
-          <div className="panel league-room-hero">
-            <div>
+          <div className="panel league-room-hero room-player-header">
+            <div className="room-player-title">
               <span className="market-kicker">{selectedLeague.competition?.name ?? "Sala privada"}</span>
               <h2>{selectedLeague.name}</h2>
-              <p className="muted">
-                {members.length}/{selectedLeague.maxParticipants} participantes · {availableSpots} cupos disponibles · {matches.length} partidos
-              </p>
-              <div className="room-status-line">
-                <span>{selectedLeague.plan?.name ?? "Sala privada"}</span>
-                <span>Estado: {roomStatusLabel(selectedLeague.status)}</span>
-                {selectedLeague.expiresAt ? <span>Vence: {new Date(selectedLeague.expiresAt).toLocaleDateString("es")}</span> : null}
-              </div>
+              <p className="muted">Código {selectedLeague.inviteCode} · {roomStatusLabel(selectedLeague.status)}</p>
             </div>
-            {canEditRoomInfo ? (
-              <div className="room-owner-actions">
-                <span>{isSuperAdmin ? "Super usuario: control global" : "Administras esta sala"}</span>
-                <button className="button secondary" onClick={() => setRoomView("participants")} type="button">Editar sala</button>
-                <button className="button primary" onClick={copyInvitation} type="button">Copiar invitación</button>
-                <button className="button secondary" onClick={shareInvitation} type="button">Compartir por WhatsApp</button>
-                {!embedded ? <button className="button secondary" onClick={() => setSelectedLeague(null)} type="button">Salas</button> : null}
-              </div>
-            ) : (
-              <div className="room-owner-actions">
-                {!embedded ? <button className="button secondary" onClick={() => setSelectedLeague(null)} type="button">Salas</button> : null}
-              </div>
-            )}
+            <div className="room-player-metrics" aria-label="Resumen de la sala">
+              <article><span>Participantes</span><strong>{members.length}/{selectedLeague.maxParticipants}</strong></article>
+              <article><span>Cupos</span><strong>{availableSpots}</strong></article>
+              <article><span>Partidos</span><strong>{matches.length}</strong></article>
+            </div>
+            <div className="room-owner-actions room-header-actions">
+              <button className="button secondary compact-button" onClick={copyInvitation} type="button">Copiar invitación</button>
+              {!embedded ? <button className="button secondary compact-button" onClick={() => setSelectedLeague(null)} type="button">Cambiar sala</button> : null}
+            </div>
           </div>
-
-          <section className="panel room-information">
-            <div>
-              <span className="market-kicker">Información del grupo</span>
-              <h3>{selectedLeague.description || "Sala privada de picks"}</h3>
-              <p>{selectedLeague.rules || "El administrador de la sala todavía no ha publicado reglas internas."}</p>
-            </div>
-            <p className="room-legal-notice">
-              Mundial Picks solo proporciona la plataforma tecnológica para crear y administrar salas privadas. Los premios,
-              pagos, acuerdos o beneficios ofrecidos dentro de cada sala son responsabilidad exclusiva del creador o
-              administrador de la sala.
-            </p>
-          </section>
 
           {!roomIsActivated ? (
             <section className="panel room-payment-required">
@@ -796,121 +796,100 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
             <div className="room-main-content">
           {roomView === "home" ? (
             <div className="room-home-screen">
-              <section className="room-next-card">
-                <div className="room-next-card-header">
-                  <span>{nextRoomMatch ? (nextRoomMatch.status === "LIVE" ? "Partido en vivo" : "Próximo partido") : lastFinishedMatch ? "Último resultado" : "Actividad de la sala"}</span>
-                  <strong>{selectedLeague.name}</strong>
-                </div>
-                {nextRoomMatch ? (
-                  <>
-                    <div className="room-next-teams">
-                      <div>
-                        <span>{flagForTeam(nextRoomMatch.homeTeam)}</span>
-                        <strong>{nextRoomMatch.homeTeam}</strong>
-                      </div>
-                      <em>vs</em>
-                      <div>
-                        <span>{flagForTeam(nextRoomMatch.awayTeam)}</span>
-                        <strong>{nextRoomMatch.awayTeam}</strong>
-                      </div>
+              <div className="room-home-grid">
+                <div className="room-home-primary">
+                  <section className="room-next-card room-featured-match">
+                    <div className="room-next-card-header">
+                      <span>{nextRoomMatch ? (nextRoomMatch.status === "LIVE" ? "En vivo" : "Próximo partido") : "Sin partido abierto"}</span>
+                      <strong>{selectedLeague.name}</strong>
                     </div>
-                    <p>
-                      {new Date(nextRoomMatch.startsAt).toLocaleDateString("es", { weekday: "short", day: "2-digit", month: "short" })}
-                      {" · "}
-                      <strong>{new Date(nextRoomMatch.startsAt).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}</strong>
-                      {nextRoomMatch.venue ? ` · ${nextRoomMatch.venue}` : ""}
-                    </p>
-                    {nextRoomMatch.status === "LIVE" ? (
-                      <div className="room-live-score">
-                        <span>Marcador actual</span>
-                        <strong>{nextRoomMatch.homeScore ?? 0} - {nextRoomMatch.awayScore ?? 0}</strong>
-                      </div>
+                    {nextRoomMatch ? (
+                      <>
+                        <div className="room-next-teams">
+                          <div>
+                            <span>{flagForTeam(nextRoomMatch.homeTeam)}</span>
+                            <strong>{nextRoomMatch.homeTeam}</strong>
+                          </div>
+                          <em>{nextRoomMatch.status === "LIVE" && nextRoomMatch.homeScore !== null && nextRoomMatch.awayScore !== null ? `${nextRoomMatch.homeScore} - ${nextRoomMatch.awayScore}` : "vs"}</em>
+                          <div>
+                            <span>{flagForTeam(nextRoomMatch.awayTeam)}</span>
+                            <strong>{nextRoomMatch.awayTeam}</strong>
+                          </div>
+                        </div>
+                        <p>
+                          {nextRoomMatch.group ? `${nextRoomMatch.group} · ` : ""}
+                          {new Date(nextRoomMatch.startsAt).toLocaleDateString("es", { weekday: "short", day: "2-digit", month: "short" })}
+                          {" · "}
+                          <strong>{new Date(nextRoomMatch.startsAt).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}</strong>
+                          {nextRoomMatch.venue ? ` · ${nextRoomMatch.venue}` : ""}
+                        </p>
+                        {featuredPrediction ? (
+                          <div className="room-my-pick-pill">
+                            <span>Mi pronóstico</span>
+                            <strong>{featuredPrediction.homeScore} - {featuredPrediction.awayScore}</strong>
+                          </div>
+                        ) : nextRoomMatch.status === "LIVE" ? (
+                          <div className="room-my-pick-pill">
+                            <span>Marcador actual</span>
+                            <strong>{nextRoomMatch.homeScore ?? 0} - {nextRoomMatch.awayScore ?? 0}</strong>
+                          </div>
+                        ) : (
+                          <div className="room-countdown-grid" aria-label="Cuenta regresiva">
+                            <article><strong>{String(nextCountdown.days).padStart(2, "0")}</strong><span>Días</span></article>
+                            <article><strong>{String(nextCountdown.hours).padStart(2, "0")}</strong><span>Hrs</span></article>
+                            <article><strong>{String(nextCountdown.minutes).padStart(2, "0")}</strong><span>Min</span></article>
+                            <article><strong>{String(nextCountdown.seconds).padStart(2, "0")}</strong><span>Seg</span></article>
+                          </div>
+                        )}
+                        <div className="room-home-actions single-action">
+                          <button className="button primary" onClick={() => setRoomView("picks")} type="button">
+                            {isSuperAdmin ? "Ver picks" : featuredActionLabel}
+                          </button>
+                        </div>
+                      </>
                     ) : (
-                      <div className="room-countdown-grid" aria-label="Cuenta regresiva">
-                        <article><strong>{String(nextCountdown.days).padStart(2, "0")}</strong><span>Días</span></article>
-                        <article><strong>{String(nextCountdown.hours).padStart(2, "0")}</strong><span>Hrs</span></article>
-                        <article><strong>{String(nextCountdown.minutes).padStart(2, "0")}</strong><span>Min</span></article>
-                        <article><strong>{String(nextCountdown.seconds).padStart(2, "0")}</strong><span>Seg</span></article>
-                      </div>
+                      <>
+                        <div className="room-activity-empty">
+                          <strong>{members.length}</strong>
+                          <span>participantes</span>
+                          <strong>{totalPicks}</strong>
+                          <span>picks guardados</span>
+                        </div>
+                        <div className="room-home-actions single-action">
+                          <button className="button primary" onClick={() => setRoomView("matches")} type="button">Ver calendario</button>
+                        </div>
+                      </>
                     )}
-                    <div className="room-home-actions">
-                      <button className="button primary" onClick={() => setRoomView("picks")} type="button">
-                        {isSuperAdmin ? "Auditar picks" : "Hacer predicción"}
-                      </button>
-                      <button className="button secondary" onClick={() => setRoomView("ranking")} type="button">Ver ranking</button>
-                    </div>
-                  </>
-                ) : lastFinishedMatch ? (
-                  <>
-                    <div className="room-next-teams">
-                      <div>
-                        <span>{flagForTeam(lastFinishedMatch.homeTeam)}</span>
-                        <strong>{lastFinishedMatch.homeTeam}</strong>
-                      </div>
-                      <em>{lastFinishedMatch.homeScore} - {lastFinishedMatch.awayScore}</em>
-                      <div>
-                        <span>{flagForTeam(lastFinishedMatch.awayTeam)}</span>
-                        <strong>{lastFinishedMatch.awayTeam}</strong>
-                      </div>
-                    </div>
-                    <p>
-                      Partido finalizado ·{" "}
-                      <strong>{new Date(lastFinishedMatch.startsAt).toLocaleDateString("es", { weekday: "short", day: "2-digit", month: "short" })}</strong>
-                      {lastFinishedMatch.venue ? ` · ${lastFinishedMatch.venue}` : ""}
-                    </p>
-                    <div className="room-home-actions">
-                      <button className="button primary" onClick={() => setRoomView("picks")} type="button">Ver picks</button>
-                      <button className="button secondary" onClick={() => setRoomView("ranking")} type="button">Ver ranking</button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="room-activity-empty">
-                      <strong>{members.length}</strong>
-                      <span>participantes</span>
-                      <strong>{totalPicks}</strong>
-                      <span>picks guardados</span>
-                    </div>
-                    <div className="room-home-actions">
-                      <button className="button primary" onClick={() => setRoomView("matches")} type="button">Ver calendario</button>
-                      <button className="button secondary" onClick={() => setRoomView("ranking")} type="button">Ver ranking</button>
-                    </div>
-                  </>
-                )}
-              </section>
+                  </section>
 
-              <section className="panel room-home-summary compact-home-summary">
-                {isSuperAdmin ? (
-                  <>
-                    <article><span>Participantes</span><strong>{members.length}</strong></article>
-                    <article><span>Picks</span><strong>{totalPicks}</strong></article>
-                    <article><span>En vivo</span><strong>{roomLiveMatches}</strong></article>
-                  </>
-                ) : (
-                  <>
-                    <article><span>Mi posición</span><strong>{userRanking ? `#${userRankingIndex + 1}` : "-"}</strong></article>
-                    <article><span>Mis puntos</span><strong>{userRanking?.points ?? 0}</strong></article>
-                    <article><span>Picks sala</span><strong>{totalPicks}</strong></article>
-                  </>
-                )}
-              </section>
+                  <section className="panel room-home-summary compact-home-summary">
+                    {isSuperAdmin ? (
+                      <>
+                        <article><span>Participantes</span><strong>{members.length}</strong></article>
+                        <article><span>Picks sala</span><strong>{totalPicks}</strong></article>
+                        <article><span>En vivo</span><strong>{roomLiveMatches}</strong></article>
+                        <article><span>Finalizados</span><strong>{roomFinishedMatches}</strong></article>
+                      </>
+                    ) : (
+                      <>
+                        <article><span>Mi posición</span><strong>{userRanking ? `#${userRankingIndex + 1}` : "-"}</strong></article>
+                        <article><span>Mis puntos</span><strong>{userRanking?.points ?? 0}</strong></article>
+                        <article><span>Picks realizados</span><strong>{userPickCount}</strong></article>
+                        <article><span>Próximo pick</span><strong>{nextPendingPick ? `${flagForTeam(nextPendingPick.homeTeam)} ${flagForTeam(nextPendingPick.awayTeam)}` : "-"}</strong></article>
+                      </>
+                    )}
+                  </section>
 
-              <section className="panel room-home-games">
-                <div className="section-title">
-                  <div>
-                    <span className="market-kicker">Calendario</span>
-                    <h3>Próximos juegos</h3>
-                  </div>
-                  <button className="button secondary compact-button" onClick={() => setRoomView("matches")} type="button">Ver todo</button>
-                </div>
-                <div className="room-home-day-list">
-                  {roomMatchesByDay.slice(0, 3).map((day) => (
-                    <section key={day.key}>
-                      <header>
-                        <strong>{day.label}</strong>
-                        <span>{day.matches.length} partido{day.matches.length === 1 ? "" : "s"}</span>
-                      </header>
-                      {day.matches.slice(0, 4).map((match) => (
+                  <section className="panel room-home-games compact-room-games">
+                    <div className="section-title">
+                      <div>
+                        <span className="market-kicker">Calendario</span>
+                        <h3>Próximos 3 partidos</h3>
+                      </div>
+                      <button className="button secondary compact-button" onClick={() => setRoomView("matches")} type="button">Ver calendario</button>
+                    </div>
+                    <div className="room-home-day-list">
+                      {upcomingRoomMatches.map((match) => (
                         <article className="room-home-match" key={match.id}>
                           <div>
                             <span>{flagForTeam(match.homeTeam)}</span>
@@ -920,18 +899,76 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
                             <span>{flagForTeam(match.awayTeam)}</span>
                             <strong>{match.awayTeam}</strong>
                           </div>
-                          <small>
-                            {match.status === "FINISHED" && match.homeScore !== null && match.awayScore !== null
-                              ? `${match.homeScore}-${match.awayScore}`
-                              : new Date(match.startsAt).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}
-                          </small>
+                          <small>{match.status === "LIVE" ? "En vivo" : new Date(match.startsAt).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}</small>
                         </article>
                       ))}
-                    </section>
-                  ))}
-                  {!roomMatchesByDay.length ? <div className="empty">Cuando publiques partidos, aparecerán aquí.</div> : null}
+                      {!upcomingRoomMatches.length ? <div className="empty">No hay partidos pendientes publicados.</div> : null}
+                    </div>
+                  </section>
                 </div>
-              </section>
+
+                <aside className="room-home-sidebar">
+                  <section className="panel room-ranking-preview">
+                    <div className="section-title">
+                      <div>
+                        <span className="market-kicker">Ranking</span>
+                        <h3>Top de la sala</h3>
+                      </div>
+                      <button className="button secondary compact-button" onClick={() => setRoomView("ranking")} type="button">Ver completo</button>
+                    </div>
+                    <div className="room-ranking-card-list">
+                      {rankingPreview.map((entry, index) => (
+                        <article className={entry.id === user.id ? "current-user" : ""} key={entry.id}>
+                          <span>#{index + 1}</span>
+                          <strong>{entry.name}</strong>
+                          <em>{entry.points} pts</em>
+                        </article>
+                      ))}
+                      {!rankingPreview.length ? <div className="empty">El ranking aparecerá cuando haya participantes.</div> : null}
+                    </div>
+                  </section>
+
+                  <section className="panel room-recent-picks">
+                    <div className="section-title">
+                      <div>
+                        <span className="market-kicker">{liveRoomPredictions.length ? "Picks en vivo" : "Actividad"}</span>
+                        <h3>{liveRoomPredictions.length ? "Partido en juego" : "Picks recientes"}</h3>
+                      </div>
+                      <button className="button secondary compact-button" onClick={() => setRoomView("picks")} type="button">Ver picks</button>
+                    </div>
+                    <div className="room-prediction-list compact-prediction-list">
+                      {previewPredictions.map((prediction) => (
+                        <article className="room-prediction" key={prediction.id}>
+                          <div><strong>{prediction.user.name}</strong><span>{prediction.match.homeTeam} vs {prediction.match.awayTeam}</span></div>
+                          <strong>{prediction.homeScore} - {prediction.awayScore}</strong>
+                          <span>{prediction.points} pts</span>
+                        </article>
+                      ))}
+                      {!previewPredictions.length ? <div className="empty">Todavía no hay picks para mostrar.</div> : null}
+                    </div>
+                  </section>
+
+                  <section className="panel room-recent-picks">
+                    <div className="section-title">
+                      <div>
+                        <span className="market-kicker">Mi historial</span>
+                        <h3>Últimos picks</h3>
+                      </div>
+                      <button className="button secondary compact-button" onClick={() => setRoomView("picks")} type="button">Ver todos</button>
+                    </div>
+                    <div className="room-prediction-list compact-prediction-list">
+                      {recentUserPicks.map(({ match, prediction }) => (
+                        <article className="room-prediction" key={prediction.id}>
+                          <div><strong>{match.homeTeam} vs {match.awayTeam}</strong><span>{matchStatusLabel(match.status)}</span></div>
+                          <strong>{prediction.homeScore} - {prediction.awayScore}</strong>
+                          <span>{prediction.points} pts</span>
+                        </article>
+                      ))}
+                      {!recentUserPicks.length ? <div className="empty">Tus picks guardados aparecerán aquí.</div> : null}
+                    </div>
+                  </section>
+                </aside>
+              </div>
             </div>
           ) : null}
 
@@ -1186,16 +1223,36 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
               <div className="section-title">
                 <div>
                   <span className="market-kicker">Más opciones</span>
-                  <h3>Herramientas secundarias</h3>
+                  <h3>Participantes, chat y reglas</h3>
                 </div>
               </div>
               <div className="room-more-grid">
                 <button className="button secondary" onClick={() => setRoomView("participants")} type="button">
-                  {canEditRoomInfo ? "Participantes" : "Mi perfil"}
+                  Participantes
                 </button>
                 <button className="button secondary" onClick={() => setRoomView("chat")} type="button">
                   Chat de la sala
                 </button>
+                <button className="button secondary" onClick={shareInvitation} type="button">
+                  Compartir invitación
+                </button>
+                {canEditRoomInfo ? (
+                  <button className="button secondary" onClick={() => setRoomView("participants")} type="button">
+                    Configuración
+                  </button>
+                ) : null}
+              </div>
+              <div className="room-more-info">
+                <article>
+                  <span className="market-kicker">Reglas</span>
+                  <h4>{selectedLeague.description || "Sala privada de picks"}</h4>
+                  <p>{selectedLeague.rules || "El administrador de la sala todavía no ha publicado reglas internas."}</p>
+                </article>
+                <p className="room-legal-notice">
+                  Mundial Picks solo proporciona la plataforma tecnológica para crear y administrar salas privadas. Los premios,
+                  pagos, acuerdos o beneficios ofrecidos dentro de cada sala son responsabilidad exclusiva del creador o
+                  administrador de la sala.
+                </p>
               </div>
             </section>
           ) : null}
@@ -1306,6 +1363,11 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
           ) : null}
             </div>
           </div>
+          {roomView !== "chat" ? (
+            <button className="room-chat-fab" onClick={() => setRoomView("chat")} type="button" aria-label="Abrir chat de sala">
+              Chat
+            </button>
+          ) : null}
           </>
           )}
         </section>
