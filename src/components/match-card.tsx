@@ -222,6 +222,8 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
               </div>
             </div>
 
+            <p className="prediction-helper prediction-edit-note">Puedes editar tu pronóstico hasta 1 hora antes del partido.</p>
+
             <section className="quick-picks">
               <span>Predicciones rápidas</span>
               <div>
@@ -252,8 +254,6 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
                 <p><strong>👀 Participación:</strong> <span>+1 pt</span></p>
               </div>
             </section>
-
-            <p className="prediction-helper prediction-edit-note">Puedes editar tu pronóstico hasta 1 hora antes del partido.</p>
 
             <section className={`ai-preview ${aiPreviewOpen ? "open" : ""}`}>
               <button
