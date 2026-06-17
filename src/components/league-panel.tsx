@@ -450,6 +450,35 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
     await loadRoom();
   }
 
+  async function closeMatchManually(event: FormEvent<HTMLFormElement>, match: Match) {
+    event.preventDefault();
+    if (!window.confirm("¿Seguro que deseas cerrar este partido? Esta acción actualizará puntos y ranking.")) return;
+
+    const formData = new FormData(event.currentTarget);
+    const homeScore = Number(formData.get("manualHomeScore"));
+    const awayScore = Number(formData.get("manualAwayScore"));
+
+    if (!Number.isInteger(homeScore) || !Number.isInteger(awayScore) || homeScore < 0 || awayScore < 0) {
+      setMessage("Ingresa un marcador final válido.");
+      return;
+    }
+
+    const response = await fetch(`/api/admin/matches/${match.id}/result`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ homeScore, awayScore, isFinal: true }),
+    });
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      setMessage(data.error ?? "No se pudo cerrar el partido.");
+      return;
+    }
+
+    setMessage("Partido cerrado y puntos recalculados.");
+    await loadRoom();
+  }
+
   const sortedMatches = [...matches].sort((first, second) => new Date(first.startsAt).getTime() - new Date(second.startsAt).getTime());
   const liveMatches = sortedMatches.filter((match) => match.status === "LIVE");
   const nextRoomMatch =
@@ -535,14 +564,30 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
         : "La sala debe estar activa para guardar picks.";
   const roomFinishedMatches = matches.filter((match) => match.status === "FINISHED").length;
   const roomLiveMatches = matches.filter((match) => match.status === "LIVE").length;
+  const intelligenceMatch = nextRoomMatch ?? lastFinishedMatch ?? sortedMatches[0] ?? null;
+  const intelligenceHasEnoughInfo = Boolean(intelligenceMatch);
+  const intelligenceScore =
+    intelligenceMatch?.homeScore !== null && intelligenceMatch?.homeScore !== undefined &&
+    intelligenceMatch?.awayScore !== null && intelligenceMatch?.awayScore !== undefined
+      ? `${intelligenceMatch.homeScore}-${intelligenceMatch.awayScore}`
+      : "Sin marcador";
+  const intelligenceTrend = intelligenceMatch
+    ? intelligenceMatch.homeScore !== null && intelligenceMatch.awayScore !== null
+      ? intelligenceMatch.homeScore === intelligenceMatch.awayScore
+        ? "Partido equilibrado por marcador actual."
+        : `${intelligenceMatch.homeScore > intelligenceMatch.awayScore ? intelligenceMatch.homeTeam : intelligenceMatch.awayTeam} tiene ventaja en el marcador.`
+      : intelligenceMatch.status === "SCHEDULED"
+        ? "Partido pendiente. Revisa contexto, bajas y momento de cada equipo antes de pronosticar."
+        : "Marcador en actualización. Espera datos completos para una lectura más confiable."
+    : "";
   const roomTabs: Array<[RoomView, string]> = [
     ["home", "Inicio"],
-    ["picks", "Picks"],
     ["matches", "Calendario"],
-    ["facts", "IA"],
+    ["picks", "Picks"],
     ["ranking", "Ranking"],
-    ["chat", "Chat"],
     ["participants", canEditRoomInfo ? "Participantes" : "Perfil"],
+    ["chat", "Chat"],
+    ["facts", "IA"],
   ];
 
   function shareRanking() {
@@ -829,18 +874,18 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
                 )}
               </section>
 
-              <section className="panel room-home-summary">
-                <article><span>Participantes</span><strong>{members.length}</strong></article>
-                <article><span>Picks</span><strong>{totalPicks}</strong></article>
+              <section className="panel room-home-summary compact-home-summary">
                 {isSuperAdmin ? (
                   <>
+                    <article><span>Participantes</span><strong>{members.length}</strong></article>
+                    <article><span>Picks</span><strong>{totalPicks}</strong></article>
                     <article><span>En vivo</span><strong>{roomLiveMatches}</strong></article>
-                    <article><span>Finalizados</span><strong>{roomFinishedMatches}</strong></article>
                   </>
                 ) : (
                   <>
-                    <article><span>Tu lugar</span><strong>{userRanking ? `#${userRankingIndex + 1}` : "-"}</strong></article>
-                    <article><span>Puntos</span><strong>{userRanking?.points ?? 0}</strong></article>
+                    <article><span>Mi posición</span><strong>{userRanking ? `#${userRankingIndex + 1}` : "-"}</strong></article>
+                    <article><span>Mis puntos</span><strong>{userRanking?.points ?? 0}</strong></article>
+                    <article><span>Picks sala</span><strong>{totalPicks}</strong></article>
                   </>
                 )}
               </section>
@@ -1042,6 +1087,31 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
                             {match.isPublished ? "Ocultar" : "Publicar"}
                           </button>
                         ) : null}
+                        {isSuperAdmin ? (
+                          match.status === "FINISHED" ? (
+                            <span>Partido cerrado</span>
+                          ) : (
+                            <form className="room-close-match-form" onSubmit={(event) => closeMatchManually(event, match)}>
+                              <input
+                                aria-label={`Goles de ${match.homeTeam}`}
+                                defaultValue={match.homeScore ?? ""}
+                                min={0}
+                                name="manualHomeScore"
+                                placeholder="L"
+                                type="number"
+                              />
+                              <input
+                                aria-label={`Goles de ${match.awayTeam}`}
+                                defaultValue={match.awayScore ?? ""}
+                                min={0}
+                                name="manualAwayScore"
+                                placeholder="V"
+                                type="number"
+                              />
+                              <button className="button danger compact-button" type="submit">Cerrar partido</button>
+                            </form>
+                          )
+                        ) : null}
                       </div>
                     </article>
                   ))}
@@ -1053,7 +1123,58 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
             </div>
           ) : null}
 
-          {roomView === "facts" ? <FormidableFacts /> : null}
+          {roomView === "facts" ? (
+            <section className="panel smart-preview-board">
+              <div className="section-title">
+                <div>
+                  <span className="market-kicker">Previa inteligente</span>
+                  <h3>Ayuda para pronosticar</h3>
+                </div>
+              </div>
+              {intelligenceHasEnoughInfo && intelligenceMatch ? (
+                <div className="smart-preview-layout">
+                  <article className="smart-preview-match">
+                    <span>{matchStatusLabel(intelligenceMatch.status)}</span>
+                    <div className="room-next-teams compact">
+                      <div><span>{flagForTeam(intelligenceMatch.homeTeam)}</span><strong>{intelligenceMatch.homeTeam}</strong></div>
+                      <em>{intelligenceScore}</em>
+                      <div><span>{flagForTeam(intelligenceMatch.awayTeam)}</span><strong>{intelligenceMatch.awayTeam}</strong></div>
+                    </div>
+                    <p>
+                      {new Date(intelligenceMatch.startsAt).toLocaleString("es", { dateStyle: "medium", timeStyle: "short" })}
+                      {intelligenceMatch.group ? ` · ${intelligenceMatch.group}` : ""}
+                      {intelligenceMatch.venue ? ` · ${intelligenceMatch.venue}` : ""}
+                    </p>
+                  </article>
+                  <article className="smart-preview-card">
+                    <h4>Resumen breve</h4>
+                    <p>{intelligenceTrend}</p>
+                  </article>
+                  <article className="smart-preview-card">
+                    <h4>Factores clave</h4>
+                    <ul>
+                      <li>Estado: {matchStatusLabel(intelligenceMatch.status)}.</li>
+                      <li>{intelligenceMatch.group ? `Fase: ${intelligenceMatch.group}.` : "Fase no registrada."}</li>
+                      <li>{intelligenceMatch.venue ? `Sede: ${intelligenceMatch.venue}.` : "Sede no registrada."}</li>
+                    </ul>
+                  </article>
+                  <article className="smart-preview-card accent">
+                    <h4>Recomendación orientativa</h4>
+                    <p>
+                      Usa esta previa como apoyo y compárala con tu intuición. Si faltan datos del partido, evita confiar en una sola señal.
+                    </p>
+                  </article>
+                  <p className="smart-preview-note">La IA solo ofrece una orientación. El resultado real puede variar.</p>
+                </div>
+              ) : (
+                <div className="empty">No hay suficiente información para generar una previa confiable.</div>
+              )}
+              <details className="room-config-drawer compact-facts-drawer">
+                <summary>Ver datos curiosos de selecciones</summary>
+                <FormidableFacts />
+              </details>
+            </section>
+          ) : null}
 
           {roomView === "ranking" ? (
             <div className="grid">
