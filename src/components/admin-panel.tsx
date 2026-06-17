@@ -1175,33 +1175,16 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
         >
           Usuarios
         </button>
-        <div className="admin-room-menu">
-          <button
-            className={`tab ${adminView === "rooms" ? "active" : ""}`}
-            onClick={async () => {
-              setAdminView("rooms");
-              await loadRooms();
-            }}
-            type="button"
-          >
-            Salas
-          </button>
-          <div className="admin-room-dropdown">
-            {adminRooms.map((room) => (
-              <button
-                key={room.id}
-                onClick={() => {
-                  void selectAdminRoom(room.id);
-                }}
-                type="button"
-              >
-                <strong>{room.name}</strong>
-                <span>{room.inviteCode} · {roomStatusLabel(room.status)}</span>
-              </button>
-            ))}
-            {!adminRooms.length ? <span>No hay salas creadas</span> : null}
-          </div>
-        </div>
+        <button
+          className={`tab ${adminView === "rooms" ? "active" : ""}`}
+          onClick={async () => {
+            setAdminView("rooms");
+            await loadRooms();
+          }}
+          type="button"
+        >
+          Salas
+        </button>
         <button
           className={`tab ${adminView === "security" ? "active" : ""}`}
           onClick={() => setAdminView("security")}
@@ -1968,100 +1951,228 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
         ) : null}
         {adminView === "rooms" ? (
           <>
-            <section className="form room-command-center compact-room-command">
-              <div className="room-command-header">
+            <section className="form admin-rooms-workspace">
+              <div className="section-title admin-rooms-title">
                 <div>
-                  <span className="market-kicker">Sala seleccionada</span>
                   <h3>Gestión de sala</h3>
-                </div>
-                <div className="room-picker-shell">
-                  <label htmlFor="superAdminRoomSelector">Cambiar sala</label>
-                  <select
-                    id="superAdminRoomSelector"
-                    onChange={(event) => {
-                      void selectAdminRoom(event.target.value);
-                    }}
-                    value={selectedRoom?.id ?? ""}
-                  >
-                    <option value="">Selecciona sala</option>
-                    {adminRooms.map((room) => (
-                      <option key={room.id} value={room.id}>
-                        {room.name} · {room.inviteCode} · {roomStatusLabel(room.status)}
-                      </option>
-                    ))}
-                  </select>
+                  <p className="muted">Administra la sala seleccionada, sus participantes, calendario, picks y ranking.</p>
                 </div>
               </div>
-              <p className="room-loaded-state">
-                {selectedRoom
-                  ? `Estás administrando "${selectedRoom.name}". El super usuario ve y corrige, pero no compite ni entra como participante.`
-                  : "Escoge una sala para abrir su panel completo."}
-              </p>
+
+              <section className="selected-room-card admin-room-shell">
+                <div className="selected-room-main">
+                  <div>
+                    <span className="market-kicker">Sala seleccionada</span>
+                    <strong>{selectedRoom?.name ?? "Selecciona una sala"}</strong>
+                    <small>
+                      {selectedRoom
+                        ? `${selectedRoom.competition?.name ?? "Sin calendario base"} · Propietario: ${selectedRoom.owner.name}`
+                        : "El super usuario no entra a ninguna sala automáticamente."}
+                    </small>
+                  </div>
+                  <div className="room-picker-shell admin-room-picker">
+                    <label htmlFor="superAdminRoomSelector">Cambiar sala</label>
+                    <select
+                      id="superAdminRoomSelector"
+                      onChange={(event) => {
+                        void selectAdminRoom(event.target.value);
+                      }}
+                      value={selectedRoom?.id ?? ""}
+                    >
+                      <option value="">Selecciona sala</option>
+                      {adminRooms.map((room) => (
+                        <option key={room.id} value={room.id}>
+                          {room.name} · {room.inviteCode} · {roomStatusLabel(room.status)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {selectedRoom ? (
+                  <>
+                    <div className="selected-room-metrics">
+                      <span><small>Código</small><strong>{selectedRoom.inviteCode}</strong></span>
+                      <span><small>Estado</small><strong>{roomStatusLabel(selectedRoom.status)}</strong></span>
+                      <span><small>Participantes</small><strong>{selectedRoomMemberships.length}/{selectedRoom.maxParticipants}</strong></span>
+                      <span><small>Publicados</small><strong>{roomDashboard?.matches.filter((match) => match.isPublished).length ?? "-"}</strong></span>
+                      <span><small>Plan</small><strong>{selectedRoom.plan?.name ?? "Personalizado"}</strong></span>
+                      <span><small>Vence</small><strong>{selectedRoom.expiresAt ? new Date(selectedRoom.expiresAt).toLocaleDateString("es") : "Sin fecha"}</strong></span>
+                    </div>
+                    <p className="room-loaded-state">
+                      Estás administrando "{selectedRoom.name}". El super usuario ve y corrige, pero no compite ni entra como participante.
+                    </p>
+                  </>
+                ) : (
+                  <div className="empty">
+                    {adminRooms.length
+                      ? "Selecciona una sala para cargar su tablero completo."
+                      : "Todavía no hay salas creadas."}
+                  </div>
+                )}
+              </section>
+
               {selectedRoom ? (
                 <>
-                <section className="selected-room-card">
-                  <div className="selected-room-main">
-                    <span className="market-kicker">Sala seleccionada</span>
-                    <strong>{selectedRoom.name}</strong>
-                    <small>{selectedRoom.competition?.name ?? "Sin calendario base"} · Propietario: {selectedRoom.owner.name}</small>
-                  </div>
-                  <div className="selected-room-metrics">
-                    <span><small>Código</small><strong>{selectedRoom.inviteCode}</strong></span>
-                    <span><small>Estado</small><strong>{roomStatusLabel(selectedRoom.status)}</strong></span>
-                    <span><small>Participantes</small><strong>{selectedRoomMemberships.length}/{selectedRoom.maxParticipants}</strong></span>
-                    <span><small>Partidos publicados</small><strong>{roomDashboard?.matches.filter((match) => match.isPublished).length ?? "-"}</strong></span>
-                  </div>
-                  <div className="selected-room-actions">
-                    <button
-                      className="button secondary"
-                      onClick={() => document.getElementById("superAdminRoomSelector")?.focus()}
-                      type="button"
-                    >
-                      Cambiar sala
-                    </button>
-                    <button className="button primary" onClick={() => syncSelectedRoomResults(selectedRoom)} type="button">
-                      Sincronizar resultados de sala
-                    </button>
-                    <button className="button secondary" onClick={() => copyRoomInvitation(selectedRoom)} type="button">Copiar invitación</button>
-                    <button className="button danger" onClick={() => deleteAdminRoom(selectedRoom)} type="button">Eliminar sala</button>
-                  </div>
-                  <div className="selected-room-status">
-                    <span>{selectedRoom.paymentStatus === "TRIAL" ? "Prueba gratis" : selectedRoom.paidAt ? "Pagada" : "Pago pendiente"}</span>
-                    {selectedRoom.expiresAt ? <span>Vence: {new Date(selectedRoom.expiresAt).toLocaleDateString("es")}</span> : null}
-                  </div>
-                </section>
-                <nav className="admin-nav room-nav selected-room-tabs" aria-label="Gestión interna de sala">
-                  <span className="tab active">Inicio</span>
-                  <span className="tab">Calendario</span>
-                  <span className="tab">Picks</span>
-                  <span className="tab">Ranking</span>
-                  <span className="tab">Participantes</span>
-                  <span className="tab">Chat</span>
-                  <span className="tab">IA</span>
-                </nav>
-                <LeaguePanel user={user} initialLeagueId={selectedRoom.id} embedded />
+	                  <div className="admin-room-action-layout compact-room-actions">
+	                    <section className="form admin-room-action-card primary-room-actions">
+	                      <div>
+	                        <span className="market-kicker">Acciones rápidas</span>
+	                        <h4>Administra resultados, invitaciones y configuración de la sala.</h4>
+	                      </div>
+	                      <div className="admin-room-action-grid compact-actions-grid">
+	                        <button className="button primary" onClick={() => syncSelectedRoomResults(selectedRoom)} type="button">
+	                          Sincronizar resultados
+	                        </button>
+	                        <button className="button secondary" onClick={() => copyRoomInvitation(selectedRoom)} type="button">
+	                          Copiar invitación
+	                        </button>
+	                        <button
+	                          className="button secondary"
+	                          onClick={() => document.getElementById("superAdminRoomSelector")?.focus()}
+	                          type="button"
+	                        >
+	                          Cambiar sala
+	                        </button>
+	                      </div>
+	                    </section>
 
-                  <section className="admin-room-dashboard compact legacy-admin-room-dashboard">
+	                    <details className="admin-room-accordion admin-room-options-panel">
+	                      <summary>Más opciones de administración</summary>
+	                      <div className="admin-room-secondary-actions">
+	                        <button
+	                          className="button secondary"
+	                          onClick={() => document.getElementById("selectedRoomUserId")?.focus()}
+	                          type="button"
+	                        >
+	                          Ver participantes
+	                        </button>
+	                        <a className="button secondary" href="/api/admin/export" download>
+	                          Descargar información
+	                        </a>
+	                      </div>
+	                      <details className="admin-room-accordion nested-admin-option">
+	                        <summary>Editar sala</summary>
+	                        <form className="form" onSubmit={updateRoomSettings}>
+	                          <input name="settingsRoomId" type="hidden" value={selectedRoom.id} />
+	                          <div className="form-row">
+                            <label htmlFor="selectedSettingsRoomName">Nombre de la sala</label>
+                            <input
+                              id="selectedSettingsRoomName"
+                              key={`${selectedRoom.id}-name`}
+                              name="settingsRoomName"
+                              defaultValue={selectedRoom.name}
+                              minLength={3}
+                              maxLength={80}
+                              required
+                            />
+                          </div>
+                          <div className="form-row">
+                            <label htmlFor="selectedSettingsOwnerId">Propietario</label>
+                            <select
+                              id="selectedSettingsOwnerId"
+                              key={`${selectedRoom.id}-owner`}
+                              name="settingsOwnerId"
+                              defaultValue={selectedRoom.ownerId}
+                            >
+                              {users.filter((item) => item.role === "USER").map((item) => (
+                                <option key={item.id} value={item.id}>{item.name} - {item.phone}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="inline-form">
+                            <div className="form-row">
+                              <label htmlFor="selectedSettingsStatus">Estado</label>
+                              <select
+                                id="selectedSettingsStatus"
+                                key={`${selectedRoom.id}-status`}
+                                name="settingsStatus"
+                                defaultValue={selectedRoom.status}
+                              >
+                                <option value="ACTIVE">Activa</option>
+                                <option value="SUSPENDED">Suspendida</option>
+                                <option value="EXPIRED">Vencida</option>
+                                <option value="CLOSED">Cerrada</option>
+                              </select>
+                            </div>
+                            <div className="form-row">
+                              <label htmlFor="selectedSettingsMaxParticipants">Límite</label>
+                              <input
+                                id="selectedSettingsMaxParticipants"
+                                key={`${selectedRoom.id}-limit`}
+                                name="settingsMaxParticipants"
+                                type="number"
+                                min={2}
+                                max={10000}
+                                defaultValue={selectedRoom.maxParticipants}
+                                required
+                              />
+                            </div>
+                            <div className="form-row">
+                              <label htmlFor="selectedSettingsExpiresAt">Vencimiento</label>
+                              <input
+                                id="selectedSettingsExpiresAt"
+                                key={`${selectedRoom.id}-expires`}
+                                name="settingsExpiresAt"
+                                type="datetime-local"
+                                defaultValue={datetimeLocalValue(selectedRoom.expiresAt)}
+                              />
+                            </div>
+	                          </div>
+	                          <button className="button primary" type="submit">Guardar sala</button>
+	                        </form>
+	                      </details>
+	                      <details className="admin-room-accordion nested-admin-option">
+	                        <summary>Asignar administrador de sala</summary>
+	                        <form className="form" onSubmit={updateRoomAdmin}>
+	                          <input name="adminRoomId" type="hidden" value={selectedRoom.id} />
+                          <div className="form-row">
+                            <label htmlFor="selectedRoomAdminUserId">Participante</label>
+                            <select id="selectedRoomAdminUserId" name="roomAdminUserId" required>
+                              <option value="">Selecciona participante</option>
+                              {selectedRoomMemberships.map((membership) => (
+                                <option key={membership.user.id} value={membership.user.id}>
+                                  {membership.user.name} · {membership.role === "ADMIN" ? "Admin actual" : "Participante"}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-row">
+                            <label htmlFor="selectedRoomRole">Rol</label>
+                            <select id="selectedRoomRole" name="roomRole" defaultValue="ADMIN" required>
+                              <option value="ADMIN">Administrador de sala</option>
+                              <option value="MEMBER">Participante</option>
+                            </select>
+                          </div>
+	                          <button className="button primary" type="submit">Guardar rol</button>
+	                        </form>
+	                      </details>
+	                    </details>
+
+	                    <details className="admin-room-accordion admin-room-danger-zone">
+	                      <summary>Zona peligrosa</summary>
+	                      <p className="muted">Eliminar una sala es una acción definitiva. Úsala solo cuando estés seguro.</p>
+	                      <button className="button danger" onClick={() => deleteAdminRoom(selectedRoom)} type="button">
+	                        Eliminar sala
+	                      </button>
+	                    </details>
+	                  </div>
+
+                  <section className="admin-room-live-panel">
+                    <LeaguePanel user={user} initialLeagueId={selectedRoom.id} embedded />
+                  </section>
+
+                  <section className="admin-room-dashboard compact admin-room-operator-tools">
                     <div className="room-dashboard-bar">
-                      <span className="market-kicker">Tablero de {selectedRoom.name}</span>
+                      <span className="market-kicker">Gestión interna de participantes</span>
                       {roomDashboardLoading ? <span className="user-chip">Cargando...</span> : null}
                     </div>
                     {roomDashboard ? (
-                      <>
-                        <div className="admin-room-summary">
-                          <article><span>Participantes</span><strong>{roomDashboard.summary.participants}</strong></article>
-                          <article><span>Admins</span><strong>{roomDashboard.summary.admins}</strong></article>
-                          <article><span>Partidos</span><strong>{roomDashboard.summary.matches}</strong></article>
-                          <article><span>Picks</span><strong>{roomDashboard.summary.picks}</strong></article>
-                          <article><span>Finalizados</span><strong>{roomDashboard.summary.finishedMatches}</strong></article>
-                          <article><span>Chat</span><strong>{roomDashboard.summary.messages}</strong></article>
-                        </div>
-
-                        <section className="admin-room-user-tools compact">
-                          <div className="room-control-bar participant-control">
-                            <div className="room-control-field">
-                              <span className="market-kicker">Participante de la sala</span>
-                              <label htmlFor="selectedRoomUserId">Usuario seleccionado</label>
+                      <section className="admin-room-user-tools compact">
+                        <div className="room-control-bar participant-control">
+                          <div className="room-control-field">
+                            <span className="market-kicker">Participante de la sala</span>
+                            <label htmlFor="selectedRoomUserId">Usuario seleccionado</label>
                             <select
                               id="selectedRoomUserId"
                               onChange={(event) => setSelectedRoomUserId(event.target.value)}
@@ -2074,33 +2185,33 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                                 </option>
                               ))}
                             </select>
-                            </div>
-                            {selectedRoomParticipant ? (
-                              <span className="user-chip">
-                                {selectedRoomParticipant.role === "ADMIN" ? "Admin sala" : "Participante"} · {selectedRoomParticipant.isActive ? "Activo" : "Inactivo"}
-                              </span>
-                            ) : null}
                           </div>
                           {selectedRoomParticipant ? (
-                            <div className="admin-room-user-card">
-                              <div className="admin-room-user-header">
-                                <div>
-                                  <strong>{selectedRoomParticipant.name}</strong>
-                                  <span>{selectedRoomParticipant.phone}</span>
-                                </div>
-                                <div className="admin-user-badges">
-                                  <span>{selectedRoomParticipant.isActive ? "Activo" : "Inactivo"}</span>
-                                  <span>{selectedRoomParticipant.role === "ADMIN" ? "Admin sala" : "Participante"}</span>
-                                </div>
+                            <span className="user-chip">
+                              {selectedRoomParticipant.role === "ADMIN" ? "Admin sala" : "Participante"} · {selectedRoomParticipant.isActive ? "Activo" : "Inactivo"}
+                            </span>
+                          ) : null}
+                        </div>
+                        {selectedRoomParticipant ? (
+                          <div className="admin-room-user-card">
+                            <div className="admin-room-user-header">
+                              <div>
+                                <strong>{selectedRoomParticipant.name}</strong>
+                                <span>{selectedRoomParticipant.phone}</span>
                               </div>
-                              <div className="admin-room-summary compact">
-                                <article><span>Puntos</span><strong>{selectedRoomRanking?.points ?? 0}</strong></article>
-                                <article><span>Picks</span><strong>{selectedRoomRanking?.predictions ?? selectedRoomUserPredictions.length}</strong></article>
-                                <article><span>Exactos</span><strong>{selectedRoomRanking?.exactScores ?? 0}</strong></article>
+                              <div className="admin-user-badges">
+                                <span>{selectedRoomParticipant.isActive ? "Activo" : "Inactivo"}</span>
+                                <span>{selectedRoomParticipant.role === "ADMIN" ? "Admin sala" : "Participante"}</span>
                               </div>
-                              <details className="admin-room-accordion">
-                                <summary>Acciones del participante seleccionado</summary>
-                                <div className="admin-room-user-forms">
+                            </div>
+                            <div className="admin-room-summary compact">
+                              <article><span>Puntos</span><strong>{selectedRoomRanking?.points ?? 0}</strong></article>
+                              <article><span>Picks</span><strong>{selectedRoomRanking?.predictions ?? selectedRoomUserPredictions.length}</strong></article>
+                              <article><span>Exactos</span><strong>{selectedRoomRanking?.exactScores ?? 0}</strong></article>
+                            </div>
+                            <details className="admin-room-accordion">
+                              <summary>Acciones del participante seleccionado</summary>
+                              <div className="admin-room-user-forms">
                                 <form className="room-user-mini-form" onSubmit={editUser}>
                                   <input name="editUserId" type="hidden" value={selectedRoomParticipant.id} />
                                   <h4>Editar datos</h4>
@@ -2211,310 +2322,71 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                                   </div>
                                   <button className="button danger" type="submit">Eliminar pick</button>
                                 </form>
-                                </div>
-                              </details>
-                              <div className="admin-user-actions">
-                                <button
-                                  className="button secondary"
-                                  disabled={selectedRoomParticipant.isActive}
-                                  onClick={() => updateSelectedRoomParticipantStatus(true)}
-                                  type="button"
-                                >
-                                  Activar usuario
-                                </button>
-                                <button
-                                  className="button danger"
-                                  disabled={!selectedRoomParticipant.isActive}
-                                  onClick={() => updateSelectedRoomParticipantStatus(false)}
-                                  type="button"
-                                >
-                                  Desactivar usuario
-                                </button>
-                                <button
-                                  className="button secondary"
-                                  disabled={selectedRoomParticipant.role === "ADMIN"}
-                                  onClick={() => updateSelectedRoomParticipantRole("ADMIN")}
-                                  type="button"
-                                >
-                                  Hacer admin de sala
-                                </button>
-                                <button
-                                  className="button secondary"
-                                  disabled={selectedRoomParticipant.role === "MEMBER"}
-                                  onClick={() => updateSelectedRoomParticipantRole("MEMBER")}
-                                  type="button"
-                                >
-                                  Dejar participante
-                                </button>
-                                <button className="button danger" onClick={removeSelectedRoomParticipant} type="button">
-                                  Retirar de sala
-                                </button>
                               </div>
-                              <div className="admin-room-section">
-                                <h3>Picks de este usuario en la sala</h3>
-                                <div className="admin-room-list compact">
-                                  {selectedRoomUserPredictions.map((prediction) => (
-                                    <article key={prediction.id}>
-                                      <strong>{prediction.match.homeTeam} vs {prediction.match.awayTeam}</strong>
-                                      <span>
-                                        Pick {prediction.homeScore}-{prediction.awayScore} · {prediction.points} pts · {matchStatusLabel(prediction.match.status)}
-                                      </span>
-                                    </article>
-                                  ))}
-                                </div>
-                                {!selectedRoomUserPredictions.length ? <div className="empty">Este usuario todavía no tiene picks guardados en esta sala.</div> : null}
-                              </div>
+                            </details>
+                            <div className="admin-user-actions">
+                              <button
+                                className="button secondary"
+                                disabled={selectedRoomParticipant.isActive}
+                                onClick={() => updateSelectedRoomParticipantStatus(true)}
+                                type="button"
+                              >
+                                Activar usuario
+                              </button>
+                              <button
+                                className="button danger"
+                                disabled={!selectedRoomParticipant.isActive}
+                                onClick={() => updateSelectedRoomParticipantStatus(false)}
+                                type="button"
+                              >
+                                Desactivar usuario
+                              </button>
+                              <button
+                                className="button secondary"
+                                disabled={selectedRoomParticipant.role === "ADMIN"}
+                                onClick={() => updateSelectedRoomParticipantRole("ADMIN")}
+                                type="button"
+                              >
+                                Hacer admin de sala
+                              </button>
+                              <button
+                                className="button secondary"
+                                disabled={selectedRoomParticipant.role === "MEMBER"}
+                                onClick={() => updateSelectedRoomParticipantRole("MEMBER")}
+                                type="button"
+                              >
+                                Dejar participante
+                              </button>
+                              <button className="button danger" onClick={removeSelectedRoomParticipant} type="button">
+                                Retirar de sala
+                              </button>
                             </div>
-                          ) : (
-                            <div className="empty">Selecciona un participante para ver su tablero dentro de esta sala.</div>
-                          )}
-                        </section>
-
-                        <div className="admin-room-grid">
-                          <details className="admin-room-section admin-room-section-wide" open>
-                            <summary>Vista operativa de la sala</summary>
-                            <div className="room-panel-preview">
-                              <nav className="admin-nav room-nav preview" aria-label="Vista de sala">
-                                <span className="tab active">Picks</span>
-                                <span className="tab">Calendario</span>
-                                <span className="tab">Ranking</span>
-                                <span className="tab">Estadísticas</span>
-                                <span className="tab">Participantes</span>
-                              </nav>
-                              <div className="room-preview-grid">
-                                <article>
-                                  <span>Publicados</span>
-                                  <strong>{roomDashboard.matches.filter((match) => match.isPublished).length}</strong>
-                                </article>
-                                <article>
-                                  <span>En vivo</span>
-                                  <strong>{roomDashboard.summary.liveMatches}</strong>
-                                </article>
-                                <article>
-                                  <span>Picks</span>
-                                  <strong>{roomDashboard.summary.picks}</strong>
-                                </article>
-                              </div>
-                              <div className="admin-room-list admin-room-match-list compact-preview">
-                                {roomDashboard.matches.filter((match) => match.isPublished).slice(0, 4).map((match) => (
-                                  <article key={`preview-${match.id}`}>
-                                    <div className="admin-match-teams">
-                                      <span>{flagForTeam(match.homeTeam)} <strong>{match.homeTeam}</strong></span>
-                                      <em>vs</em>
-                                      <span>{flagForTeam(match.awayTeam)} <strong>{match.awayTeam}</strong></span>
-                                    </div>
-                                    <div className="admin-match-scoreline">
-                                      <span>{matchStatusLabel(match.status)}</span>
-                                      <strong>{match.homeScore !== null && match.awayScore !== null ? `${match.homeScore} - ${match.awayScore}` : "- -"}</strong>
-                                    </div>
+                            <div className="admin-room-section">
+                              <h3>Picks de este usuario en la sala</h3>
+                              <div className="admin-room-list compact">
+                                {selectedRoomUserPredictions.map((prediction) => (
+                                  <article key={prediction.id}>
+                                    <strong>{prediction.match.homeTeam} vs {prediction.match.awayTeam}</strong>
+                                    <span>
+                                      Pick {prediction.homeScore}-{prediction.awayScore} · {prediction.points} pts · {matchStatusLabel(prediction.match.status)}
+                                    </span>
                                   </article>
                                 ))}
-                                {!roomDashboard.matches.some((match) => match.isPublished) ? (
-                                  <div className="empty">Esta sala no tiene partidos publicados para sus participantes.</div>
-                                ) : null}
                               </div>
+                              {!selectedRoomUserPredictions.length ? <div className="empty">Este usuario todavía no tiene picks guardados en esta sala.</div> : null}
                             </div>
-                          </details>
-
-                          <details className="admin-room-section" open>
-                            <summary>Ranking de esta sala</summary>
-                            <div className="table-scroll">
-                              <table className="ranking">
-                                <thead>
-                                  <tr><th>#</th><th>Jugador</th><th>Picks</th><th>Exactos</th><th>Puntos</th></tr>
-                                </thead>
-                                <tbody>
-                                  {roomDashboard.ranking.map((entry, index) => (
-                                    <tr key={entry.id}>
-                                      <td>{index + 1}</td>
-                                      <td>{entry.name}</td>
-                                      <td>{entry.predictions}</td>
-                                      <td>{entry.exactScores}</td>
-                                      <td><strong>{entry.points}</strong></td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                            {!roomDashboard.ranking.length ? <div className="empty">No hay ranking para esta sala.</div> : null}
-                          </details>
-
-                          <details className="admin-room-section">
-                            <summary>Participantes</summary>
-                            <div className="admin-room-list">
-                              {roomDashboard.participants.map((participant) => (
-                                <article key={participant.id}>
-                                  <div>
-                                    <strong>{participant.name}</strong>
-                                    <span>{participant.phone} · {participant.role === "ADMIN" ? "Admin sala" : "Participante"} · {participant.isActive ? "Activo" : "Inactivo"}</span>
-                                  </div>
-                                  <button className="button secondary compact-button" onClick={() => setSelectedRoomUserId(participant.id)} type="button">
-                                    Ver usuario
-                                  </button>
-                                </article>
-                              ))}
-                            </div>
-                          </details>
-
-                          <details className="admin-room-section" open>
-                            <summary>Calendario de la sala</summary>
-                            <div className="admin-room-list admin-room-match-list">
-                              {roomDashboard.matches.map((match) => (
-                                <article key={match.id}>
-                                  <div className="admin-match-teams">
-                                    <span>{flagForTeam(match.homeTeam)} <strong>{match.homeTeam}</strong></span>
-                                    <em>vs</em>
-                                    <span>{flagForTeam(match.awayTeam)} <strong>{match.awayTeam}</strong></span>
-                                  </div>
-                                  <div className="admin-match-scoreline">
-                                    <span>{new Date(match.startsAt).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" })} · {matchStatusLabel(match.status)}</span>
-                                    <strong>{match.homeScore !== null && match.awayScore !== null ? `${match.homeScore} - ${match.awayScore}` : "- - -"}</strong>
-                                  </div>
-                                </article>
-                              ))}
-                            </div>
-                          </details>
-
-                          <details className="admin-room-section">
-                            <summary>Picks guardados</summary>
-                            <div className="admin-room-list compact">
-                              {roomDashboard.predictions.map((prediction) => (
-                                <article key={prediction.id}>
-                                  <strong>{prediction.user.name}: {prediction.homeScore}-{prediction.awayScore}</strong>
-                                  <span>{prediction.match.homeTeam} vs {prediction.match.awayTeam} · {prediction.points} pts</span>
-                                </article>
-                              ))}
-                            </div>
-                            {!roomDashboard.predictions.length ? <div className="empty">No hay picks guardados en esta sala.</div> : null}
-                          </details>
-
-                          <details className="admin-room-section admin-room-section-wide">
-                            <summary>Chat de la sala</summary>
-                            <div className="admin-room-list compact">
-                              {roomDashboard.messages.map((chatMessage) => (
-                                <article key={chatMessage.id}>
-                                  <strong>{chatMessage.user.name}</strong>
-                                  <span>{new Date(chatMessage.createdAt).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" })}</span>
-                                  <p>{chatMessage.body}</p>
-                                </article>
-                              ))}
-                            </div>
-                            {!roomDashboard.messages.length ? <div className="empty">No hay mensajes en esta sala.</div> : null}
-                          </details>
-                        </div>
-                      </>
+                          </div>
+                        ) : (
+                          <div className="empty">Selecciona un participante para ver su tablero dentro de esta sala.</div>
+                        )}
+                      </section>
                     ) : (
                       <div className="empty">Selecciona una sala para ver su tablero completo.</div>
                     )}
                   </section>
-                  <div className="room-selected-tools legacy-room-selected-tools">
-                    <details className="admin-room-accordion">
-                      <summary>Editar datos de la sala seleccionada</summary>
-                      <form className="form" onSubmit={updateRoomSettings}>
-                      <input name="settingsRoomId" type="hidden" value={selectedRoom.id} />
-                      <h3>Editar sala seleccionada</h3>
-                      <div className="form-row">
-                        <label htmlFor="selectedSettingsRoomName">Nombre de la sala</label>
-                        <input
-                          id="selectedSettingsRoomName"
-                          key={`${selectedRoom.id}-name`}
-                          name="settingsRoomName"
-                          defaultValue={selectedRoom.name}
-                          minLength={3}
-                          maxLength={80}
-                          required
-                        />
-                      </div>
-                      <div className="form-row">
-                        <label htmlFor="selectedSettingsOwnerId">Propietario</label>
-                        <select
-                          id="selectedSettingsOwnerId"
-                          key={`${selectedRoom.id}-owner`}
-                          name="settingsOwnerId"
-                          defaultValue={selectedRoom.ownerId}
-                        >
-                          {users.filter((item) => item.role === "USER").map((item) => (
-                            <option key={item.id} value={item.id}>{item.name} - {item.phone}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="inline-form">
-                        <div className="form-row">
-                          <label htmlFor="selectedSettingsStatus">Estado</label>
-                          <select
-                            id="selectedSettingsStatus"
-                            key={`${selectedRoom.id}-status`}
-                            name="settingsStatus"
-                            defaultValue={selectedRoom.status}
-                          >
-                            <option value="ACTIVE">Activa</option>
-                            <option value="SUSPENDED">Suspendida</option>
-                            <option value="EXPIRED">Vencida</option>
-                            <option value="CLOSED">Cerrada</option>
-                          </select>
-                        </div>
-                        <div className="form-row">
-                          <label htmlFor="selectedSettingsMaxParticipants">Límite</label>
-                          <input
-                            id="selectedSettingsMaxParticipants"
-                            key={`${selectedRoom.id}-limit`}
-                            name="settingsMaxParticipants"
-                            type="number"
-                            min={2}
-                            max={10000}
-                            defaultValue={selectedRoom.maxParticipants}
-                            required
-                          />
-                        </div>
-                        <div className="form-row">
-                          <label htmlFor="selectedSettingsExpiresAt">Vencimiento</label>
-                          <input
-                            id="selectedSettingsExpiresAt"
-                            key={`${selectedRoom.id}-expires`}
-                            name="settingsExpiresAt"
-                            type="datetime-local"
-                            defaultValue={datetimeLocalValue(selectedRoom.expiresAt)}
-                          />
-                        </div>
-                      </div>
-                      <button className="button primary" type="submit">Guardar sala seleccionada</button>
-                      </form>
-                    </details>
-
-                    <details className="admin-room-accordion">
-                      <summary>Asignar administrador de sala</summary>
-                      <form className="form" onSubmit={updateRoomAdmin}>
-                      <input name="adminRoomId" type="hidden" value={selectedRoom.id} />
-                      <h3>Administrador de sala</h3>
-                      <div className="form-row">
-                        <label htmlFor="selectedRoomAdminUserId">Participante</label>
-                        <select id="selectedRoomAdminUserId" name="roomAdminUserId" required>
-                          <option value="">Selecciona participante</option>
-                          {selectedRoomMemberships.map((membership) => (
-                            <option key={membership.user.id} value={membership.user.id}>
-                              {membership.user.name} · {membership.role === "ADMIN" ? "Admin actual" : "Participante"}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="form-row">
-                        <label htmlFor="selectedRoomRole">Rol</label>
-                        <select id="selectedRoomRole" name="roomRole" defaultValue="ADMIN" required>
-                          <option value="ADMIN">Administrador de sala</option>
-                          <option value="MEMBER">Participante</option>
-                        </select>
-                      </div>
-                      <button className="button primary" type="submit">Guardar rol</button>
-                      </form>
-                    </details>
-                  </div>
                 </>
               ) : (
-                <div className="empty">
-                  {adminRooms.length
-                    ? "Selecciona una sala para cargar su tablero. El super usuario no entra a ninguna sala automáticamente."
-                    : "Todavía no hay salas creadas."}
-                </div>
+                null
               )}
             </section>
 

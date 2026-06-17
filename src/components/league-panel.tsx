@@ -14,7 +14,7 @@ type Props = {
   initialLeagueId?: string | null;
   embedded?: boolean;
 };
-type RoomView = "home" | "picks" | "matches" | "facts" | "ranking" | "statistics" | "participants" | "chat";
+type RoomView = "home" | "picks" | "matches" | "facts" | "ranking" | "statistics" | "participants" | "chat" | "more";
 
 type LeagueMessage = {
   id: string;
@@ -585,10 +585,10 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
     ["matches", "Calendario"],
     ["picks", "Picks"],
     ["ranking", "Ranking"],
-    ["participants", canEditRoomInfo ? "Participantes" : "Perfil"],
-    ["chat", "Chat"],
     ["facts", "IA"],
+    ["more", "Más"],
   ];
+  const moreRoomViews: RoomView[] = ["participants", "chat", "more"];
 
   function shareRanking() {
     if (!selectedLeague || !userRanking) return;
@@ -620,7 +620,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
                 onChange={(event) => {
                   const league = leagues.find((item) => item.id === event.target.value) ?? null;
                   setSelectedLeague(league);
-                  setRoomView("participants");
+                  setRoomView("home");
                 }}
                 value=""
               >
@@ -767,13 +767,13 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
             <div className="room-mobile-cajons">
               {roomTabs.map(([view, label]) => (
                 <button
-                  className={`room-mobile-cajon ${roomView === view ? "active" : ""}`}
+                  className={`room-mobile-cajon ${roomView === view || (view === "more" && moreRoomViews.includes(roomView)) ? "active" : ""}`}
                   key={view}
                   onClick={() => setRoomView(view)}
                   type="button"
                 >
                   <strong>{label}</strong>
-                  <small>{roomView === view ? "Abierto" : "Tocar para abrir"}</small>
+                  <small>{roomView === view || (view === "more" && moreRoomViews.includes(roomView)) ? "Abierto" : "Tocar para abrir"}</small>
                 </button>
               ))}
             </div>
@@ -781,7 +781,12 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
 
           <nav className="admin-nav room-nav" aria-label="Secciones de la sala">
             {roomTabs.map(([view, label]) => (
-              <button className={`tab ${roomView === view ? "active" : ""}`} key={view} onClick={() => setRoomView(view)} type="button">
+              <button
+                className={`tab ${roomView === view || (view === "more" && moreRoomViews.includes(roomView)) ? "active" : ""}`}
+                key={view}
+                onClick={() => setRoomView(view)}
+                type="button"
+              >
                 {label}
               </button>
             ))}
@@ -1173,6 +1178,25 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
                 <summary>Ver datos curiosos de selecciones</summary>
                 <FormidableFacts />
               </details>
+            </section>
+          ) : null}
+
+          {roomView === "more" ? (
+            <section className="panel room-more-panel">
+              <div className="section-title">
+                <div>
+                  <span className="market-kicker">Más opciones</span>
+                  <h3>Herramientas secundarias</h3>
+                </div>
+              </div>
+              <div className="room-more-grid">
+                <button className="button secondary" onClick={() => setRoomView("participants")} type="button">
+                  {canEditRoomInfo ? "Participantes" : "Mi perfil"}
+                </button>
+                <button className="button secondary" onClick={() => setRoomView("chat")} type="button">
+                  Chat de la sala
+                </button>
+              </div>
             </section>
           ) : null}
 

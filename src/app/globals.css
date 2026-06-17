@@ -4087,7 +4087,11 @@ button {
 .admin-room-action-layout {
   display: grid;
   gap: 12px;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) minmax(240px, 0.6fr);
+  grid-template-columns: 1fr;
+}
+
+.admin-room-action-layout.compact-room-actions {
+  gap: 10px;
 }
 
 .admin-room-action-card {
@@ -4097,10 +4101,28 @@ button {
   min-height: auto;
 }
 
+.primary-room-actions {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(56, 189, 248, 0.11), transparent 32%),
+    rgba(5, 9, 18, 0.66);
+  border-color: rgba(93, 220, 255, 0.14);
+}
+
+.primary-room-actions h4 {
+  color: #fff;
+  font-size: 1rem;
+  margin: 2px 0 0;
+}
+
 .admin-room-action-grid {
   display: grid;
   gap: 9px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.compact-actions-grid {
+  align-items: center;
+  grid-template-columns: minmax(220px, 0.9fr) repeat(2, minmax(150px, 0.55fr));
 }
 
 .admin-room-action-grid .button {
@@ -4109,8 +4131,80 @@ button {
   white-space: normal;
 }
 
+.admin-room-options-panel,
 .admin-room-danger-zone {
-  border-color: rgba(248, 113, 113, 0.28);
+  background: rgba(5, 9, 18, 0.52);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 0;
+}
+
+.admin-room-options-panel > summary,
+.admin-room-danger-zone > summary {
+  color: #fff;
+  cursor: pointer;
+  font-weight: 900;
+  list-style: none;
+  padding: 13px 14px;
+}
+
+.admin-room-options-panel > summary::-webkit-details-marker,
+.admin-room-danger-zone > summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-room-options-panel > summary::after,
+.admin-room-danger-zone > summary::after {
+  color: var(--gold);
+  content: "+";
+  float: right;
+  font-weight: 900;
+}
+
+.admin-room-options-panel[open] > summary::after,
+.admin-room-danger-zone[open] > summary::after {
+  content: "-";
+}
+
+.admin-room-options-panel[open],
+.admin-room-danger-zone[open] {
+  padding-bottom: 12px;
+}
+
+.admin-room-options-panel > *:not(summary),
+.admin-room-danger-zone > *:not(summary) {
+  margin-left: 14px;
+  margin-right: 14px;
+}
+
+.admin-room-secondary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.admin-room-secondary-actions .button {
+  min-height: 36px;
+}
+
+.nested-admin-option {
+  background: rgba(2, 6, 14, 0.5);
+  border-color: rgba(93, 220, 255, 0.1);
+  margin-top: 8px;
+}
+
+.admin-room-danger-zone {
+  border-color: rgba(248, 113, 113, 0.2);
+}
+
+.admin-room-danger-zone > summary {
+  color: #fecaca;
+}
+
+.admin-room-danger-zone .button {
+  margin-top: 8px;
+  width: auto;
 }
 
 .admin-room-danger-zone .button {
@@ -4638,6 +4732,17 @@ button {
 
 .compact-facts-drawer {
   margin-top: 2px;
+}
+
+.room-more-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.room-more-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .admin-room-user-header {
@@ -5307,6 +5412,15 @@ button {
 	  .admin-room-action-grid,
 	  .competition-create .inline-form {
 	    grid-template-columns: 1fr;
+	  }
+
+	  .compact-actions-grid,
+	  .room-more-grid {
+	    grid-template-columns: repeat(2, minmax(0, 1fr));
+	  }
+
+	  .compact-actions-grid .button.primary {
+	    grid-column: 1 / -1;
 	  }
 
   .room-owner-actions {
