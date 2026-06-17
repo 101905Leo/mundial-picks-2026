@@ -2155,31 +2155,145 @@ button {
 
 .room-chat-fab {
   align-items: center;
-  background: linear-gradient(135deg, var(--premium-blue), var(--premium-cyan));
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.98), rgba(244, 189, 79, 0.96));
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 999px;
-  bottom: calc(20px + env(safe-area-inset-bottom));
+  bottom: calc(22px + env(safe-area-inset-bottom));
   box-shadow: 0 18px 38px rgba(0, 0, 0, 0.35);
   color: #06101e;
   cursor: pointer;
+  gap: 8px;
   display: inline-flex;
   font-weight: 900;
   justify-content: center;
   min-height: 48px;
-  padding: 0 18px;
+  padding: 0 16px;
   position: fixed;
   right: 20px;
-  z-index: 35;
+  z-index: 45;
 }
 
-.room-main-chat {
-  max-height: none;
-  position: static;
+.room-chat-fab small {
+  align-items: center;
+  background: rgba(3, 7, 18, 0.86);
+  border-radius: 999px;
+  color: var(--gold-soft);
+  display: inline-flex;
+  font-size: 0.72rem;
+  justify-content: center;
+  min-width: 22px;
+  padding: 3px 7px;
 }
 
-.room-main-chat .league-chat-messages {
-  max-height: 520px;
-  min-height: 260px;
+.room-chat-shell {
+  inset: 0;
+  pointer-events: none;
+  position: fixed;
+  z-index: 80;
+}
+
+.room-chat-backdrop {
+  background: rgba(2, 6, 23, 0.42);
+  border: 0;
+  cursor: pointer;
+  inset: 0;
+  pointer-events: auto;
+  position: absolute;
+}
+
+.room-chat-panel {
+  background:
+    linear-gradient(180deg, rgba(19, 31, 56, 0.98), rgba(7, 12, 24, 0.99)),
+    var(--panel);
+  border: 1px solid rgba(93, 220, 255, 0.18);
+  border-radius: 20px;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.54);
+  display: grid;
+  gap: 12px;
+  max-height: min(680px, calc(100dvh - 48px));
+  max-width: 420px;
+  padding: 16px;
+  pointer-events: auto;
+  position: absolute;
+  right: 20px;
+  width: min(420px, calc(100vw - 32px));
+}
+
+.room-chat-handle {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  display: none;
+  height: 4px;
+  justify-self: center;
+  width: 52px;
+}
+
+.room-chat-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+}
+
+.room-chat-header h3 {
+  color: #fff;
+  font-size: 1.2rem;
+  margin: 3px 0 4px;
+}
+
+.room-chat-header p {
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.room-chat-close {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 1.45rem;
+  height: 38px;
+  justify-content: center;
+  line-height: 1;
+  width: 38px;
+}
+
+.room-chat-messages {
+  max-height: min(430px, 48dvh);
+  min-height: 220px;
+}
+
+.league-chat-message.own-message {
+  border-left-color: var(--gold);
+  margin-left: 22px;
+}
+
+.room-chat-empty {
+  align-self: center;
+  justify-self: center;
+  max-width: 280px;
+  text-align: center;
+}
+
+.room-chat-form {
+  align-items: center;
+  background: rgba(4, 8, 16, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  gap: 8px;
+  padding: 8px;
+}
+
+.room-chat-form input {
+  border-radius: 12px;
+  min-height: 42px;
 }
 
 .room-config-drawer {
@@ -6251,15 +6365,6 @@ button {
     flex-direction: column;
   }
 
-  .room-main-chat {
-    max-height: none;
-    position: static;
-  }
-
-  .room-main-chat .league-chat-messages {
-    max-height: 420px;
-  }
-
   .statistics-header {
     align-items: flex-start;
     flex-direction: column;
@@ -6846,6 +6951,39 @@ button {
     bottom: calc(72px + env(safe-area-inset-bottom));
     min-height: 44px;
     right: 12px;
+  }
+
+  .room-chat-panel {
+    border-radius: 22px 22px 0 0;
+    bottom: 0;
+    left: 0;
+    max-height: min(78dvh, 680px);
+    max-width: none;
+    padding: 10px 14px calc(14px + env(safe-area-inset-bottom));
+    right: 0;
+    width: 100%;
+  }
+
+  .room-chat-handle {
+    display: block;
+  }
+
+  .room-chat-header h3 {
+    font-size: 1.1rem;
+  }
+
+  .room-chat-messages {
+    max-height: min(44dvh, 420px);
+    min-height: 230px;
+  }
+
+  .room-chat-form {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .room-chat-form .button {
+    min-height: 42px;
+    padding: 0 12px;
   }
 
   .market-columns {

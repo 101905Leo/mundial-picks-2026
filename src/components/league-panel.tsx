@@ -64,6 +64,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
   const [groupInfo, setGroupInfo] = useState<GroupInfo | null>(null);
   const [message, setMessage] = useState("");
   const [syncError, setSyncError] = useState("");
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const [calendarFilter, setCalendarFilter] = useState<"ALL" | "TODAY" | "PENDING" | "LIVE" | "FINISHED">("ALL");
   const [picksFilter, setPicksFilter] = useState<"PENDING" | "LIVE" | "FINISHED" | "ALL">("PENDING");
@@ -637,7 +638,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
     ["facts", "IA"],
     ["more", "Más"],
   ];
-  const moreRoomViews: RoomView[] = ["participants", "chat", "more"];
+  const moreRoomViews: RoomView[] = ["participants", "more"];
 
   function shareRanking() {
     if (!selectedLeague || !userRanking) return;
@@ -1288,7 +1289,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
                 <button className="button secondary" onClick={() => setRoomView("participants")} type="button">
                   Participantes
                 </button>
-                <button className="button secondary" onClick={() => setRoomView("chat")} type="button">
+                <button className="button secondary" onClick={() => setIsChatOpen(true)} type="button">
                   Chat de la sala
                 </button>
                 <button className="button secondary" onClick={shareInvitation} type="button">
@@ -1391,28 +1392,6 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
             </div>
           ) : null}
 
-          {roomView === "chat" ? (
-            <section className="panel league-chat room-main-chat">
-              <div className="section-title"><div><span className="market-kicker">Chat público</span><h3>Conversación de la sala</h3></div></div>
-              <div className="league-chat-messages" aria-live="polite">
-                {chatMessages.map((chatMessage) => (
-                  <article className="league-chat-message" key={chatMessage.id}>
-                    <div>
-                      <strong>{chatMessage.user.name}</strong>
-                      <time>{new Date(chatMessage.createdAt).toLocaleString("es", { dateStyle: "short", timeStyle: "short" })}</time>
-                    </div>
-                    {chatMessage.body ? <p>{chatMessage.body}</p> : null}
-                  </article>
-                ))}
-                {!chatMessages.length ? <div className="empty">Todavía no hay mensajes.</div> : null}
-              </div>
-              <form className="league-chat-form" onSubmit={sendChatMessage}>
-                <input maxLength={500} name="message" placeholder="Escribe un mensaje..." required />
-                <button className="button primary" type="submit">Enviar</button>
-              </form>
-            </section>
-          ) : null}
-
           {roomView === "participants" ? (
             <div className="league-room-grid">
               <section className="panel">
@@ -1446,10 +1425,43 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
           ) : null}
             </div>
           </div>
-          {roomView !== "chat" ? (
-            <button className="room-chat-fab" onClick={() => setRoomView("chat")} type="button" aria-label="Abrir chat de sala">
-              Chat
-            </button>
+          <button className="room-chat-fab" onClick={() => setIsChatOpen(true)} type="button" aria-label="Abrir chat de sala">
+            <span>Chat</span>
+            {chatMessages.length ? <small>{chatMessages.length}</small> : null}
+          </button>
+          {isChatOpen ? (
+            <div className="room-chat-shell" role="dialog" aria-modal="true" aria-label="Chat de sala">
+              <button className="room-chat-backdrop" onClick={() => setIsChatOpen(false)} type="button" aria-label="Cerrar chat" />
+              <section className="league-chat room-chat-panel">
+                <div className="room-chat-handle" aria-hidden="true" />
+                <header className="room-chat-header">
+                  <div>
+                    <span className="market-kicker">Chat de sala</span>
+                    <h3>Chat de sala</h3>
+                    <p>Conversa con los participantes de esta quiniela.</p>
+                  </div>
+                  <button className="room-chat-close" onClick={() => setIsChatOpen(false)} type="button" aria-label="Cerrar chat">
+                    ×
+                  </button>
+                </header>
+                <div className="league-chat-messages room-chat-messages" aria-live="polite">
+                  {chatMessages.map((chatMessage) => (
+                    <article className={`league-chat-message ${chatMessage.user.id === user.id ? "own-message" : ""}`} key={chatMessage.id}>
+                      <div>
+                        <strong>{chatMessage.user.name}</strong>
+                        <time>{new Date(chatMessage.createdAt).toLocaleString("es", { dateStyle: "short", timeStyle: "short" })}</time>
+                      </div>
+                      {chatMessage.body ? <p>{chatMessage.body}</p> : null}
+                    </article>
+                  ))}
+                  {!chatMessages.length ? <div className="empty room-chat-empty">Aún no hay mensajes en esta sala. Sé el primero en escribir.</div> : null}
+                </div>
+                <form className="league-chat-form room-chat-form" onSubmit={sendChatMessage}>
+                  <input maxLength={500} name="message" placeholder="Escribe un mensaje..." required />
+                  <button className="button primary compact-button" type="submit">Enviar</button>
+                </form>
+              </section>
+            </div>
           ) : null}
           </>
           )}
