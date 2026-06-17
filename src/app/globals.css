@@ -2173,6 +2173,10 @@ button {
   z-index: 45;
 }
 
+.room-chat-fab.has-activity {
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.35), 0 0 0 4px rgba(244, 189, 79, 0.14);
+}
+
 .room-chat-fab small {
   align-items: center;
   background: rgba(3, 7, 18, 0.86);
@@ -2183,6 +2187,35 @@ button {
   justify-content: center;
   min-width: 22px;
   padding: 3px 7px;
+}
+
+.room-chat-badge {
+  box-shadow: 0 0 0 2px rgba(244, 189, 79, 0.28);
+}
+
+.room-more-chat-button {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.room-more-badge {
+  align-items: center;
+  background: #ef4444;
+  border-radius: 999px;
+  color: #fff;
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 900;
+  justify-content: center;
+  line-height: 1;
+  min-width: 20px;
+  padding: 4px 6px;
+}
+
+.room-more-chat-button.has-activity {
+  border-color: rgba(244, 189, 79, 0.38);
 }
 
 .room-chat-shell {
@@ -5506,6 +5539,17 @@ button {
   padding: 14px;
 }
 
+.room-podium-grid article.podium-rank-1 {
+  background: linear-gradient(145deg, rgba(244, 189, 79, 0.16), rgba(8, 12, 22, 0.82));
+  border-color: rgba(244, 189, 79, 0.48);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.24);
+}
+
+.room-podium-grid article.podium-rank-2,
+.room-podium-grid article.podium-rank-3 {
+  border-color: rgba(56, 189, 248, 0.24);
+}
+
 .room-podium-grid article.current-user,
 .room-ranking-list article.current-user {
   border-color: rgba(244, 189, 79, 0.55);
@@ -5550,6 +5594,11 @@ button {
   display: grid;
   gap: 8px;
   grid-template-columns: 54px minmax(0, 1fr) auto auto;
+}
+
+.room-ranking-list article:first-child {
+  background: rgba(244, 189, 79, 0.09);
+  border-color: rgba(244, 189, 79, 0.34);
 }
 
 .smart-preview-board {
@@ -6914,11 +6963,13 @@ button {
   }
 
   .room-ranking-list article {
-    grid-template-columns: 42px minmax(0, 1fr) auto;
+    align-items: center;
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    row-gap: 4px;
   }
 
   .room-ranking-list article small {
-    grid-column: 2;
+    grid-column: 2 / 4;
   }
 
   .smart-outlook-grid {
@@ -6997,6 +7048,15 @@ button {
     bottom: calc(72px + env(safe-area-inset-bottom));
     min-height: 44px;
     right: 12px;
+  }
+
+  .room-chat-fab.has-activity {
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.34), 0 0 0 3px rgba(244, 189, 79, 0.14);
+  }
+
+  .room-more-chat-button {
+    justify-content: space-between;
+    width: 100%;
   }
 
   .room-chat-panel {

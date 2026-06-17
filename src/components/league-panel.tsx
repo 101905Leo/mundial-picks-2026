@@ -65,6 +65,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
   const [message, setMessage] = useState("");
   const [syncError, setSyncError] = useState("");
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [lastSeenChatMessageId, setLastSeenChatMessageId] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
   const [calendarFilter, setCalendarFilter] = useState<"ALL" | "TODAY" | "PENDING" | "LIVE" | "FINISHED">("ALL");
   const [picksFilter, setPicksFilter] = useState<"PENDING" | "LIVE" | "FINISHED" | "ALL">("PENDING");
@@ -220,6 +221,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
   useEffect(() => {
     if (!selectedLeague) {
       setChatMessages([]);
+      setLastSeenChatMessageId(null);
       return;
     }
 
@@ -238,6 +240,14 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
       window.clearInterval(interval);
     };
   }, [selectedLeague?.id]);
+
+  const latestChatMessage = chatMessages[chatMessages.length - 1] ?? null;
+
+  useEffect(() => {
+    if (isChatOpen && latestChatMessage) {
+      setLastSeenChatMessageId(latestChatMessage.id);
+    }
+  }, [isChatOpen, latestChatMessage?.id]);
 
   async function joinLeague(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -556,7 +566,6 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
     .slice(0, 3);
   const pendingPickCount = sortedMatches.filter((match) => match.status !== "FINISHED" && !(match.predictions ?? []).length).length;
   const rankingTopThree = ranking.slice(0, 3);
-  const rankingRest = ranking.slice(3);
   const livePredictionMatchIds = new Set(liveMatches.map((match) => match.id));
   const liveRoomPredictions = predictions.filter((prediction) => livePredictionMatchIds.has(prediction.match.id));
   const previewPredictions = (liveRoomPredictions.length ? liveRoomPredictions : predictions).slice(0, 5);
@@ -593,6 +602,16 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
         : "La sala debe estar activa para guardar picks.";
   const roomFinishedMatches = matches.filter((match) => match.status === "FINISHED").length;
   const roomLiveMatches = matches.filter((match) => match.status === "LIVE").length;
+  const lastSeenChatIndex = lastSeenChatMessageId
+    ? chatMessages.findIndex((chatMessage) => chatMessage.id === lastSeenChatMessageId)
+    : -1;
+  const chatActivityCount = isChatOpen
+    ? 0
+    : lastSeenChatIndex >= 0
+      ? Math.max(0, chatMessages.length - lastSeenChatIndex - 1)
+      : chatMessages.length;
+  const chatActivityLabel = chatActivityCount > 9 ? "9+" : String(chatActivityCount);
+  const hasChatActivity = chatActivityCount > 0;
   const intelligenceMatch = nextRoomMatch ?? lastFinishedMatch ?? sortedMatches[0] ?? null;
   const intelligenceHasEnoughInfo = Boolean(intelligenceMatch);
   const intelligenceScore =
@@ -1289,8 +1308,9 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
                 <button className="button secondary" onClick={() => setRoomView("participants")} type="button">
                   Participantes
                 </button>
-                <button className="button secondary" onClick={() => setIsChatOpen(true)} type="button">
-                  Chat de la sala
+                <button className={`button secondary room-more-chat-button ${hasChatActivity ? "has-activity" : ""}`} onClick={() => setIsChatOpen(true)} type="button">
+                  <span>Chat de la sala</span>
+                  {hasChatActivity ? <small className="room-more-badge">{chatActivityLabel}</small> : null}
                 </button>
                 <button className="button secondary" onClick={shareInvitation} type="button">
                   Compartir invitación
@@ -1350,8 +1370,8 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
                 </div>
                 <div className="room-podium-grid">
                   {rankingTopThree.map((entry, index) => (
-                    <article className={entry.id === user.id ? "current-user" : ""} key={entry.id}>
-                      <span>#{index + 1}</span>
+                    <article className={`${entry.id === user.id ? "current-user" : ""} podium-rank-${index + 1}`} key={entry.id}>
+                      <span>{index === 0 ? "🏆 #1" : `#${index + 1}`}</span>
                       <strong>{entry.name}</strong>
                       <em>{entry.points} pts</em>
                       <small>{entry.predictions} picks</small>
@@ -1366,15 +1386,15 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
                   <div><span className="market-kicker">Lista completa</span><h3>Todos los participantes</h3></div>
                 </div>
                 <div className="room-ranking-list">
-                  {rankingRest.map((entry, index) => (
+                  {ranking.map((entry, index) => (
                     <article className={entry.id === user.id ? "current-user" : ""} key={entry.id}>
-                      <span>#{index + 4}</span>
+                      <span>{index === 0 ? "🏆 #1" : `#${index + 1}`}</span>
                       <strong>{entry.name}</strong>
                       <small>{entry.predictions} picks</small>
                       <em>{entry.points} pts</em>
                     </article>
                   ))}
-                  {!rankingRest.length && rankingTopThree.length ? <div className="empty">Solo hay top 3 por ahora.</div> : null}
+                  {!ranking.length ? <div className="empty">El ranking completo aparecerá cuando haya participantes.</div> : null}
                 </div>
               </section>
             </div>
@@ -1425,9 +1445,9 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
           ) : null}
             </div>
           </div>
-          <button className="room-chat-fab" onClick={() => setIsChatOpen(true)} type="button" aria-label="Abrir chat de sala">
+          <button className={`room-chat-fab ${hasChatActivity ? "has-activity" : ""}`} onClick={() => setIsChatOpen(true)} type="button" aria-label="Abrir chat de sala">
             <span>Chat</span>
-            {chatMessages.length ? <small>{chatMessages.length}</small> : null}
+            {hasChatActivity ? <small className="room-chat-badge">{chatActivityLabel}</small> : null}
           </button>
           {isChatOpen ? (
             <div className="room-chat-shell" role="dialog" aria-modal="true" aria-label="Chat de sala">
