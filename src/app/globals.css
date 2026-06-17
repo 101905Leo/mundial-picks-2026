@@ -281,6 +281,212 @@ button {
   padding: 20px;
 }
 
+.public-landing {
+  display: grid;
+  gap: 18px;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.landing-create-panel {
+  align-items: center;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(56, 189, 248, 0.2), transparent 34%),
+    linear-gradient(135deg, rgba(47, 107, 255, 0.22), rgba(244, 189, 79, 0.12)),
+    linear-gradient(180deg, rgba(18, 24, 37, 0.98), rgba(7, 10, 17, 0.98));
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.landing-create-panel h2,
+.landing-access-copy h2,
+.landing-room-ready h2,
+.landing-plans h2 {
+  color: #fff;
+  font-size: clamp(1.55rem, 3vw, 2.35rem);
+  line-height: 1.05;
+  margin: 6px 0 10px;
+}
+
+.landing-create-panel p,
+.landing-access-copy p,
+.landing-room-ready p {
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0;
+  max-width: 720px;
+}
+
+.landing-create-actions {
+  display: grid;
+  gap: 10px;
+  min-width: 190px;
+}
+
+.compact-title {
+  align-items: start;
+  display: grid;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.compact-title h2 {
+  margin: 0;
+}
+
+.landing-step-grid,
+.landing-plan-strip,
+.landing-benefits,
+.room-ready-list {
+  display: grid;
+  gap: 10px;
+}
+
+.landing-step-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.landing-step-grid article,
+.landing-plan-strip article,
+.landing-benefits span,
+.room-ready-list span {
+  background: rgba(5, 7, 13, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+}
+
+.landing-step-grid article {
+  display: grid;
+  gap: 8px;
+  min-height: 110px;
+  padding: 16px;
+}
+
+.landing-step-grid strong {
+  align-items: center;
+  background: rgba(244, 189, 79, 0.14);
+  border: 1px solid rgba(244, 189, 79, 0.26);
+  border-radius: 999px;
+  color: var(--gold-soft);
+  display: inline-flex;
+  height: 34px;
+  justify-content: center;
+  width: 34px;
+}
+
+.landing-step-grid span,
+.landing-plan-strip strong {
+  color: #fff;
+  font-weight: 900;
+}
+
+.landing-benefits {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 16px 0;
+}
+
+.landing-benefits span,
+.room-ready-list span {
+  color: #dce7fb;
+  font-weight: 800;
+  padding: 12px;
+}
+
+.landing-plan-strip {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 16px;
+}
+
+.landing-plan-strip article {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+}
+
+.landing-plan-strip span {
+  color: var(--muted);
+}
+
+.landing-access-panel {
+  align-items: start;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 0.9fr) minmax(320px, 420px);
+}
+
+.landing-access-panel > .panel {
+  margin: 0;
+}
+
+.landing-access-copy {
+  display: grid;
+  gap: 10px;
+}
+
+.landing-room-ready {
+  align-items: center;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.7fr);
+}
+
+.room-ready-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.landing-score-card {
+  display: grid;
+  gap: 12px;
+}
+
+.compact-score-rules {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.compact-score-rules article {
+  min-height: 104px;
+}
+
+.landing-footer {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: center;
+  padding: 16px 0 4px;
+}
+
+.landing-footer a {
+  color: var(--gold-soft);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.floating-contact {
+  align-items: center;
+  background: var(--premium-gradient);
+  border: 1px solid rgba(255, 231, 168, 0.42);
+  border-radius: 999px;
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.38);
+  color: #07111f;
+  display: inline-flex;
+  font-weight: 900;
+  min-height: 46px;
+  padding: 0 18px;
+  position: fixed;
+  right: 18px;
+  text-decoration: none;
+  z-index: 30;
+}
+
 .landing-intro {
   background:
     linear-gradient(135deg, rgba(47, 107, 255, 0.28), rgba(226, 30, 55, 0.14)),
@@ -1068,6 +1274,12 @@ button {
   background: linear-gradient(180deg, rgba(31, 38, 55, 0.94), rgba(18, 23, 35, 0.94));
   border-color: rgba(255, 255, 255, 0.12);
   color: #fff;
+}
+
+.button.ghost {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #e7edf8;
 }
 
 .button.danger {
@@ -5327,6 +5539,44 @@ button {
     flex-direction: column;
   }
 
+  .topbar {
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 10px 12px;
+  }
+
+  .top-actions {
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  .brand {
+    min-width: 0;
+  }
+
+  .brand-logo-image {
+    height: 48px;
+    width: 32px;
+  }
+
+  .brand strong {
+    font-size: 0.95rem;
+  }
+
+  .brand span {
+    font-size: 0.76rem;
+  }
+
+  .top-actions .button {
+    min-height: 34px;
+    padding: 0 10px;
+  }
+
   .topbar .countdown-panel.compact {
     display: none;
   }
@@ -5356,6 +5606,13 @@ button {
 	  }
 
   .landing-grid,
+  .landing-create-panel,
+  .landing-step-grid,
+  .landing-benefits,
+  .landing-plan-strip,
+  .landing-access-panel,
+  .landing-room-ready,
+  .room-ready-list,
   .landing-stats,
   .admin-overview,
   .score-rules,
@@ -5530,25 +5787,76 @@ button {
   }
 
   .hero-title-group {
-    align-items: flex-start;
-    flex-direction: column;
+    align-items: center;
+    gap: 12px;
   }
 
   .hero-logo-image {
-    height: 132px;
-    width: 82px;
+    height: 92px;
+    width: 58px;
   }
 
   .hero-band {
-    display: none;
+    align-items: end;
+    background-position: right 28%;
+    min-height: 245px;
+    padding: 18px 14px 22px;
   }
 
-  .landing-side {
-    order: -1;
+  .hero-band h1 {
+    font-size: clamp(1.75rem, 9vw, 2.55rem);
+    margin-bottom: 8px;
   }
 
-  .landing-main {
+  .hero-band p {
+    font-size: 0.98rem;
+    line-height: 1.35;
+  }
+
+  .hero-actions,
+  .landing-create-actions,
+  .landing-access-copy .landing-cta-row {
+    width: 100%;
+  }
+
+  .hero-actions .button,
+  .landing-create-actions .button,
+  .landing-access-copy .button {
+    flex: 1 1 140px;
+  }
+
+  .public-landing {
+    gap: 14px;
+  }
+
+  .landing-card {
+    padding: 16px;
+  }
+
+  .landing-create-panel h2,
+  .landing-access-copy h2,
+  .landing-room-ready h2,
+  .landing-plans h2 {
+    font-size: clamp(1.35rem, 7vw, 2rem);
+  }
+
+  .landing-access-panel > .panel {
+    order: 2;
+  }
+
+  .landing-access-copy {
     order: 1;
+  }
+
+  .compact-score-rules article {
+    min-height: 86px;
+  }
+
+  .floating-contact {
+    bottom: calc(14px + env(safe-area-inset-bottom));
+    min-height: 42px;
+    padding: 0 14px;
+    right: 12px;
   }
 
   .app-shell.action-view .hero-band {

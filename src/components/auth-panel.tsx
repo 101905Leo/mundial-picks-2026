@@ -4,14 +4,19 @@ import { FormEvent, useEffect, useState } from "react";
 import type { User } from "@/components/types";
 
 type Props = {
+  initialMode?: "login" | "register";
   onAuth: (user: User, options?: { joinedLeague?: boolean }) => void;
 };
 
-export function AuthPanel({ onAuth }: Props) {
-  const [mode, setMode] = useState<"login" | "register">("login");
+export function AuthPanel({ initialMode = "login", onAuth }: Props) {
+  const [mode, setMode] = useState<"login" | "register">(initialMode);
   const [message, setMessage] = useState("");
   const [phone, setPhone] = useState("");
   const [rememberLogin, setRememberLogin] = useState(false);
+
+  useEffect(() => {
+    setMode(initialMode);
+  }, [initialMode]);
 
   useEffect(() => {
     const savedPhone = window.localStorage.getItem("mundial_picks_phone") ?? "";
