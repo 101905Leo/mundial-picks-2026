@@ -5078,6 +5078,320 @@ button {
   outline: none;
 }
 
+.room-screen {
+  display: grid;
+  gap: 14px;
+}
+
+.room-screen-header {
+  align-items: end;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.room-screen-header h3,
+.room-screen-title h3 {
+  color: #fff;
+  font-size: clamp(1.2rem, 2vw, 1.65rem);
+  margin: 2px 0 4px;
+}
+
+.room-screen-header p,
+.room-screen-title p {
+  color: var(--muted);
+  margin: 0;
+}
+
+.room-filter-pills {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.room-filter-pills button {
+  background: rgba(8, 14, 28, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  color: var(--muted);
+  cursor: pointer;
+  flex: 0 0 auto;
+  font-weight: 900;
+  min-height: 38px;
+  padding: 8px 12px;
+}
+
+.room-filter-pills button.active {
+  background: linear-gradient(135deg, rgba(35, 111, 255, 0.95), rgba(244, 189, 79, 0.92));
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #06101e;
+}
+
+.room-admin-calendar-tools {
+  background: rgba(5, 9, 18, 0.66);
+}
+
+.room-admin-tool-grid {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.compact-private-league {
+  background: rgba(2, 6, 14, 0.42);
+}
+
+.room-calendar-list,
+.room-calendar-day {
+  display: grid;
+  gap: 12px;
+}
+
+.room-calendar-day-header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.room-calendar-day-header h4 {
+  color: #fff;
+  margin: 0;
+}
+
+.room-calendar-day-header span {
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  padding: 6px 10px;
+}
+
+.room-calendar-card {
+  align-items: center;
+  background: rgba(8, 12, 22, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(240px, 1.2fr) minmax(160px, 0.9fr) minmax(130px, 0.45fr) auto;
+  padding: 14px;
+}
+
+.room-calendar-card.live {
+  border-color: rgba(74, 222, 128, 0.28);
+}
+
+.room-calendar-card.finished {
+  opacity: 0.88;
+}
+
+.room-calendar-teams {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: auto minmax(0, 1fr) auto auto minmax(0, 1fr);
+}
+
+.room-calendar-teams span {
+  font-size: 1.2rem;
+}
+
+.room-calendar-teams strong {
+  color: #fff;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.room-calendar-teams em {
+  color: var(--muted);
+  font-style: normal;
+  font-weight: 900;
+}
+
+.room-calendar-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.room-calendar-meta span {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 5px 8px;
+}
+
+.room-calendar-result {
+  display: grid;
+  gap: 2px;
+  justify-items: end;
+}
+
+.room-calendar-result strong {
+  color: var(--gold-soft);
+  font-size: 1.2rem;
+}
+
+.room-calendar-result span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.room-calendar-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.compact-close-form {
+  grid-template-columns: 42px 42px auto;
+}
+
+.room-picks-summary,
+.room-ranking-hero {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.room-picks-summary article,
+.room-my-ranking-card,
+.room-group-mini {
+  border-radius: 14px;
+}
+
+.room-picks-summary span,
+.room-my-ranking-card span,
+.room-group-mini span {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.room-picks-summary strong,
+.room-my-ranking-card strong {
+  color: var(--gold-soft);
+  display: block;
+  font-size: clamp(1.6rem, 4vw, 2.35rem);
+  margin-top: 4px;
+}
+
+.compact-room-picks {
+  padding: 0;
+}
+
+.room-picks-list {
+  gap: 10px;
+}
+
+.compact-history-panel {
+  background: rgba(5, 9, 18, 0.58);
+}
+
+.room-my-ranking-card {
+  display: grid;
+  gap: 4px;
+  grid-column: span 1;
+}
+
+.room-my-ranking-card p,
+.room-my-ranking-card small {
+  color: var(--muted);
+  margin: 0;
+}
+
+.room-group-mini {
+  display: grid;
+  gap: 12px;
+  grid-column: span 2;
+}
+
+.room-group-mini > div {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.room-group-mini strong {
+  color: #fff;
+  display: block;
+  font-size: 1.4rem;
+}
+
+.room-group-mini small {
+  color: var(--muted);
+}
+
+.room-podium-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.room-podium-grid article,
+.room-ranking-list article {
+  background: rgba(8, 12, 22, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.room-podium-grid article.current-user,
+.room-ranking-list article.current-user {
+  border-color: rgba(244, 189, 79, 0.55);
+  box-shadow: 0 0 0 1px rgba(244, 189, 79, 0.12);
+}
+
+.room-podium-grid span,
+.room-ranking-list span {
+  color: var(--gold);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.room-podium-grid strong,
+.room-ranking-list strong {
+  color: #fff;
+  display: block;
+  margin-top: 4px;
+}
+
+.room-podium-grid em,
+.room-ranking-list em {
+  color: var(--gold-soft);
+  display: block;
+  font-style: normal;
+  font-weight: 900;
+  margin-top: 8px;
+}
+
+.room-podium-grid small,
+.room-ranking-list small {
+  color: var(--muted);
+}
+
+.room-ranking-list {
+  display: grid;
+  gap: 8px;
+}
+
+.room-ranking-list article {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 54px minmax(0, 1fr) auto auto;
+}
+
 .smart-preview-board {
   display: grid;
   gap: 14px;
@@ -5134,8 +5448,46 @@ button {
   padding: 0;
 }
 
+.smart-factor-list li {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.smart-factor-list span {
+  color: var(--muted);
+}
+
+.smart-factor-list strong {
+  color: #fff;
+}
+
 .smart-preview-card.accent {
   border-color: rgba(244, 189, 79, 0.22);
+}
+
+.smart-outlook-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.smart-outlook-grid span {
+  background: rgba(2, 6, 14, 0.54);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+}
+
+.smart-outlook-grid small {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.smart-outlook-grid strong {
+  color: var(--gold-soft);
 }
 
 .smart-preview-note {
@@ -6348,6 +6700,78 @@ button {
 
   .room-home-summary strong {
     font-size: 1.18rem;
+  }
+
+  .room-screen {
+    gap: 10px;
+  }
+
+  .room-screen-header {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+
+  .room-filter-pills {
+    justify-content: flex-start;
+    margin-inline: -2px;
+    padding-bottom: 4px;
+  }
+
+  .room-filter-pills button {
+    min-height: 36px;
+    padding: 8px 11px;
+  }
+
+  .room-calendar-card {
+    border-radius: 13px;
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+
+  .room-calendar-teams {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .room-calendar-teams em {
+    display: none;
+  }
+
+  .room-calendar-result {
+    justify-items: start;
+  }
+
+  .room-calendar-actions {
+    align-items: stretch;
+    display: grid;
+    grid-template-columns: 1fr;
+    justify-content: stretch;
+  }
+
+  .room-picks-summary,
+  .room-ranking-hero,
+  .room-podium-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .room-group-mini {
+    grid-column: auto;
+  }
+
+  .room-group-mini > div {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .room-ranking-list article {
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+  }
+
+  .room-ranking-list article small {
+    grid-column: 2;
+  }
+
+  .smart-outlook-grid {
+    grid-template-columns: 1fr;
   }
 
   .smart-preview-layout {

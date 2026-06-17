@@ -2,7 +2,6 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { MatchCard } from "@/components/match-card";
-import { RankingTable } from "@/components/ranking-table";
 import { FormidableFacts } from "@/components/formidable-facts";
 import { StatisticsPanel } from "@/components/statistics-panel";
 import type { Competition, League, LeagueMember, Match, RankingEntry, User } from "@/components/types";
@@ -46,16 +45,6 @@ type RoomPrediction = {
   };
 };
 
-type RoomPredictionMatch = {
-  id: string;
-  homeTeam: string;
-  awayTeam: string;
-  startsAt: string;
-  status: "SCHEDULED" | "LIVE" | "FINISHED";
-  homeScore: number | null;
-  awayScore: number | null;
-};
-
 function isActiveLeague(league: League) {
   const expired = Boolean(league.expiresAt && new Date(league.expiresAt) <= new Date());
   return (league.status ?? "ACTIVE") === "ACTIVE" && !expired;
@@ -72,11 +61,12 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
   const [members, setMembers] = useState<LeagueMember[]>([]);
   const [chatMessages, setChatMessages] = useState<LeagueMessage[]>([]);
   const [predictions, setPredictions] = useState<RoomPrediction[]>([]);
-  const [predictionMatches, setPredictionMatches] = useState<RoomPredictionMatch[]>([]);
   const [groupInfo, setGroupInfo] = useState<GroupInfo | null>(null);
   const [message, setMessage] = useState("");
   const [syncError, setSyncError] = useState("");
   const [now, setNow] = useState(() => new Date());
+  const [calendarFilter, setCalendarFilter] = useState<"ALL" | "TODAY" | "PENDING" | "LIVE" | "FINISHED">("ALL");
+  const [picksFilter, setPicksFilter] = useState<"PENDING" | "LIVE" | "FINISHED" | "ALL">("PENDING");
   const isSuperAdmin = user.role === "ADMIN";
   const isOwner = selectedLeague?.ownerId === user.id;
   const roomMembership = selectedLeague?.memberships?.find((membership) => membership.userId === user.id);
@@ -153,11 +143,9 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
 
       if (predictionsResult.status === "fulfilled") {
         setPredictions(predictionsResult.value.predictions ?? []);
-        setPredictionMatches(predictionsResult.value.matches ?? []);
       } else {
         syncErrors.push(predictionsResult.reason instanceof Error ? predictionsResult.reason.message : "No se pudieron cargar los picks en vivo.");
         setPredictions([]);
-        setPredictionMatches([]);
       }
 
       if (matchesResult.status === "fulfilled") {
@@ -496,7 +484,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
     minutes: Math.floor((nextDiff % 3_600_000) / 60_000),
     seconds: Math.floor((nextDiff % 60_000) / 1000),
   };
-  const roomMatchesByDay = sortedMatches.reduce<Array<{ key: string; label: string; matches: Match[] }>>((days, match) => {
+  const buildMatchDays = (items: Match[]) => items.reduce<Array<{ key: string; label: string; matches: Match[] }>>((days, match) => {
     const startsAt = new Date(match.startsAt);
     const key = startsAt.toISOString().slice(0, 10);
     const todayKey = now.toISOString().slice(0, 10);
@@ -519,6 +507,26 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
 
     return days;
   }, []);
+  const todayKey = now.toISOString().slice(0, 10);
+  const calendarSourceMatches = canEditRoomInfo
+    ? [...managedMatches].sort((first, second) => new Date(first.startsAt).getTime() - new Date(second.startsAt).getTime())
+    : sortedMatches;
+  const filteredCalendarMatches = calendarSourceMatches.filter((match) => {
+    const matchDayKey = new Date(match.startsAt).toISOString().slice(0, 10);
+    if (calendarFilter === "TODAY") return matchDayKey === todayKey;
+    if (calendarFilter === "PENDING") return match.status === "SCHEDULED";
+    if (calendarFilter === "LIVE") return match.status === "LIVE";
+    if (calendarFilter === "FINISHED") return match.status === "FINISHED";
+    return true;
+  });
+  const calendarMatchesByDay = buildMatchDays(filteredCalendarMatches);
+  const filteredPickMatches = sortedMatches.filter((match) => {
+    const hasPrediction = Boolean(match.predictions?.length);
+    if (picksFilter === "PENDING") return match.status !== "FINISHED" && !hasPrediction;
+    if (picksFilter === "LIVE") return match.status === "LIVE";
+    if (picksFilter === "FINISHED") return match.status === "FINISHED";
+    return true;
+  });
   const totalPicks = members.reduce((sum, member) => sum + member.predictions, 0);
   const finishedMatches = matches.filter((match) => match.status === "FINISHED").length;
   const availableSpots = selectedLeague ? Math.max(0, selectedLeague.maxParticipants - members.length) : 0;
@@ -545,25 +553,21 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
   const recentUserPicks = [...savedPicks]
     .sort((first, second) => new Date(second.match.startsAt).getTime() - new Date(first.match.startsAt).getTime())
     .slice(0, 3);
+  const pendingPickCount = sortedMatches.filter((match) => match.status !== "FINISHED" && !(match.predictions ?? []).length).length;
+  const rankingTopThree = ranking.slice(0, 3);
+  const rankingRest = ranking.slice(3);
   const livePredictionMatchIds = new Set(liveMatches.map((match) => match.id));
   const liveRoomPredictions = predictions.filter((prediction) => livePredictionMatchIds.has(prediction.match.id));
   const previewPredictions = (liveRoomPredictions.length ? liveRoomPredictions : predictions).slice(0, 5);
-  const predictionMatchLabel = predictionMatches.length
-    ? predictionMatches
-        .map((match) => {
-          const score =
-            match.homeScore !== null && match.awayScore !== null
-              ? ` ${match.homeScore}-${match.awayScore}`
-              : "";
-          return `${match.homeTeam}${score} ${match.awayTeam}`;
-        })
-        .join(" · ")
-    : "";
   const userRankingIndex = ranking.findIndex((entry) => entry.id === user.id);
   const userRanking = userRankingIndex >= 0 ? ranking[userRankingIndex] : null;
   const userPickCount = userRanking?.predictions ?? savedPicks.length;
   const leader = ranking[0] ?? null;
   const pointsBehindLeader = userRanking && leader ? Math.max(0, leader.points - userRanking.points) : 0;
+  const userPointsFromPicks = userRanking?.points ?? savedPicks.reduce((sum, { match, prediction }) => {
+    if (match.status === "SCHEDULED" || match.homeScore === null || match.awayScore === null) return sum;
+    return sum + (prediction.points ?? 0);
+  }, 0);
   const roomHasExpired = Boolean(selectedLeague?.expiresAt && new Date(selectedLeague.expiresAt) <= new Date());
   const activeLeagues = leagues.filter(isActiveLeague);
   const selectableLeagues = isSuperAdmin ? leagues : activeLeagues;
@@ -604,6 +608,27 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
         ? "Partido pendiente. Revisa contexto, bajas y momento de cada equipo antes de pronosticar."
         : "Marcador en actualización. Espera datos completos para una lectura más confiable."
     : "";
+  const intelligenceSuggestedTrend = intelligenceMatch
+    ? intelligenceMatch.homeScore !== null && intelligenceMatch.awayScore !== null
+      ? intelligenceMatch.homeScore === intelligenceMatch.awayScore
+        ? "Partido parejo"
+        : intelligenceMatch.homeScore > intelligenceMatch.awayScore
+          ? "Local"
+          : "Visitante"
+      : "Partido parejo"
+    : "Sin datos";
+  const intelligenceSuggestedScore = intelligenceMatch
+    ? intelligenceMatch.homeScore !== null && intelligenceMatch.awayScore !== null
+      ? `${intelligenceMatch.homeScore} - ${intelligenceMatch.awayScore}`
+      : "1 - 1"
+    : "-";
+  const intelligenceConfidence = intelligenceMatch
+    ? intelligenceMatch.status === "LIVE"
+      ? "Media"
+      : intelligenceMatch.status === "FINISHED"
+        ? "Alta"
+        : "Baja"
+    : "Baja";
   const roomTabs: Array<[RoomView, string]> = [
     ["home", "Inicio"],
     ["matches", "Calendario"],
@@ -973,38 +998,41 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
           ) : null}
 
           {roomView === "picks" ? (
-            <div className="grid">
-              <section className="panel room-live-inline">
-                <div className="section-title">
-                  <div>
-                    <span className="market-kicker">Picks en vivo</span>
-                    <h3>Picks del partido que se está jugando</h3>
-                    {predictionMatchLabel ? <span>{predictionMatchLabel}</span> : null}
-                  </div>
+            <div className="room-screen">
+              <section className="panel room-screen-header">
+                <div>
+                  <span className="market-kicker">Tus pronósticos</span>
+                  <h3>Mis picks</h3>
+                  <p>Revisa tus picks pendientes, en vivo y finalizados.</p>
                 </div>
-                <div className="room-prediction-list">
-                  {predictions.map((prediction) => (
-                    <article className="room-prediction" key={prediction.id}>
-                      <div><strong>{prediction.user.name}</strong><span>{prediction.match.homeTeam} vs {prediction.match.awayTeam}</span></div>
-                      <strong>{prediction.homeScore} - {prediction.awayScore}</strong>
-                      <span>{prediction.points} pts</span>
-                    </article>
+                <div className="room-filter-pills" aria-label="Filtrar picks">
+                  {[
+                    ["PENDING", "Pendientes"],
+                    ["LIVE", "En vivo"],
+                    ["FINISHED", "Finalizados"],
+                    ["ALL", "Todos"],
+                  ].map(([value, label]) => (
+                    <button
+                      className={picksFilter === value ? "active" : ""}
+                      key={value}
+                      onClick={() => setPicksFilter(value as typeof picksFilter)}
+                      type="button"
+                    >
+                      {label}
+                    </button>
                   ))}
-                  {!predictions.length ? (
-                    <div className="empty">
-                      {predictionMatchLabel
-                        ? "Este partido está publicado, pero todavía no hay picks guardados para mostrar."
-                        : "Cuando haya un partido publicado en vivo, sus picks aparecerán aquí sin abrir otra pestaña."}
-                    </div>
-                  ) : null}
                 </div>
               </section>
-              <section className="panel market-board room-picks-board">
-                <div className="section-title">
-                  <div><span className="market-kicker">Tus pronósticos</span><h3>Partidos de la sala</h3></div>
-                </div>
-                <div className="market-list">
-                  {matches.map((match) => (
+
+              <section className="room-picks-summary">
+                <article className="panel"><span>Picks realizados</span><strong>{savedPicks.length}</strong></article>
+                <article className="panel"><span>Picks pendientes</span><strong>{pendingPickCount}</strong></article>
+                <article className="panel"><span>Puntos obtenidos</span><strong>{userPointsFromPicks}</strong></article>
+              </section>
+
+              <section className="panel market-board room-picks-board compact-room-picks">
+                <div className="market-list room-picks-list">
+                  {filteredPickMatches.map((match) => (
                     <MatchCard
                       key={match.id}
                       match={match}
@@ -1015,162 +1043,186 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
                       roomId={selectedLeague.id}
                     />
                   ))}
-                  {!matches.length ? <div className="empty">Esta sala todavía no tiene partidos publicados.</div> : null}
+                  {!filteredPickMatches.length ? <div className="empty">No hay picks para este filtro.</div> : null}
                 </div>
               </section>
-              <section className="panel room-predictions">
+
+              <section className="panel room-predictions compact-history-panel">
                 <div className="section-title">
-                  <div><span className="market-kicker">Tu historial</span><h3>Mis picks guardados</h3></div>
+                  <div><span className="market-kicker">Historial</span><h3>Últimos picks guardados</h3></div>
                 </div>
-                <div className="room-prediction-list">
-                  {savedPicks.map(({ match, prediction }) => (
+                <div className="room-prediction-list compact-prediction-list">
+                  {recentUserPicks.map(({ match, prediction }) => (
                     <article className="room-prediction" key={prediction.id}>
                       <div>
                         <strong>{match.homeTeam} vs {match.awayTeam}</strong>
-                        <span>{new Date(match.startsAt).toLocaleString("es", { dateStyle: "short", timeStyle: "short" })}</span>
+                        <span>{matchStatusLabel(match.status)}</span>
                       </div>
                       <strong>{prediction.homeScore} - {prediction.awayScore}</strong>
                       <span>{prediction.points} pts</span>
                     </article>
                   ))}
-                  {!savedPicks.length ? <div className="empty">Todavía no has guardado picks en esta sala.</div> : null}
+                  {!recentUserPicks.length ? <div className="empty">Todavía no has guardado picks en esta sala.</div> : null}
                 </div>
               </section>
             </div>
           ) : null}
 
           {roomView === "matches" ? (
-            <div className="grid">
-              {canEditRoomInfo ? <section className="panel room-match-admin">
-                <div className="section-title">
-                  <div>
-                    <span className="market-kicker">Configuración de sala</span>
-                    <h3>Calendario y partidos</h3>
-                  </div>
+            <div className="room-screen">
+              <section className="panel room-screen-header">
+                <div>
+                  <span className="market-kicker">Calendario</span>
+                  <h3>Calendario de partidos</h3>
+                  <p>Consulta los partidos de la sala y revisa tus pronósticos.</p>
                 </div>
-                <details className="room-config-drawer" open>
-                  <summary>Usar calendario existente</summary>
-                  <form className="room-match-loader" onSubmit={importCompetitionMatches}>
-                    <div className="form-row">
-                      <label htmlFor="roomCompetitionId">Calendario base disponible</label>
-                      <select id="roomCompetitionId" name="competitionId" defaultValue={selectedLeague.competitionId ?? competitions[0]?.id ?? ""} required>
-                        <option value="">Selecciona calendario base</option>
-                        {competitions.map((competition) => (
-                          <option key={competition.id} value={competition.id}>
-                            {competition.name} · {competition.season}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <button className="button primary" type="submit">Cargar partidos en esta sala</button>
-                  </form>
-                </details>
-                <details className="room-config-drawer">
-                  <summary>Crear liga privada</summary>
-                  <form className="room-private-match-form" onSubmit={createPrivateMatch}>
-                    <div className="inline-form">
-                      <div className="form-row">
-                        <label htmlFor="privateHomeTeam">Equipo local</label>
-                        <input id="privateHomeTeam" name="homeTeam" minLength={2} required />
-                      </div>
-                      <div className="form-row">
-                        <label htmlFor="privateAwayTeam">Equipo visitante</label>
-                        <input id="privateAwayTeam" name="awayTeam" minLength={2} required />
-                      </div>
-                    </div>
-                    <div className="inline-form">
-                      <div className="form-row">
-                        <label htmlFor="privateStartsAt">Fecha y hora</label>
-                        <input id="privateStartsAt" name="startsAt" type="datetime-local" required />
-                      </div>
-                      <div className="form-row">
-                        <label htmlFor="privateGroup">Grupo o fase</label>
-                        <input id="privateGroup" name="group" placeholder="Grupo A" />
-                      </div>
-                      <div className="form-row">
-                        <label htmlFor="privateVenue">Lugar</label>
-                        <input id="privateVenue" name="venue" placeholder="Cancha principal" />
-                      </div>
-                    </div>
-                    <button className="button primary" type="submit">Crear partido privado</button>
-                  </form>
-                </details>
-              </section> : null}
-
-              <section className="panel room-match-admin-list">
-                <div className="section-title">
-                  <div>
-                    <span className="market-kicker">{canEditRoomInfo ? "Publicación por sala" : "Calendario de la sala"}</span>
-                    <h3>{canEditRoomInfo ? managedMatches.length : matches.length} partidos cargados</h3>
-                  </div>
-                </div>
-                <div className="room-match-control-list">
-                  {(canEditRoomInfo ? managedMatches : matches).map((match) => (
-                    <article className={`room-match-control ${match.isPublished ? "published" : "hidden"}`} key={match.id}>
-                      <div className="room-match-control-teams">
-                        <strong>{match.homeTeam} vs {match.awayTeam}</strong>
-                        <span>
-                          {new Date(match.startsAt).toLocaleString("es-CO", { dateStyle: "short", timeStyle: "short" })}
-                          {match.venue ? ` · ${match.venue}` : ""}
-                        </span>
-                      </div>
-                      <div className="room-match-control-score">
-                        <strong>{match.homeScore !== null && match.awayScore !== null ? `${match.homeScore}-${match.awayScore}` : "--"}</strong>
-                        <span>{matchStatusLabel(match.status)}</span>
-                      </div>
-                      <div className="room-match-control-actions">
-                        <span>{match.isPublished ? "Publicado" : "Oculto"}</span>
-                        {canEditRoomInfo ? (
-                          <button
-                            className={match.isPublished ? "button secondary" : "button primary"}
-                            onClick={() => publishRoomMatch(match.id, !match.isPublished)}
-                            type="button"
-                          >
-                            {match.isPublished ? "Ocultar" : "Publicar"}
-                          </button>
-                        ) : null}
-                        {isSuperAdmin ? (
-                          match.status === "FINISHED" ? (
-                            <span>Partido cerrado</span>
-                          ) : (
-                            <form className="room-close-match-form" onSubmit={(event) => closeMatchManually(event, match)}>
-                              <input
-                                aria-label={`Goles de ${match.homeTeam}`}
-                                defaultValue={match.homeScore ?? ""}
-                                min={0}
-                                name="manualHomeScore"
-                                placeholder="L"
-                                type="number"
-                              />
-                              <input
-                                aria-label={`Goles de ${match.awayTeam}`}
-                                defaultValue={match.awayScore ?? ""}
-                                min={0}
-                                name="manualAwayScore"
-                                placeholder="V"
-                                type="number"
-                              />
-                              <button className="button danger compact-button" type="submit">Cerrar partido</button>
-                            </form>
-                          )
-                        ) : null}
-                      </div>
-                    </article>
+                <div className="room-filter-pills" aria-label="Filtrar calendario">
+                  {[
+                    ["ALL", "Todos"],
+                    ["TODAY", "Hoy"],
+                    ["PENDING", "Pendientes"],
+                    ["LIVE", "En vivo"],
+                    ["FINISHED", "Finalizados"],
+                  ].map(([value, label]) => (
+                    <button
+                      className={calendarFilter === value ? "active" : ""}
+                      key={value}
+                      onClick={() => setCalendarFilter(value as typeof calendarFilter)}
+                      type="button"
+                    >
+                      {label}
+                    </button>
                   ))}
-                  {!(canEditRoomInfo ? managedMatches : matches).length ? (
-                    <div className="empty">Carga una competición o crea partidos privados para armar el calendario de esta sala.</div>
-                  ) : null}
                 </div>
+              </section>
+
+              {canEditRoomInfo ? (
+                <details className="panel room-config-drawer room-admin-calendar-tools">
+                  <summary>Herramientas de calendario</summary>
+                  <div className="room-admin-tool-grid">
+                    <form className="room-match-loader" onSubmit={importCompetitionMatches}>
+                      <div className="form-row">
+                        <label htmlFor="roomCompetitionId">Calendario base disponible</label>
+                        <select id="roomCompetitionId" name="competitionId" defaultValue={selectedLeague.competitionId ?? competitions[0]?.id ?? ""} required>
+                          <option value="">Selecciona calendario base</option>
+                          {competitions.map((competition) => (
+                            <option key={competition.id} value={competition.id}>
+                              {competition.name} · {competition.season}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <button className="button secondary compact-button" type="submit">Cargar partidos</button>
+                    </form>
+
+                    <details className="room-config-drawer compact-private-league">
+                      <summary>Crear partido privado</summary>
+                      <form className="room-private-match-form" onSubmit={createPrivateMatch}>
+                        <div className="inline-form">
+                          <div className="form-row">
+                            <label htmlFor="privateHomeTeam">Equipo local</label>
+                            <input id="privateHomeTeam" name="homeTeam" minLength={2} required />
+                          </div>
+                          <div className="form-row">
+                            <label htmlFor="privateAwayTeam">Equipo visitante</label>
+                            <input id="privateAwayTeam" name="awayTeam" minLength={2} required />
+                          </div>
+                        </div>
+                        <div className="inline-form">
+                          <div className="form-row">
+                            <label htmlFor="privateStartsAt">Fecha y hora</label>
+                            <input id="privateStartsAt" name="startsAt" type="datetime-local" required />
+                          </div>
+                          <div className="form-row">
+                            <label htmlFor="privateGroup">Grupo o fase</label>
+                            <input id="privateGroup" name="group" placeholder="Grupo A" />
+                          </div>
+                          <div className="form-row">
+                            <label htmlFor="privateVenue">Lugar</label>
+                            <input id="privateVenue" name="venue" placeholder="Cancha principal" />
+                          </div>
+                        </div>
+                        <button className="button secondary compact-button" type="submit">Crear partido</button>
+                      </form>
+                    </details>
+                  </div>
+                </details>
+              ) : null}
+
+              <section className="room-calendar-list">
+                {calendarMatchesByDay.map((day) => (
+                  <div className="room-calendar-day" key={day.key}>
+                    <div className="room-calendar-day-header">
+                      <h4>{day.label}</h4>
+                      <span>{day.matches.length} partido{day.matches.length === 1 ? "" : "s"}</span>
+                    </div>
+                    {day.matches.map((match) => {
+                      const prediction = match.predictions?.[0];
+                      const actionLabel = match.status === "FINISHED"
+                        ? "Ver resultado"
+                        : prediction
+                          ? "Editar pronóstico"
+                          : "Hacer pronóstico";
+
+                      return (
+                        <article className={`room-calendar-card ${match.status.toLowerCase()}`} key={match.id}>
+                          <div className="room-calendar-teams">
+                            <span>{flagForTeam(match.homeTeam)}</span>
+                            <strong>{match.homeTeam}</strong>
+                            <em>vs</em>
+                            <span>{flagForTeam(match.awayTeam)}</span>
+                            <strong>{match.awayTeam}</strong>
+                          </div>
+                          <div className="room-calendar-meta">
+                            <span>{matchStatusLabel(match.status)}</span>
+                            <span>{new Date(match.startsAt).toLocaleString("es", { hour: "2-digit", minute: "2-digit" })}</span>
+                            {match.group ? <span>{match.group}</span> : null}
+                            {match.venue ? <span>{match.venue}</span> : null}
+                          </div>
+                          <div className="room-calendar-result">
+                            <strong>{match.homeScore !== null && match.awayScore !== null ? `${match.homeScore} - ${match.awayScore}` : "vs"}</strong>
+                            {prediction ? <span>Mi pick {prediction.homeScore} - {prediction.awayScore} · {prediction.points} pts</span> : <span>Sin pick</span>}
+                          </div>
+                          <div className="room-calendar-actions">
+                            <button className="button primary compact-button" onClick={() => setRoomView("picks")} type="button">
+                              {actionLabel}
+                            </button>
+                            {canEditRoomInfo ? (
+                              <button
+                                className="button secondary compact-button"
+                                onClick={() => publishRoomMatch(match.id, !match.isPublished)}
+                                type="button"
+                              >
+                                {match.isPublished ? "Ocultar" : "Publicar"}
+                              </button>
+                            ) : null}
+                            {isSuperAdmin && match.status !== "FINISHED" ? (
+                              <form className="room-close-match-form compact-close-form" onSubmit={(event) => closeMatchManually(event, match)}>
+                                <input aria-label={`Goles de ${match.homeTeam}`} defaultValue={match.homeScore ?? ""} min={0} name="manualHomeScore" placeholder="L" type="number" />
+                                <input aria-label={`Goles de ${match.awayTeam}`} defaultValue={match.awayScore ?? ""} min={0} name="manualAwayScore" placeholder="V" type="number" />
+                                <button className="button danger compact-button" type="submit">Cerrar</button>
+                              </form>
+                            ) : null}
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                ))}
+                {!calendarMatchesByDay.length ? (
+                  <div className="empty">No hay partidos para este filtro.</div>
+                ) : null}
               </section>
             </div>
           ) : null}
 
           {roomView === "facts" ? (
-            <section className="panel smart-preview-board">
-              <div className="section-title">
+            <section className="panel smart-preview-board room-screen">
+              <div className="section-title room-screen-title">
                 <div>
                   <span className="market-kicker">Previa inteligente</span>
-                  <h3>Ayuda para pronosticar</h3>
+                  <h3>Previa inteligente</h3>
+                  <p>Análisis orientativo para ayudarte a decidir tu pronóstico.</p>
                 </div>
               </div>
               {intelligenceHasEnoughInfo && intelligenceMatch ? (
@@ -1189,27 +1241,33 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
                     </p>
                   </article>
                   <article className="smart-preview-card">
-                    <h4>Resumen breve</h4>
-                    <p>{intelligenceTrend}</p>
+                    <h4>Lectura del partido</h4>
+                    <p>{intelligenceTrend || "Información limitada. Esta previa se basa solo en los datos disponibles del partido."}</p>
                   </article>
                   <article className="smart-preview-card">
                     <h4>Factores clave</h4>
-                    <ul>
-                      <li>Estado: {matchStatusLabel(intelligenceMatch.status)}.</li>
-                      <li>{intelligenceMatch.group ? `Fase: ${intelligenceMatch.group}.` : "Fase no registrada."}</li>
-                      <li>{intelligenceMatch.venue ? `Sede: ${intelligenceMatch.venue}.` : "Sede no registrada."}</li>
+                    <ul className="smart-factor-list">
+                      <li><span>Estado</span><strong>{matchStatusLabel(intelligenceMatch.status)}</strong></li>
+                      <li><span>Contexto</span><strong>{intelligenceMatch.group ?? "Grupo sin registrar"}</strong></li>
+                      <li><span>Riesgo</span><strong>{intelligenceMatch.status === "LIVE" ? "Medio" : "Alto"}</strong></li>
+                      <li><span>Incertidumbre</span><strong>{intelligenceMatch.homeScore !== null ? "Media" : "Alta"}</strong></li>
                     </ul>
                   </article>
                   <article className="smart-preview-card accent">
-                    <h4>Recomendación orientativa</h4>
-                    <p>
-                      Usa esta previa como apoyo y compárala con tu intuición. Si faltan datos del partido, evita confiar en una sola señal.
-                    </p>
+                    <h4>Pronóstico orientativo</h4>
+                    <div className="smart-outlook-grid">
+                      <span><small>Tendencia</small><strong>{intelligenceSuggestedTrend}</strong></span>
+                      <span><small>Marcador</small><strong>{intelligenceSuggestedScore}</strong></span>
+                      <span><small>Confianza</small><strong>{intelligenceConfidence}</strong></span>
+                    </div>
+                    <button className="button secondary compact-button" onClick={() => setRoomView("picks")} type="button">
+                      Usar como referencia
+                    </button>
                   </article>
                   <p className="smart-preview-note">La IA solo ofrece una orientación. El resultado real puede variar.</p>
                 </div>
               ) : (
-                <div className="empty">No hay suficiente información para generar una previa confiable.</div>
+                <div className="empty">Información limitada. Esta previa se basa solo en los datos disponibles del partido.</div>
               )}
               <details className="room-config-drawer compact-facts-drawer">
                 <summary>Ver datos curiosos de selecciones</summary>
@@ -1258,39 +1316,64 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
           ) : null}
 
           {roomView === "ranking" ? (
-            <div className="grid">
-              <section className="room-ranking-summary">
-                {isSuperAdmin ? (
-                  <>
-                    <article className="panel"><span>Miembros</span><strong>{members.length}</strong></article>
-                    <article className="panel"><span>Picks</span><strong>{totalPicks}</strong></article>
-                    <article className="panel"><span>En vivo</span><strong>{roomLiveMatches}</strong></article>
-                    <article className="panel"><span>Finalizados</span><strong>{roomFinishedMatches}</strong></article>
-                  </>
-                ) : (
-                  <>
-                    <article className="panel"><span>Tu lugar</span><strong>{userRanking ? `#${userRankingIndex + 1}` : "-"}</strong></article>
-                    <article className="panel"><span>Diferencia con el líder</span><strong>{userRanking ? `${pointsBehindLeader} pts` : "-"}</strong></article>
-                    <article className="panel"><span>Racha actual</span><strong>{userRanking?.currentStreak ?? 0}</strong></article>
-                    <article className="panel"><span>Marcadores exactos</span><strong>{userRanking?.exactScores ?? 0}</strong></article>
-                  </>
-                )}
+            <div className="room-screen">
+              <section className="panel room-screen-header">
+                <div>
+                  <span className="market-kicker">Clasificación privada</span>
+                  <h3>Ranking de la sala</h3>
+                  <p>Compite con tus amigos y revisa tu posición.</p>
+                </div>
+                {userRanking ? <button className="button secondary compact-button" onClick={shareRanking} type="button">Compartir ranking</button> : null}
               </section>
+
+              <section className="room-ranking-hero">
+                <article className="panel room-my-ranking-card">
+                  <span>{isSuperAdmin ? "Sala completa" : "Mi posición"}</span>
+                  <strong>{userRanking ? `#${userRankingIndex + 1}` : "-"}</strong>
+                  <p>{userRanking ? `${userRanking.points} puntos · ${userRanking.predictions} picks` : `${members.length} participantes · ${totalPicks} picks`}</p>
+                  {!isSuperAdmin ? <small>{userRanking ? `${pointsBehindLeader} pts del líder` : "Aún sin posición"}</small> : null}
+                </article>
+                <article className="panel room-group-mini">
+                  <span>Información del grupo</span>
+                  <div>
+                    <strong>{groupInfo?.memberCount ?? members.length}</strong><small>miembros</small>
+                    <strong>{groupInfo?.predictionCount ?? totalPicks}</strong><small>picks</small>
+                    <strong>{groupInfo?.mostExact?.exactScores ?? 0}</strong><small>exactos</small>
+                  </div>
+                </article>
+              </section>
+
               <section className="panel room-ranking">
                 <div className="section-title">
-                  <div><span className="market-kicker">Clasificación privada</span><h3>Ranking de la sala</h3></div>
-                  {userRanking ? <button className="button secondary" onClick={shareRanking} type="button">Compartir mi ranking</button> : null}
+                  <div><span className="market-kicker">Top ranking</span><h3>Top 3</h3></div>
                 </div>
-                <RankingTable ranking={ranking} />
+                <div className="room-podium-grid">
+                  {rankingTopThree.map((entry, index) => (
+                    <article className={entry.id === user.id ? "current-user" : ""} key={entry.id}>
+                      <span>#{index + 1}</span>
+                      <strong>{entry.name}</strong>
+                      <em>{entry.points} pts</em>
+                      <small>{entry.predictions} picks</small>
+                    </article>
+                  ))}
+                  {!rankingTopThree.length ? <div className="empty">El ranking aparecerá cuando haya picks guardados.</div> : null}
+                </div>
               </section>
-              <section className="panel">
-                <div className="section-title"><div><span className="market-kicker">Actividad</span><h3>Información del grupo</h3></div></div>
-                <div className="room-group-insights">
-                  <article><span>Miembros</span><strong>{groupInfo?.memberCount ?? members.length}</strong></article>
-                  <article><span>Predicciones</span><strong>{groupInfo?.predictionCount ?? totalPicks}</strong></article>
-                  <article><span>Líder semanal</span><strong>{groupInfo?.weeklyLeader?.name ?? "Sin datos"}</strong><small>{groupInfo?.weeklyLeader?.weeklyPoints ?? 0} pts</small></article>
-                  <article><span>Mejor racha activa</span><strong>{groupInfo?.bestActiveStreak?.name ?? "Sin datos"}</strong><small>{groupInfo?.bestActiveStreak?.currentStreak ?? 0} aciertos</small></article>
-                  <article><span>Más exactos</span><strong>{groupInfo?.mostExact?.name ?? "Sin datos"}</strong><small>{groupInfo?.mostExact?.exactScores ?? 0} exactos</small></article>
+
+              <section className="panel room-ranking">
+                <div className="section-title">
+                  <div><span className="market-kicker">Lista completa</span><h3>Todos los participantes</h3></div>
+                </div>
+                <div className="room-ranking-list">
+                  {rankingRest.map((entry, index) => (
+                    <article className={entry.id === user.id ? "current-user" : ""} key={entry.id}>
+                      <span>#{index + 4}</span>
+                      <strong>{entry.name}</strong>
+                      <small>{entry.predictions} picks</small>
+                      <em>{entry.points} pts</em>
+                    </article>
+                  ))}
+                  {!rankingRest.length && rankingTopThree.length ? <div className="empty">Solo hay top 3 por ahora.</div> : null}
                 </div>
               </section>
             </div>
