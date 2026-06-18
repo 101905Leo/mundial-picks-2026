@@ -97,6 +97,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
   const [quickAwayPick, setQuickAwayPick] = useState(0);
   const [quickPickMessage, setQuickPickMessage] = useState("");
   const [quickPickSaving, setQuickPickSaving] = useState(false);
+  const [adminPickUserId, setAdminPickUserId] = useState("");
   const [lastSeenChatMessageId, setLastSeenChatMessageId] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
   const [calendarFilter, setCalendarFilter] = useState<"ALL" | "TODAY" | "PENDING" | "LIVE" | "FINISHED">("ALL");
@@ -618,7 +619,11 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
   const savedPicks = matches.flatMap((match) =>
     (match.predictions ?? []).map((prediction) => ({ match, prediction })),
   );
-  const featuredPrediction = featuredMatch?.predictions?.[0] ?? null;
+  const adminPickMember = isSuperAdmin ? members.find((member) => member.id === adminPickUserId) ?? null : null;
+  const featuredAdminPrediction = isSuperAdmin && featuredMatch && adminPickUserId
+    ? predictions.find((prediction) => prediction.user.id === adminPickUserId && prediction.match.id === featuredMatch.id) ?? null
+    : null;
+  const featuredPrediction = featuredAdminPrediction ?? featuredMatch?.predictions?.[0] ?? null;
   const featuredActionLabel = featuredMatch
     ? featuredMatchStatus === "LIVE"
       ? featuredPrediction
@@ -668,7 +673,12 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
     !roomHasExpired &&
     roomIsActivated;
   const featuredPickClosed = featuredMatch ? isPickClosed(new Date(featuredMatch.startsAt)) || featuredMatchStatus === "LIVE" || featuredMatchStatus === "FINISHED" : true;
-  const canEditFeaturedPick = Boolean(featuredMatch && selectedLeague && roomCanPredict && !featuredPickClosed);
+  const canAdministrativelyEditFeaturedPick = Boolean(isSuperAdmin && featuredMatch && selectedLeague && adminPickUserId);
+  const canEditFeaturedPick = Boolean(
+    featuredMatch &&
+    selectedLeague &&
+    ((roomCanPredict && !featuredPickClosed) || canAdministrativelyEditFeaturedPick),
+  );
   const roomDisabledMessage = isSuperAdmin
     ? "Modo espectador: administra la sala sin participar en la competencia."
     : roomHasExpired
@@ -730,10 +740,23 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
     setQuickHomePick(featuredPrediction?.homeScore ?? 0);
     setQuickAwayPick(featuredPrediction?.awayScore ?? 0);
     setQuickPickMessage("");
-  }, [featuredMatch?.id, featuredPrediction?.homeScore, featuredPrediction?.awayScore]);
+  }, [featuredMatch?.id, featuredPrediction?.homeScore, featuredPrediction?.awayScore, adminPickUserId]);
+
+  useEffect(() => {
+    if (!isSuperAdmin) {
+      setAdminPickUserId("");
+      return;
+    }
+    setAdminPickUserId((current) => (current && members.some((member) => member.id === current) ? current : members[0]?.id ?? ""));
+  }, [isSuperAdmin, members]);
 
   async function saveFeaturedPick() {
     if (!featuredMatch || !selectedLeague) return;
+
+    if (isSuperAdmin && !adminPickUserId) {
+      setQuickPickMessage("Selecciona un participante para guardar el pick.");
+      return;
+    }
 
     if (!canEditFeaturedPick) {
       setQuickPickMessage(roomDisabledMessage);
@@ -754,6 +777,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
           roomKey: selectedLeague.id,
           homeScore: quickHomePick,
           awayScore: quickAwayPick,
+          ...(isSuperAdmin && adminPickUserId ? { targetUserId: adminPickUserId } : {}),
         }),
       });
       const data = await response.json().catch(() => ({}));
@@ -763,7 +787,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
         return;
       }
 
-      setQuickPickMessage("Pick guardado");
+      setQuickPickMessage(isSuperAdmin && adminPickMember ? `Pick guardado para ${adminPickMember.name}` : "Pick guardado");
       await loadRoom();
     } catch {
       setQuickPickMessage("No hay conexión con el servidor. Intenta nuevamente.");
@@ -1099,6 +1123,18 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
                         )}
                         {canEditFeaturedPick ? (
                           <div className="quick-home-pick-card" aria-label="Guardar pick rapido">
+                            {isSuperAdmin ? (
+                              <label className="quick-home-admin-target">
+                                <span>Guardar para</span>
+                                <select value={adminPickUserId} onChange={(event) => setAdminPickUserId(event.target.value)}>
+                                  {members.map((member) => (
+                                    <option key={member.id} value={member.id}>
+                                      {member.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                            ) : null}
                             <div className="quick-home-scoreboard">
                               <div>
                                 <span>{featuredMatch.homeTeam}</span>
