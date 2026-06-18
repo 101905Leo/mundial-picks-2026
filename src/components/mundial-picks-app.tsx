@@ -195,7 +195,7 @@ export function MundialPicksApp() {
         <Countdown matches={matches} compact />
         <div className="top-actions">
           {user ? <span className="user-chip">{user.name}</span> : null}
-          {user?.role === "ADMIN" ? (
+          {user?.role === "ADMIN" && activeView !== "rooms" ? (
             <button className="button danger" onClick={logout}>
               Salir
             </button>
@@ -375,6 +375,15 @@ export function MundialPicksApp() {
                       }}
                     >
                       Panel administrador
+                    </button>
+                    <button
+                      className={`tab ${activeView === "rooms" ? "active" : ""}`}
+                      onClick={() => {
+                        setActiveView("rooms");
+                        setRoomMenuRequest((current) => current + 1);
+                      }}
+                    >
+                      Salas
                     </button>
                   </>
                 ) : (

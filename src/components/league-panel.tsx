@@ -524,13 +524,15 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
 
   const sortedMatches = [...matches].sort((first, second) => new Date(first.startsAt).getTime() - new Date(second.startsAt).getTime());
   const liveMatches = sortedMatches.filter((match) => match.status === "LIVE");
-  const nextRoomMatch =
-    liveMatches[0] ??
-    sortedMatches.find((match) => match.status !== "FINISHED" && new Date(match.startsAt) >= now) ??
-    null;
+  const nextScheduledMatch = sortedMatches.find((match) => match.status === "SCHEDULED" && new Date(match.startsAt) >= now) ?? null;
   const lastFinishedMatch = [...sortedMatches]
     .reverse()
-    .find((match) => match.status === "FINISHED" && match.homeScore !== null && match.awayScore !== null);
+    .find((match) => match.status === "FINISHED" && match.homeScore !== null && match.awayScore !== null) ?? null;
+  const nextRoomMatch =
+    liveMatches[0] ??
+    nextScheduledMatch ??
+    lastFinishedMatch ??
+    null;
   const nextStartsAt = nextRoomMatch ? new Date(nextRoomMatch.startsAt) : null;
   const nextDiff = nextStartsAt ? Math.max(0, nextStartsAt.getTime() - now.getTime()) : 0;
   const nextCountdown = {
@@ -594,7 +596,9 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
       ? featuredPrediction
         ? "Ver partido"
         : "Ver en vivo"
-      : featuredPrediction
+      : nextRoomMatch.status === "FINISHED"
+        ? "Ver resultado"
+        : featuredPrediction
         ? "Editar pronóstico"
         : "Hacer pronóstico"
     : "Ver calendario";
@@ -756,6 +760,10 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
     return membership?.role === "ADMIN" ? "Admin" : "Participante";
   }
 
+  function roomParticipantsLabel(league: League) {
+    return `${league.memberships?.length ?? 0}/${league.maxParticipants} participantes`;
+  }
+
   function selectRoom(league: League) {
     setSelectedLeague(league);
     setRoomView("home");
@@ -806,7 +814,9 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
               <button className="room-picker-row" key={league.id} onClick={() => selectRoom(league)} type="button">
                 <span>
                   <strong>{league.name}</strong>
-                  <small>{league.competition?.name ?? "Competición"} · Código {league.inviteCode}</small>
+                  <small>
+                    Código {league.inviteCode} · {roomStatusLabel(league.status)} · {roomParticipantsLabel(league)}
+                  </small>
                 </span>
                 <span className="room-picker-meta">
                   <small>{roomRoleLabel(league)}</small>
@@ -844,25 +854,6 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
 
       {selectedLeague ? (
         <section className={`league-room ${embedded ? "embedded-room-view" : ""}`}>
-          {isSuperAdmin && !embedded ? (
-            <div className="panel super-room-selector-bar">
-              <div>
-                <span className="market-kicker">Super usuario</span>
-                <strong>Vista de sala</strong>
-                <p className="muted">Estás viendo esta sala con permisos de control, sin competir como participante.</p>
-              </div>
-              <button
-                className="button secondary compact-button"
-                onClick={() => {
-                  setIsRoomMenuOpen(true);
-                  hideMobileNavSoon();
-                }}
-                type="button"
-              >
-                Salas
-              </button>
-            </div>
-          ) : null}
           <div className="panel league-room-hero room-player-header">
             <div className="room-player-title">
               <span className="market-kicker">{selectedLeague.competition?.name ?? "Sala privada"}</span>
@@ -892,6 +883,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
               ) : null}
               {onLogout ? (
                 <button className="button danger compact-button room-header-logout" onClick={onLogout} type="button">
+                  <span aria-hidden="true">↗</span>
                   Salir
                 </button>
               ) : null}
@@ -984,7 +976,15 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
                 <div className="room-home-primary">
                   <section className="room-next-card room-featured-match">
                     <div className="room-next-card-header">
-                      <span>{nextRoomMatch ? (nextRoomMatch.status === "LIVE" ? "En vivo" : "Próximo partido") : "Sin partido abierto"}</span>
+                      <span>
+                        {nextRoomMatch
+                          ? nextRoomMatch.status === "LIVE"
+                            ? "En vivo"
+                            : nextRoomMatch.status === "FINISHED"
+                              ? "Último resultado"
+                              : "Próximo partido"
+                          : "Sin partido abierto"}
+                      </span>
                       <strong>{selectedLeague.name}</strong>
                     </div>
                     {nextRoomMatch ? (
@@ -994,7 +994,13 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
                             <span>{flagForTeam(nextRoomMatch.homeTeam)}</span>
                             <strong>{nextRoomMatch.homeTeam}</strong>
                           </div>
-                          <em>{nextRoomMatch.status === "LIVE" && nextRoomMatch.homeScore !== null && nextRoomMatch.awayScore !== null ? `${nextRoomMatch.homeScore} - ${nextRoomMatch.awayScore}` : "vs"}</em>
+                          <em>
+                            {(nextRoomMatch.status === "LIVE" || nextRoomMatch.status === "FINISHED") &&
+                            nextRoomMatch.homeScore !== null &&
+                            nextRoomMatch.awayScore !== null
+                              ? `${nextRoomMatch.homeScore} - ${nextRoomMatch.awayScore}`
+                              : "vs"}
+                          </em>
                           <div>
                             <span>{flagForTeam(nextRoomMatch.awayTeam)}</span>
                             <strong>{nextRoomMatch.awayTeam}</strong>
@@ -1012,9 +1018,9 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
                             <span>Mi pronóstico</span>
                             <strong>{featuredPrediction.homeScore} - {featuredPrediction.awayScore}</strong>
                           </div>
-                        ) : nextRoomMatch.status === "LIVE" ? (
+                        ) : nextRoomMatch.status === "LIVE" || nextRoomMatch.status === "FINISHED" ? (
                           <div className="room-my-pick-pill">
-                            <span>Marcador actual</span>
+                            <span>{nextRoomMatch.status === "FINISHED" ? "Resultado final" : "Marcador actual"}</span>
                             <strong>{nextRoomMatch.homeScore ?? 0} - {nextRoomMatch.awayScore ?? 0}</strong>
                           </div>
                         ) : (
@@ -1646,7 +1652,9 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
                 <button className="room-picker-row sheet-row" key={league.id} onClick={() => selectRoom(league)} type="button">
                   <span>
                     <strong>{league.name}</strong>
-                    <small>{league.competition?.name ?? "Competición"} · Código {league.inviteCode}</small>
+                    <small>
+                      Código {league.inviteCode} · {roomStatusLabel(league.status)} · {roomParticipantsLabel(league)}
+                    </small>
                   </span>
                   <span className="room-picker-meta">
                     <small>{roomRoleLabel(league)}</small>
