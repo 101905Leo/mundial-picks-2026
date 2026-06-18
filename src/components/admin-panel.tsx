@@ -1695,7 +1695,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                   inputMode="tel"
                   maxLength={18}
                   name="newUserPhone"
-                  pattern="([+]57[ -]?)?3[0-9 -]{9,13}"
+                  pattern="(\+57[ \-]?)?3[0-9 \-]{9,13}"
                   placeholder="300 000 0000"
                   required
                   title="Ingresa un celular colombiano valido. Ejemplo: 300 000 0000"
