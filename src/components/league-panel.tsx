@@ -54,14 +54,17 @@ function isActiveLeague(league: League) {
   return (league.status ?? "ACTIVE") === "ACTIVE" && !expired;
 }
 
-function getEffectiveMatchStatus(match: Match, now: Date) {
+function getVisualMatchStatus(match: Match, now: Date) {
   const status = String(match.status).trim().toUpperCase();
   const startsAt = new Date(match.startsAt);
   const liveWindowMs = 120 * 60 * 1000;
   const elapsedMs = now.getTime() - startsAt.getTime();
   const hasScore = match.homeScore !== null && match.awayScore !== null;
 
-  if (status === "SCHEDULED" && hasScore && elapsedMs >= 0 && elapsedMs <= liveWindowMs) {
+  if (status === "LIVE") return "LIVE";
+  if (status === "FINISHED") return "FINISHED";
+
+  if (status === "SCHEDULED" && elapsedMs >= 0 && elapsedMs <= liveWindowMs) {
     return "LIVE";
   }
 
@@ -542,11 +545,11 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
   }
 
   const sortedMatches = [...matches].sort((first, second) => new Date(first.startsAt).getTime() - new Date(second.startsAt).getTime());
-  const effectiveMatchStatus = (match: Match) => getEffectiveMatchStatus(match, now);
-  const liveMatches = sortedMatches.filter((match) => effectiveMatchStatus(match) === "LIVE");
-  const scheduledMatches = sortedMatches.filter((match) => effectiveMatchStatus(match) === "SCHEDULED");
+  const visualMatchStatus = (match: Match) => getVisualMatchStatus(match, now);
+  const liveMatches = sortedMatches.filter((match) => visualMatchStatus(match) === "LIVE");
+  const scheduledMatches = sortedMatches.filter((match) => visualMatchStatus(match) === "SCHEDULED");
   const finishedMatchesWithScore = sortedMatches.filter(
-    (match) => effectiveMatchStatus(match) === "FINISHED" && match.homeScore !== null && match.awayScore !== null,
+    (match) => visualMatchStatus(match) === "FINISHED" && match.homeScore !== null && match.awayScore !== null,
   );
   const nextScheduledMatch = scheduledMatches.find((match) => new Date(match.startsAt) >= now) ?? scheduledMatches[0] ?? null;
   const lastFinishedMatch = finishedMatchesWithScore[finishedMatchesWithScore.length - 1] ?? null;
@@ -556,7 +559,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
     nextScheduledMatch ??
     lastFinishedMatch ??
     null;
-  const featuredMatchStatus = featuredMatch ? effectiveMatchStatus(featuredMatch) : null;
+  const featuredMatchStatus = featuredMatch ? visualMatchStatus(featuredMatch) : null;
   const featuredMatchHasScore = Boolean(featuredMatch && featuredMatch.homeScore !== null && featuredMatch.awayScore !== null);
   const nextStartsAt = featuredMatch ? new Date(featuredMatch.startsAt) : null;
   const nextDiff = nextStartsAt ? Math.max(0, nextStartsAt.getTime() - now.getTime()) : 0;

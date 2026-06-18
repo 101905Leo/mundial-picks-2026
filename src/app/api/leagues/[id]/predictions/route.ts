@@ -30,6 +30,20 @@ function livePredictionPoints(prediction: { homeScore: number; awayScore: number
   );
 }
 
+function getPredictionVisibilityStatus(match: LivePointsMatch, now = new Date()): LivePointsMatch["status"] {
+  const status = String(match.status).trim().toUpperCase();
+  const startsAt = match.startsAt instanceof Date ? match.startsAt : new Date(match.startsAt);
+  const elapsedMs = now.getTime() - startsAt.getTime();
+  const liveWindowMs = 120 * 60 * 1000;
+  const hasScore = match.homeScore !== null && match.awayScore !== null;
+
+  if (status === "LIVE") return "LIVE";
+  if (status === "FINISHED") return "FINISHED";
+  if (status === "SCHEDULED" && elapsedMs >= 0 && elapsedMs <= liveWindowMs) return "LIVE";
+  if (status === "SCHEDULED" && hasScore && elapsedMs > liveWindowMs) return "FINISHED";
+  return "SCHEDULED";
+}
+
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { user, response } = await requireUser(request);
   if (response) return response;
@@ -87,22 +101,22 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   });
 
   const now = new Date();
-  const matchesWithScoringStatus = roomMatches.map((match) => ({
+  const matchesWithVisibilityStatus = roomMatches.map((match) => ({
     ...match,
-    status: getScoringStatus(match, now),
+    status: getPredictionVisibilityStatus(match, now),
   }));
 
-  let visibleMatches: typeof matchesWithScoringStatus = [];
+  let visibleMatches: typeof matchesWithVisibilityStatus = [];
   if (requestedMatchId) {
-    const requestedMatch = matchesWithScoringStatus.find((match) => match.id === requestedMatchId);
+    const requestedMatch = matchesWithVisibilityStatus.find((match) => match.id === requestedMatchId);
     if (!requestedMatch) {
       return Response.json({ error: "El partido no pertenece a esta sala" }, { status: 404 });
     }
     visibleMatches = [requestedMatch];
   } else {
-    const openMatches = matchesWithScoringStatus.filter((match) => match.status !== "FINISHED");
-    const liveMatches = matchesWithScoringStatus.filter((match) => match.status === "LIVE");
-    const lastFinishedMatch = [...matchesWithScoringStatus]
+    const openMatches = matchesWithVisibilityStatus.filter((match) => match.status !== "FINISHED");
+    const liveMatches = matchesWithVisibilityStatus.filter((match) => match.status === "LIVE");
+    const lastFinishedMatch = [...matchesWithVisibilityStatus]
       .filter((match) => match.status === "FINISHED")
       .sort((left, right) => right.startsAt.getTime() - left.startsAt.getTime())[0];
     const nearestOpenMatches = [...openMatches].sort(
@@ -167,11 +181,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
   return Response.json({
     matches: visibleMatches,
-    message: visibleMatches.some((match) => getScoringStatus(match, now) === "SCHEDULED")
+    message: visibleMatches.some((match) => getPredictionVisibilityStatus(match, now) === "SCHEDULED")
       ? "Los picks se mostrarán cuando inicie el partido."
       : null,
     predictions: visibleMatches.flatMap((match) => {
-      const matchStatus = getScoringStatus(match, now);
+      const matchStatus = getPredictionVisibilityStatus(match, now);
       if (matchStatus === "SCHEDULED") return [];
 
       return participantMembers.map((member) => {
