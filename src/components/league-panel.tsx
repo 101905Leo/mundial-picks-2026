@@ -523,11 +523,15 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
   }
 
   const sortedMatches = [...matches].sort((first, second) => new Date(first.startsAt).getTime() - new Date(second.startsAt).getTime());
-  const liveMatches = sortedMatches.filter((match) => match.status === "LIVE");
-  const nextScheduledMatch = sortedMatches.find((match) => match.status === "SCHEDULED" && new Date(match.startsAt) >= now) ?? null;
-  const lastFinishedMatch = [...sortedMatches]
-    .reverse()
-    .find((match) => match.status === "FINISHED" && match.homeScore !== null && match.awayScore !== null) ?? null;
+  const matchStatus = (match: Match) => String(match.status).trim().toUpperCase();
+  const liveMatches = sortedMatches.filter((match) => matchStatus(match) === "LIVE");
+  const scheduledMatches = sortedMatches.filter((match) => matchStatus(match) === "SCHEDULED");
+  const finishedMatchesWithScore = sortedMatches.filter(
+    (match) => matchStatus(match) === "FINISHED" && match.homeScore !== null && match.awayScore !== null,
+  );
+  const nextScheduledMatch = scheduledMatches.find((match) => new Date(match.startsAt) >= now) ?? scheduledMatches[0] ?? null;
+  const lastFinishedMatch = finishedMatchesWithScore[finishedMatchesWithScore.length - 1] ?? null;
+  // LIVE tiene prioridad para no cambiar la tarjeta mientras el partido está en curso.
   const featuredMatch =
     liveMatches[0] ??
     nextScheduledMatch ??
