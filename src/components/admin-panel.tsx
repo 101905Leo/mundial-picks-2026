@@ -24,7 +24,7 @@ type Props = {
   user: User;
 };
 
-type AdminView = "overview" | "matches" | "users" | "rooms" | "security";
+type AdminView = "overview" | "matches" | "tools" | "users" | "rooms" | "security";
 
 type AdminRoom = {
   id: string;
@@ -1175,18 +1175,15 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
           Salas
         </button>
         <button
-          className={`tab ${adminView === "users" ? "active" : ""}`}
-          onClick={async () => {
-            setAdminView("users");
-            if (!usersLoaded) await loadUsers();
-          }}
-          type="button"
-        >
-          Usuarios
-        </button>
-        <button
           className={`tab ${adminView === "matches" ? "active" : ""}`}
           onClick={() => setAdminView("matches")}
+          type="button"
+        >
+          Ligas
+        </button>
+        <button
+          className={`tab ${adminView === "tools" ? "active" : ""}`}
+          onClick={() => setAdminView("tools")}
           type="button"
         >
           Herramientas
@@ -1271,18 +1268,11 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                     >
                       Administrar salas
                     </button>
-                    <button
-                      className="button secondary"
-                      onClick={async () => {
-                        setAdminView("users");
-                        if (!usersLoaded) await loadUsers();
-                      }}
-                      type="button"
-                    >
-                      Usuarios
+                    <button className="button secondary" onClick={() => setAdminView("security")} type="button">
+                      Seguridad y permisos
                     </button>
                     <button className="button secondary" onClick={() => setAdminView("matches")} type="button">
-                      Ligas / competiciones
+                      Ligas base
                     </button>
                   </div>
                 </section>
@@ -1293,24 +1283,12 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                     <h3>Herramientas técnicas</h3>
                   </div>
                   <div className="admin-action-grid admin-action-grid-tools">
-                    <button className="button admin-tool-button" onClick={updateResults} type="button">
-                      Actualizar resultados
+                    <button className="button primary admin-tool-button admin-tool-primary" onClick={updateResults} type="button">
+                      Refrescar plataforma
                     </button>
-                    <button className="button admin-tool-button" onClick={() => recalculate()} type="button">
-                      Recalcular ranking
+                    <button className="button admin-tool-button" onClick={() => setAdminView("tools")} type="button">
+                      Ver herramientas
                     </button>
-                    <button className="button admin-tool-button" onClick={syncAllRoomResults} type="button">
-                      Sincronizar salas
-                    </button>
-                    <button className="button admin-tool-button" onClick={importWorldCupCalendar} type="button">
-                      Cargar calendario
-                    </button>
-                    <button className="button admin-tool-button" onClick={testWhatsApp} type="button">
-                      Probar WhatsApp
-                    </button>
-                    <a className="button admin-tool-button" href="/api/admin/export" download>
-                      Descargar Excel
-                    </a>
                   </div>
                 </section>
               </div>
@@ -1319,10 +1297,10 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                 <section className="form admin-guide admin-guide-compact">
                   <span className="market-kicker">Guía rápida</span>
                   <ol>
-                    <li>Publica los partidos.</li>
-                    <li>Actualiza resultados.</li>
-                    <li>Recalcula ranking si es necesario.</li>
-                    <li>Sincroniza salas.</li>
+                    <li>Revisa alertas globales.</li>
+                    <li>Entra a la sala que vas a operar.</li>
+                    <li>Refresca datos desde Herramientas.</li>
+                    <li>Corrige solo la sala afectada.</li>
                   </ol>
                 </section>
 
@@ -1396,7 +1374,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
             </section>
 
             <details className="admin-room-section admin-room-section-wide admin-advanced-calendar">
-              <summary>Calendario base y herramientas avanzadas</summary>
+              <summary>Calendario base avanzado</summary>
               <div className="grid two-columns admin-advanced-calendar-grid">
             <section className="form publish-manager">
               <div className="section-title publish-manager-title">
@@ -1695,6 +1673,43 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
               </div>
             </details>
           </>
+        ) : null}
+        {adminView === "tools" ? (
+          <section className="form admin-tools-hub admin-room-section-wide">
+            <div className="section-title">
+              <div>
+                <span className="market-kicker">Herramientas</span>
+                <h3>Mantenimiento técnico</h3>
+                <p className="muted">
+                  Acciones globales para refrescar resultados, recalcular datos y revisar integraciones. Para cambios de una sala específica, entra primero a Salas.
+                </p>
+              </div>
+            </div>
+            <div className="admin-action-grid admin-action-grid-tools admin-tools-grid">
+              <button className="button primary admin-tool-button admin-tool-primary" onClick={updateResults} type="button">
+                Refrescar plataforma
+              </button>
+              <button className="button admin-tool-button" onClick={() => recalculate()} type="button">
+                Recalcular ranking
+              </button>
+              <button className="button admin-tool-button" onClick={syncAllRoomResults} type="button">
+                Sincronizar salas
+              </button>
+              <button className="button admin-tool-button" onClick={importWorldCupCalendar} type="button">
+                Cargar calendario base
+              </button>
+              <button className="button admin-tool-button" onClick={testWhatsApp} type="button">
+                Probar WhatsApp
+              </button>
+              <a className="button admin-tool-button" href="/api/admin/export" download>
+                Descargar Excel
+              </a>
+            </div>
+            <div className="admin-tool-note">
+              <strong>Acciones separadas, misma intención:</strong>
+              <span>Actualizar resultados trae marcadores; recalcular revisa puntos; sincronizar salas copia el estado correcto a cada sala.</span>
+            </div>
+          </section>
         ) : null}
         {adminView === "users" ? (
           <>
@@ -2053,7 +2068,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
 	                      </div>
 	                      <div className="admin-room-action-grid compact-actions-grid">
 	                        <button className="button primary" onClick={() => syncSelectedRoomResults(selectedRoom)} type="button">
-	                          Sincronizar resultados
+	                          Refrescar sala
 	                        </button>
 	                        <button className="button secondary" onClick={() => copyRoomInvitation(selectedRoom)} type="button">
 	                          Copiar invitación
@@ -2507,20 +2522,75 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
           </>
         ) : null}
         {adminView === "security" ? (
-          <form className="form" onSubmit={changePassword}>
-            <h3>Cambiar mi contraseña</h3>
-            <div className="form-row">
-              <label htmlFor="currentPassword">Contraseña actual</label>
-              <input id="currentPassword" name="currentPassword" type="password" minLength={6} required />
+          <section className="admin-security-hub admin-room-section-wide">
+            <section className="form">
+              <span className="market-kicker">Seguridad</span>
+              <h3>Permisos y acceso</h3>
+              <p className="muted">
+                Aquí se agrupan usuarios generales, administradores, contraseñas y acciones sensibles de la plataforma.
+              </p>
+            </section>
+            <div className="grid two-columns">
+              <form className="form" onSubmit={changePassword}>
+                <h3>Cambiar mi contraseña</h3>
+                <div className="form-row">
+                  <label htmlFor="currentPassword">Contraseña actual</label>
+                  <input id="currentPassword" name="currentPassword" type="password" minLength={6} required />
+                </div>
+                <div className="form-row">
+                  <label htmlFor="newPassword">Nueva contraseña</label>
+                  <input id="newPassword" name="newPassword" type="password" minLength={8} required />
+                </div>
+                <button className="button primary" type="submit">
+                  Guardar nueva contraseña
+                </button>
+              </form>
+              <section className="form admin-security-card">
+                <span className="market-kicker">Usuarios generales</span>
+                <h3>Accesos y permisos</h3>
+                <p className="muted">
+                  Crea usuarios, cambia contraseñas, activa accesos y corrige información cuando sea necesario.
+                </p>
+                <button
+                  className="button secondary"
+                  onClick={async () => {
+                    setAdminView("users");
+                    await loadUsers();
+                  }}
+                  type="button"
+                >
+                  Abrir usuarios
+                </button>
+              </section>
+              <section className="form admin-security-card">
+                <span className="market-kicker">Administradores de sala</span>
+                <h3>Permisos por sala</h3>
+                <p className="muted">
+                  Los administradores de sala se asignan desde la sala seleccionada para no mezclar participantes de distintas salas.
+                </p>
+                <button
+                  className="button secondary"
+                  onClick={async () => {
+                    setAdminView("rooms");
+                    await loadRooms();
+                  }}
+                  type="button"
+                >
+                  Ir a salas
+                </button>
+              </section>
+              <section className="form admin-danger-summary">
+                <span className="market-kicker">Zona sensible</span>
+                <h3>Acciones delicadas</h3>
+                <p className="muted">
+                  Eliminar usuarios, retirar participantes o borrar salas debe hacerse desde su contexto para evitar afectar información equivocada.
+                </p>
+                <button className="button danger subtle-danger" onClick={() => setAdminView("users")} type="button">
+                  Revisar acciones sensibles
+                </button>
+              </section>
             </div>
-            <div className="form-row">
-              <label htmlFor="newPassword">Nueva contraseña</label>
-              <input id="newPassword" name="newPassword" type="password" minLength={8} required />
-            </div>
-            <button className="button primary" type="submit">
-              Guardar nueva contraseña
-            </button>
-          </form>
+          </section>
         ) : null}
       </div>
     </section>

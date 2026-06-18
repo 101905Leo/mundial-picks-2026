@@ -75,6 +75,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
   const isRoomAdmin = roomMembership?.role === "ADMIN";
   const canEditRoomInfo = Boolean(isSuperAdmin || isOwner || isRoomAdmin);
   const canModerateRoom = Boolean(isSuperAdmin || isOwner || isRoomAdmin);
+  const canManageInvitation = Boolean(isSuperAdmin || isOwner || isRoomAdmin);
   const canCloseRoom = Boolean(isSuperAdmin || isOwner);
   const canDeleteRoom = isSuperAdmin;
 
@@ -557,9 +558,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
   const nextPendingPick = sortedMatches.find(
     (match) => match.status !== "FINISHED" && !(match.predictions ?? []).length,
   );
-  const upcomingRoomMatches = sortedMatches
-    .filter((match) => match.status !== "FINISHED")
-    .slice(0, 3);
+  const upcomingRoomMatch = sortedMatches.find((match) => match.status !== "FINISHED") ?? null;
   const rankingPreview = ranking.slice(0, 5);
   const recentUserPicks = [...savedPicks]
     .sort((first, second) => new Date(second.match.startsAt).getTime() - new Date(first.match.startsAt).getTime())
@@ -789,7 +788,9 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
               <article><span>Partidos</span><strong>{matches.length}</strong></article>
             </div>
             <div className="room-owner-actions room-header-actions">
-              <button className="button secondary compact-button" onClick={copyInvitation} type="button">Copiar invitación</button>
+              {canManageInvitation ? (
+                <button className="button secondary compact-button" onClick={copyInvitation} type="button">Copiar invitación</button>
+              ) : null}
               {!embedded ? <button className="button secondary compact-button" onClick={() => setSelectedLeague(null)} type="button">Cambiar sala</button> : null}
             </div>
           </div>
@@ -928,26 +929,26 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
                   <section className="panel room-home-games compact-room-games">
                     <div className="section-title">
                       <div>
-                        <span className="market-kicker">Calendario</span>
-                        <h3>Próximos 3 partidos</h3>
+                        <span className="market-kicker">Siguiente acción</span>
+                        <h3>{upcomingRoomMatch ? "Próximo partido disponible" : "Calendario al día"}</h3>
                       </div>
-                      <button className="button secondary compact-button" onClick={() => setRoomView("matches")} type="button">Ver calendario</button>
                     </div>
                     <div className="room-home-day-list">
-                      {upcomingRoomMatches.map((match) => (
-                        <article className="room-home-match" key={match.id}>
+                      {upcomingRoomMatch ? (
+                        <article className="room-home-match" key={upcomingRoomMatch.id}>
                           <div>
-                            <span>{flagForTeam(match.homeTeam)}</span>
-                            <strong>{match.homeTeam}</strong>
+                            <span>{flagForTeam(upcomingRoomMatch.homeTeam)}</span>
+                            <strong>{upcomingRoomMatch.homeTeam}</strong>
                           </div>
                           <div>
-                            <span>{flagForTeam(match.awayTeam)}</span>
-                            <strong>{match.awayTeam}</strong>
+                            <span>{flagForTeam(upcomingRoomMatch.awayTeam)}</span>
+                            <strong>{upcomingRoomMatch.awayTeam}</strong>
                           </div>
-                          <small>{match.status === "LIVE" ? "En vivo" : new Date(match.startsAt).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}</small>
+                          <small>{upcomingRoomMatch.status === "LIVE" ? "En vivo" : new Date(upcomingRoomMatch.startsAt).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}</small>
                         </article>
-                      ))}
-                      {!upcomingRoomMatches.length ? <div className="empty">No hay partidos pendientes publicados.</div> : null}
+                      ) : (
+                        <div className="empty">No hay partidos pendientes publicados.</div>
+                      )}
                     </div>
                   </section>
                 </div>
@@ -1312,9 +1313,11 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
                   <span>Chat de la sala</span>
                   {hasChatActivity ? <small className="room-more-badge">{chatActivityLabel}</small> : null}
                 </button>
-                <button className="button secondary" onClick={shareInvitation} type="button">
-                  Compartir invitación
-                </button>
+                {canManageInvitation ? (
+                  <button className="button secondary" onClick={shareInvitation} type="button">
+                    Compartir invitación
+                  </button>
+                ) : null}
                 {canEditRoomInfo ? (
                   <button className="button secondary" onClick={() => setRoomView("participants")} type="button">
                     Configuración
