@@ -1,6 +1,7 @@
 import type { MatchStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
+import { getScoringStatus } from "@/lib/scoring";
 
 type MatchForSync = {
   id: string;
@@ -128,6 +129,7 @@ export async function syncRoomMatchesFromGlobalResults(options: { roomId?: strin
     matched += 1;
 
     const globalHasScore = scoreIsComplete(globalMatch);
+    const globalScoringStatus = getScoringStatus(globalMatch) as MatchStatus;
     if (!globalHasScore) {
       missingGlobalScore.push({
         globalMatchId: globalMatch.id,
@@ -138,7 +140,7 @@ export async function syncRoomMatchesFromGlobalResults(options: { roomId?: strin
         reason: "El partido global equivalente no tiene marcador completo",
         globalScore: scoreLabel(globalMatch),
         roomScore: scoreLabel(roomMatch),
-        globalStatus: globalMatch.status,
+        globalStatus: globalScoringStatus,
         roomStatus: roomMatch.status,
       });
     }
@@ -157,7 +159,7 @@ export async function syncRoomMatchesFromGlobalResults(options: { roomId?: strin
         reason: "La sala tenia marcador diferente al global; se sincroniza con el global",
         globalScore: scoreLabel(globalMatch),
         roomScore: scoreLabel(roomMatch),
-        globalStatus: globalMatch.status,
+        globalStatus: globalScoringStatus,
         roomStatus: roomMatch.status,
       });
     }
@@ -165,7 +167,7 @@ export async function syncRoomMatchesFromGlobalResults(options: { roomId?: strin
     const scoreNeedsUpdate =
       globalHasScore &&
       (roomMatch.homeScore !== globalMatch.homeScore || roomMatch.awayScore !== globalMatch.awayScore);
-    const statusNeedsUpdate = roomMatch.status !== globalMatch.status;
+    const statusNeedsUpdate = roomMatch.status !== globalScoringStatus;
     const needsUpdate = scoreNeedsUpdate || statusNeedsUpdate;
 
     if (!needsUpdate) {
@@ -177,7 +179,7 @@ export async function syncRoomMatchesFromGlobalResults(options: { roomId?: strin
       await prisma.match.update({
         where: { id: roomMatch.id },
         data: {
-          status: globalMatch.status,
+          status: globalScoringStatus,
           ...(globalHasScore
             ? {
                 homeScore: globalMatch.homeScore,
@@ -187,9 +189,9 @@ export async function syncRoomMatchesFromGlobalResults(options: { roomId?: strin
         },
       });
       updated += 1;
-      if (globalMatch.status === "FINISHED") finishedSynced += 1;
-      if (globalMatch.status === "LIVE") liveSynced += 1;
-      if (globalMatch.status === "SCHEDULED") scheduledSynced += 1;
+      if (globalScoringStatus === "FINISHED") finishedSynced += 1;
+      if (globalScoringStatus === "LIVE") liveSynced += 1;
+      if (globalScoringStatus === "SCHEDULED") scheduledSynced += 1;
     } catch (error) {
       errors.push({
         globalMatchId: globalMatch.id,
@@ -200,7 +202,7 @@ export async function syncRoomMatchesFromGlobalResults(options: { roomId?: strin
         reason: error instanceof Error ? error.message : "Error desconocido al sincronizar",
         globalScore: scoreLabel(globalMatch),
         roomScore: scoreLabel(roomMatch),
-        globalStatus: globalMatch.status,
+        globalStatus: globalScoringStatus,
         roomStatus: roomMatch.status,
       });
     }

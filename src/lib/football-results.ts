@@ -1,5 +1,6 @@
 import { MatchStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { getScoringStatus } from "@/lib/scoring";
 
 type ApiFootballFixture = {
   fixture?: {
@@ -133,9 +134,13 @@ export async function updateWorldCupResultsFromApiFootball() {
     const homeTeam = fixture.teams?.home?.name;
     const awayTeam = fixture.teams?.away?.name;
     const fixtureDate = fixture.fixture?.date ? new Date(fixture.fixture.date) : null;
-    const status = statusFromApi(fixture.fixture?.status?.short);
     const homeScore = fixture.goals?.home ?? fixture.score?.fulltime?.home ?? null;
     const awayScore = fixture.goals?.away ?? fixture.score?.fulltime?.away ?? null;
+    const status = statusFromApi(fixture.fixture?.status?.short) ?? (
+      fixtureDate && homeScore !== null && awayScore !== null
+        ? getScoringStatus({ status: "SCHEDULED", startsAt: fixtureDate, homeScore, awayScore }) as MatchStatus
+        : null
+    );
 
     if (!homeTeam || !awayTeam || !fixtureDate || status === null || homeScore === null || awayScore === null) {
       continue;

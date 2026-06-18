@@ -1,5 +1,5 @@
 import { MatchStatus } from "@prisma/client";
-import { calculatePredictionPoints } from "@/lib/scoring";
+import { calculatePredictionPoints, hasScoringScore } from "@/lib/scoring";
 
 type PredictionScore = {
   homeScore: number;
@@ -11,6 +11,7 @@ type PredictionScore = {
 
 type MatchScore = {
   status: MatchStatus | "SCHEDULED" | "LIVE" | "FINISHED";
+  startsAt?: Date | string;
   homeScore: number | null;
   awayScore: number | null;
   updatedAt?: Date | string;
@@ -48,11 +49,7 @@ export function visiblePredictionPoints(prediction: PredictionScore, match: Matc
 }
 
 export function hasRankingScore(match: MatchScore) {
-  return (
-    (match.status === "LIVE" || match.status === "FINISHED") &&
-    match.homeScore !== null &&
-    match.awayScore !== null
-  );
+  return hasScoringScore(match);
 }
 
 export function rankingPredictionPoints(

@@ -1,4 +1,4 @@
-import { calculatePredictionPoints } from "@/lib/scoring";
+import { calculatePredictionPoints, hasScoringScore } from "@/lib/scoring";
 import { resolveEffectiveMatchScore, sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
 
 type RoomPredictionScore = {
@@ -35,11 +35,10 @@ export function roomMatchForPrediction<T extends RoomPredictionScore>(
 }
 
 export function roomPredictionPoints(prediction: Pick<RoomPredictionScore, "homeScore" | "awayScore">, match: RoomMatchScore) {
-  if (match.status !== "LIVE" && match.status !== "FINISHED") return 0;
-  if (match.homeScore === null || match.awayScore === null) return 0;
+  if (!hasScoringScore(match)) return 0;
 
   return calculatePredictionPoints(
     { homeScore: prediction.homeScore, awayScore: prediction.awayScore },
-    { homeScore: match.homeScore, awayScore: match.awayScore },
+    { homeScore: match.homeScore!, awayScore: match.awayScore! },
   );
 }

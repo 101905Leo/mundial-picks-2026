@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { roomOwnedMatchWhere } from "@/lib/room-match-scope";
 import { uniqueRoomPredictions } from "@/lib/room-predictions";
-import { calculatePredictionPoints } from "@/lib/scoring";
+import { getScoringStatus, calculatePredictionPoints } from "@/lib/scoring";
 
 type LivePointsMatch = {
   id?: string;
@@ -20,7 +20,8 @@ type LivePointsMatch = {
 };
 
 function livePredictionPoints(prediction: { homeScore: number; awayScore: number }, match: LivePointsMatch) {
-  if (match.status !== "LIVE" && match.status !== "FINISHED") return 0;
+  const scoringStatus = getScoringStatus(match);
+  if (scoringStatus !== "LIVE" && scoringStatus !== "FINISHED") return 0;
   if (match.homeScore === null || match.awayScore === null) return 0;
 
   return calculatePredictionPoints(
@@ -146,15 +147,20 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     matches: visibleMatches,
     predictions: uniqueRoomPredictions(scopedVisiblePredictions, id).map((prediction) => {
       const points = livePredictionPoints(prediction, prediction.match);
+      const matchStatus = getScoringStatus(prediction.match);
 
       return {
         ...prediction,
         points,
+        match: {
+          ...prediction.match,
+          status: matchStatus,
+        },
         debug: {
           predictionId: prediction.id,
           predictionMatchId: prediction.matchId,
           resolvedMatchId: prediction.match.id,
-          matchStatus: prediction.match.status,
+          matchStatus,
           realHomeScore: prediction.match.homeScore,
           realAwayScore: prediction.match.awayScore,
           calculatedPoints: points,

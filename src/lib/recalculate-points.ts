@@ -5,7 +5,7 @@ import { hasRankingScore, rankingPredictionPoints } from "@/lib/prediction-point
 export async function recalculateFinishedMatchPoints(options: { clearManualPoints?: boolean } = {}) {
   const scoreMatches = await prisma.match.findMany({
     where: {
-      status: { in: ["LIVE", "FINISHED"] },
+      status: { in: ["SCHEDULED", "LIVE", "FINISHED"] },
       homeScore: { not: null },
       awayScore: { not: null },
     },

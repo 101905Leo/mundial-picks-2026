@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { roomOwnedMatchWhere } from "@/lib/room-match-scope";
 import { rankingPredictionPoints } from "@/lib/prediction-points";
 import { pickRoomPrediction } from "@/lib/room-predictions";
+import { getScoringStatus } from "@/lib/scoring";
 
 const privateMatchSchema = z.object({
   homeTeam: z.string().trim().min(2).max(80),
@@ -95,14 +96,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   return Response.json({
     matches: matches.map((match) => {
+      const status = getScoringStatus(match);
+      const matchWithScoringStatus = { ...match, status };
       const matchingPredictions = userPredictions.filter(
         (prediction) => prediction.matchId === match.id,
       );
       return {
-        ...match,
+        ...matchWithScoringStatus,
         predictions: (() => {
           const prediction = pickRoomPrediction(matchingPredictions, league.id);
-          return prediction ? [{ ...prediction, points: rankingPredictionPoints(prediction, match) }] : [];
+          return prediction ? [{ ...prediction, points: rankingPredictionPoints(prediction, matchWithScoringStatus) }] : [];
         })(),
       };
     }),

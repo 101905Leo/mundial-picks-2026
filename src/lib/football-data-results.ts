@@ -1,5 +1,6 @@
 import { MatchStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { getScoringStatus } from "@/lib/scoring";
 
 type FootballDataMatch = {
   id?: number;
@@ -124,10 +125,14 @@ export async function updateWorldCupResultsFromFootballData() {
     const homeTeam = fixture.homeTeam?.name || fixture.homeTeam?.shortName;
     const awayTeam = fixture.awayTeam?.name || fixture.awayTeam?.shortName;
     const fixtureDate = fixture.utcDate ? new Date(fixture.utcDate) : null;
-    const status = statusFromFootballData(fixture.status);
     const currentScore = firstValidScore(fixture.score?.fullTime, fixture.score?.regularTime, fixture.score?.halfTime);
     const homeScore = currentScore?.home ?? null;
     const awayScore = currentScore?.away ?? null;
+    const status = statusFromFootballData(fixture.status) ?? (
+      fixtureDate && homeScore !== null && awayScore !== null
+        ? getScoringStatus({ status: "SCHEDULED", startsAt: fixtureDate, homeScore, awayScore }) as MatchStatus
+        : null
+    );
 
     if (!homeTeam || !awayTeam || !fixtureDate || status === null || homeScore === null || awayScore === null) {
       continue;
