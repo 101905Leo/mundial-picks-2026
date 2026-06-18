@@ -187,23 +187,17 @@ export function MundialPicksApp() {
         <div className="brand">
           <img className="brand-logo-image" src="/logo-copa-mundial-2026.png" alt="Copa Mundial de la FIFA 2026™" />
           <span>
-            <strong>Copa Mundial de la FIFA 2026™</strong>
+            <strong>Mundial Picks 2026</strong>
             <span>11 jun 2026 - 19 jul 2026</span>
           </span>
         </div>
         <Countdown matches={matches} compact />
         <div className="top-actions">
-          <a className="button secondary" href="#planes">Planes</a>
           {user ? <span className="user-chip">{user.name}</span> : null}
           {!user ? (
-            <>
-              <button className="button ghost" onClick={() => openPublicAccess("register")} type="button">
-                Registro
-              </button>
-              <button className="button secondary" onClick={() => openPublicAccess("login")} type="button">
-                Acceso
-              </button>
-            </>
+            <button className="button secondary compact-action" onClick={() => openPublicAccess("login")} type="button">
+              Ingresar
+            </button>
           ) : null}
           {user ? (
             <button className="button danger" onClick={logout}>
@@ -218,15 +212,17 @@ export function MundialPicksApp() {
           <div className="hero-title-group">
             <img className="hero-logo-image" src="/logo-copa-mundial-2026.png" alt="Copa Mundial de la FIFA 2026™" />
             <div>
-              <h1>Copa Mundial de la FIFA 2026™</h1>
+              <h1>{!user ? "Mundial Picks 2026" : "Copa Mundial de la FIFA 2026™"}</h1>
               {!user ? (
                 <>
-                  <p>Crea tu quiniela privada, invita a tus amigos y compite por el ranking.</p>
+                  <p>Crea tu quiniela privada del Mundial y compite con tus amigos.</p>
                   <div className="hero-actions">
                     <button className="button primary" onClick={() => openPublicAccess("register")} type="button">
                       Crear sala
                     </button>
-                    <a className="button secondary" href="#planes">Ver planes</a>
+                    <button className="button secondary" onClick={() => openPublicAccess("register")} type="button">
+                      Ingresar con código
+                    </button>
                   </div>
                 </>
               ) : null}
@@ -244,20 +240,31 @@ export function MundialPicksApp() {
           <>
             {!user ? (
               <section className="public-landing">
-                <section className="landing-card landing-create-panel" id="crear-sala">
+                <section className="landing-card landing-code-panel" id="acceso">
                   <div>
-                    <span className="market-kicker">Organiza tu quiniela</span>
-                    <h2>Crea una sala privada lista para invitar participantes.</h2>
-                    <p>
-                      Mundial Picks reúne calendario, pronósticos, ranking y chat en un solo espacio para tu grupo.
-                    </p>
+                    <span className="market-kicker">¿Ya tienes código?</span>
+                    <h2>Ingresa a tu sala y empieza a jugar.</h2>
+                    <p>Haz tus pronósticos, revisa tu posición en el ranking y sigue los resultados de tu grupo.</p>
                   </div>
-                  <div className="landing-create-actions">
-                    <button className="button primary" onClick={() => openPublicAccess("register")} type="button">
-                      Crear sala
-                    </button>
-                    <a className="button secondary" href="#planes">Ver planes</a>
+                  <AuthPanel
+                    initialMode={publicAuthMode}
+                    onAuth={async (sessionUser, options) => {
+                      setUser(sessionUser);
+                      setActiveView(sessionUser.role === "ADMIN" ? "admin" : "rooms");
+                      await loadData(sessionUser);
+                    }}
+                  />
+                </section>
+
+                <section className="landing-card landing-private-panel" id="crear-sala">
+                  <div>
+                    <span className="market-kicker">Crea tu liga privada</span>
+                    <h2>Una sala para jugar con tu grupo.</h2>
+                    <p>Crea una sala, comparte el código y deja que tus amigos hagan sus picks.</p>
                   </div>
+                  <button className="button primary" onClick={() => openPublicAccess("register")} type="button">
+                    Crear liga
+                  </button>
                 </section>
 
                 <section className="landing-card landing-steps">
@@ -267,20 +274,35 @@ export function MundialPicksApp() {
                   </div>
                   <div className="landing-step-grid">
                     <article><strong>1</strong><span>Crea tu sala</span></article>
-                    <article><strong>2</strong><span>Invita a tus amigos</span></article>
-                    <article><strong>3</strong><span>Hagan sus pronósticos</span></article>
-                    <article><strong>4</strong><span>Compitan por el ranking</span></article>
+                    <article><strong>2</strong><span>Comparte el código</span></article>
+                    <article><strong>3</strong><span>Cada jugador hace sus pronósticos</span></article>
+                    <article><strong>4</strong><span>El ranking se actualiza con los resultados</span></article>
                   </div>
+                </section>
+
+                <section className="landing-card landing-score-card">
+                  <div className="section-title compact-title">
+                    <span className="market-kicker">Reglas resumidas</span>
+                    <h2>Sistema de puntos</h2>
+                  </div>
+                  <div className="score-rules compact-score-rules">
+                    <article><strong>5</strong><h3>Marcador exacto</h3></article>
+                    <article><strong>3</strong><h3>Ganador correcto</h3></article>
+                    <article><strong>2</strong><h3>Diferencia correcta</h3></article>
+                    <article><strong>1</strong><h3>Participación</h3></article>
+                  </div>
+                  <p className="score-note">
+                    En partidos definidos por penales, los puntos se calculan con el marcador antes de la tanda de penales.
+                  </p>
                 </section>
 
                 <section className="landing-card landing-plans" id="planes">
                   <div className="section-title compact-title">
-                    <span className="market-kicker">Planes para tu quiniela</span>
-                    <h2>Salas privadas para grupos pequeños, grandes o empresariales.</h2>
+                    <span className="market-kicker">Planes</span>
+                    <h2>Elige el tamaño de tu sala.</h2>
                   </div>
                   <p className="score-explainer">
-                    Organiza tu sala privada para el Mundial 2026, invita participantes y administra pronósticos,
-                    ranking y resultados desde un solo lugar.
+                    Organiza tu quiniela privada del Mundial 2026 con código, ranking, chat y resultados.
                   </p>
                   <div className="landing-benefits">
                     <span>Sala privada con código</span>
@@ -300,65 +322,8 @@ export function MundialPicksApp() {
                   <a className="button primary" href="/planes">Ver planes</a>
                 </section>
 
-                <section className="landing-card landing-access-panel" id="acceso">
-                  <div className="landing-access-copy">
-                    <span className="market-kicker">Accede a tu cuenta</span>
-                    <h2>Ingresa para administrar tu sala, hacer pronósticos o revisar tu ranking.</h2>
-                    <div className="landing-cta-row">
-                      <button className="button primary" onClick={() => setPublicAuthMode("register")} type="button">
-                        Crear sala
-                      </button>
-                      <button className="button secondary" onClick={() => setPublicAuthMode("login")} type="button">
-                        Acceso
-                      </button>
-                      <button className="button secondary" onClick={() => setPublicAuthMode("register")} type="button">
-                        Registro
-                      </button>
-                    </div>
-                  </div>
-                  <AuthPanel
-                    initialMode={publicAuthMode}
-                    onAuth={async (sessionUser, options) => {
-                      setUser(sessionUser);
-                      setActiveView(sessionUser.role === "ADMIN" ? "admin" : "rooms");
-                      await loadData(sessionUser);
-                    }}
-                  />
-                </section>
-
-                <section className="landing-card landing-room-ready">
-                  <div>
-                    <span className="market-kicker">Después de crearla</span>
-                    <h2>La sala debe quedar clara para usar.</h2>
-                    <p>Sala creada correctamente. Ya puedes invitar participantes y comenzar a gestionar tu quiniela.</p>
-                  </div>
-                  <div className="room-ready-list">
-                    <span>Código de invitación visible</span>
-                    <span>Botón para entrar a la sala</span>
-                    <span>Copiar invitación</span>
-                    <span>Compartir por WhatsApp</span>
-                  </div>
-                </section>
-
-                <section className="landing-card landing-score-card">
-                  <div className="section-title compact-title">
-                    <span className="market-kicker">Reglas</span>
-                    <h2>Sistema de puntos</h2>
-                  </div>
-                  <div className="score-rules compact-score-rules">
-                    <article><strong>5</strong><h3>Marcador exacto</h3></article>
-                    <article><strong>3</strong><h3>Ganador correcto</h3></article>
-                    <article><strong>2</strong><h3>Diferencia correcta</h3></article>
-                    <article><strong>1</strong><h3>Participación</h3></article>
-                  </div>
-                  <p className="score-note">
-                    En partidos definidos por penales, los puntos se calculan con el marcador antes de la tanda de penales.
-                  </p>
-                </section>
-
                 <footer className="landing-footer">
                   <span>Desarrollado por Mundial Picks 2026</span>
-                  <a href="/planes">Planes</a>
                   <a href={salesWhatsAppUrl("Sala Básica")} rel="noreferrer" target="_blank">Contacto</a>
                 </footer>
 

@@ -296,7 +296,8 @@ button {
   margin-top: 20px;
 }
 
-.landing-create-panel {
+.landing-create-panel,
+.landing-private-panel {
   align-items: center;
   background:
     radial-gradient(circle at 100% 0%, rgba(56, 189, 248, 0.2), transparent 34%),
@@ -307,7 +308,22 @@ button {
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
+.landing-code-panel {
+  align-items: start;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 0.9fr) minmax(320px, 420px);
+}
+
+.landing-code-panel > .panel {
+  background: rgba(5, 7, 13, 0.62);
+  box-shadow: none;
+  margin: 0;
+}
+
 .landing-create-panel h2,
+.landing-code-panel h2,
+.landing-private-panel h2,
 .landing-access-copy h2,
 .landing-room-ready h2,
 .landing-plans h2 {
@@ -318,12 +334,22 @@ button {
 }
 
 .landing-create-panel p,
+.landing-code-panel p,
+.landing-private-panel p,
 .landing-access-copy p,
 .landing-room-ready p {
   color: var(--muted);
   line-height: 1.5;
   margin: 0;
   max-width: 720px;
+}
+
+.landing-private-panel {
+  border-color: rgba(163, 255, 18, 0.18);
+}
+
+.landing-private-panel .button {
+  justify-self: end;
 }
 
 .landing-create-actions {
@@ -6625,6 +6651,8 @@ button {
 
   .landing-grid,
   .landing-create-panel,
+  .landing-code-panel,
+  .landing-private-panel,
   .landing-step-grid,
   .landing-benefits,
   .landing-plan-strip,
@@ -6874,6 +6902,8 @@ button {
   }
 
   .landing-create-panel h2,
+  .landing-code-panel h2,
+  .landing-private-panel h2,
   .landing-access-copy h2,
   .landing-room-ready h2,
   .landing-plans h2 {
