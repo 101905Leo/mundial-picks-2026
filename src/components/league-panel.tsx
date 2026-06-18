@@ -905,11 +905,20 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
                     )}
                   </section>
 
-                  <section className="panel room-create-promo-card">
+                  <section className="panel room-create-promo-card visual-room-ad">
                     <div>
-                      <span className="market-kicker">Juega con tus amigos</span>
+                      <span className="market-kicker">Crea tu propia liga</span>
                       <h3>Crea una liga privada</h3>
-                      <p>Crea una liga privada, invita a tus amigos y compitan por el primer lugar.</p>
+                      <p>Invita a tus amigos y compite en una sala privada.</p>
+                    </div>
+                    <div className="room-ad-visual" aria-hidden="true">
+                      <span className="room-ad-trophy">🏆</span>
+                      <div className="room-ad-mini-ranking">
+                        <strong>1. Tú</strong>
+                        <span>2. Amigo</span>
+                        <span>3. Grupo</span>
+                      </div>
+                      <small>CODIGO: MP26</small>
                     </div>
                     <a className="button secondary compact-button room-promo-action" href="/planes">
                       Crear liga

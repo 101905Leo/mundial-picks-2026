@@ -358,6 +358,102 @@ button {
   min-width: 190px;
 }
 
+.landing-showcase {
+  align-items: center;
+  background:
+    radial-gradient(circle at 88% 12%, rgba(163, 255, 18, 0.18), transparent 24%),
+    radial-gradient(circle at 0% 0%, rgba(244, 189, 79, 0.18), transparent 32%),
+    linear-gradient(135deg, rgba(17, 24, 39, 0.98), rgba(8, 11, 18, 0.98));
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 0.92fr) minmax(280px, 0.62fr);
+}
+
+.landing-showcase-copy {
+  display: grid;
+  gap: 12px;
+}
+
+.landing-showcase h2 {
+  color: #fff;
+  font-size: clamp(1.55rem, 4vw, 2.65rem);
+  line-height: 1.02;
+  margin: 0;
+}
+
+.landing-showcase p {
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0;
+  max-width: 620px;
+}
+
+.landing-showcase .button {
+  justify-self: start;
+}
+
+.landing-app-mockup {
+  background:
+    linear-gradient(180deg, rgba(20, 29, 48, 0.96), rgba(6, 9, 16, 0.98));
+  border: 1px solid rgba(244, 189, 79, 0.28);
+  border-radius: 18px;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.38);
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+
+.mockup-top,
+.mockup-ranking,
+.mockup-picks,
+.mockup-code {
+  background: rgba(5, 7, 13, 0.64);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.mockup-top {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.mockup-top span,
+.mockup-picks span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.mockup-top strong,
+.mockup-picks strong {
+  color: var(--gold-soft);
+}
+
+.mockup-ranking {
+  display: grid;
+  gap: 8px;
+}
+
+.mockup-ranking span {
+  color: #eaf3ff;
+  font-weight: 800;
+}
+
+.mockup-picks {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.mockup-code {
+  border-color: rgba(163, 255, 18, 0.28);
+  color: var(--lime-accent);
+  font-weight: 950;
+  text-align: center;
+}
+
 .compact-title {
   align-items: start;
   display: grid;
@@ -1545,6 +1641,60 @@ button {
 .public-room-promo p {
   color: var(--muted);
   margin: 0;
+}
+
+.visual-room-ad {
+  align-items: center;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(244, 189, 79, 0.16), transparent 34%),
+    radial-gradient(circle at 100% 8%, rgba(163, 255, 18, 0.13), transparent 30%),
+    linear-gradient(115deg, rgba(15, 23, 42, 0.98), rgba(7, 10, 17, 0.98));
+  border-color: rgba(244, 189, 79, 0.18);
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1fr) minmax(170px, 0.55fr) auto;
+}
+
+.visual-room-ad h3 {
+  color: #fff;
+  margin: 4px 0 6px;
+}
+
+.room-ad-visual {
+  align-items: center;
+  background: rgba(5, 7, 13, 0.56);
+  border: 1px solid rgba(244, 189, 79, 0.2);
+  border-radius: 14px;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: auto minmax(0, 1fr);
+  padding: 10px;
+}
+
+.room-ad-trophy {
+  font-size: 2rem;
+  grid-row: span 2;
+}
+
+.room-ad-mini-ranking {
+  display: grid;
+  gap: 3px;
+}
+
+.room-ad-mini-ranking strong {
+  color: var(--gold-soft);
+}
+
+.room-ad-mini-ranking span,
+.room-ad-visual small {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.room-ad-visual small {
+  color: var(--lime-accent);
+  grid-column: 1 / -1;
+  letter-spacing: 0.04em;
 }
 
 .room-owner-actions {
@@ -2796,7 +2946,9 @@ button {
 }
 
 .plan-card {
-  background: rgba(13, 18, 29, 0.96);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(56, 189, 248, 0.09), transparent 30%),
+    rgba(13, 18, 29, 0.96);
   border: 1px solid rgba(255, 255, 255, 0.11);
   border-radius: 8px;
   display: grid;
@@ -2806,8 +2958,28 @@ button {
 }
 
 .plan-card.featured {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(163, 255, 18, 0.13), transparent 30%),
+    linear-gradient(180deg, rgba(23, 30, 45, 0.98), rgba(9, 13, 22, 0.98));
   border-color: rgba(244, 189, 79, 0.7);
   box-shadow: inset 0 3px 0 var(--gold);
+}
+
+.plan-card-topline {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.plan-badge {
+  background: rgba(163, 255, 18, 0.12);
+  border: 1px solid rgba(163, 255, 18, 0.32);
+  border-radius: 999px;
+  color: var(--lime-accent);
+  font-size: 0.72rem;
+  font-weight: 950;
+  padding: 5px 8px;
 }
 
 .plan-card h2 {
@@ -6650,6 +6822,7 @@ button {
 	  }
 
   .landing-grid,
+  .landing-showcase,
   .landing-create-panel,
   .landing-code-panel,
   .landing-private-panel,
@@ -6687,6 +6860,30 @@ button {
   .ranking-stat-grid,
   .ranking-search-panel {
     grid-template-columns: 1fr;
+  }
+
+  .landing-showcase .button,
+  .landing-private-panel .button {
+    justify-self: stretch;
+  }
+
+  .landing-app-mockup {
+    border-radius: 14px;
+    padding: 12px;
+  }
+
+  .mockup-top,
+  .mockup-picks {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .visual-room-ad {
+    grid-template-columns: 1fr;
+  }
+
+  .room-ad-visual {
+    grid-template-columns: auto minmax(0, 1fr);
   }
 
   .plans-grid {

@@ -34,7 +34,10 @@ export function PlansPage() {
         {roomPlanCatalog.map((plan) => (
           <article className={`plan-card ${plan.slug === "sala-pro" ? "featured" : ""}`} key={plan.slug}>
             <div>
-              <span className="market-kicker">{plan.durationDays} días</span>
+              <div className="plan-card-topline">
+                <span className="market-kicker">{plan.durationDays} días</span>
+                {plan.slug === "sala-pro" ? <span className="plan-badge">Recomendado</span> : null}
+              </div>
               <h2>{plan.name}</h2>
               <strong className="plan-price">{formatPrice(plan.priceCop)}</strong>
               <p>{plan.participantLimit ? `Hasta ${plan.participantLimit} participantes` : "Participantes según necesidad"}</p>

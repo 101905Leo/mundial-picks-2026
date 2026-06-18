@@ -240,6 +240,33 @@ export function MundialPicksApp() {
           <>
             {!user ? (
               <section className="public-landing">
+                <section className="landing-card landing-showcase">
+                  <div className="landing-showcase-copy">
+                    <span className="market-kicker">Vive el Mundial con tu grupo</span>
+                    <h2>Todo tu grupo compitiendo en una sola sala.</h2>
+                    <p>Crea una liga privada, comparte el código y deja que el ranking se actualice solo.</p>
+                    <button className="button primary" onClick={() => openPublicAccess("register")} type="button">
+                      Crear mi liga
+                    </button>
+                  </div>
+                  <div className="landing-app-mockup" aria-hidden="true">
+                    <div className="mockup-top">
+                      <span>Partido destacado</span>
+                      <strong>COL 2 - 1 BRA</strong>
+                    </div>
+                    <div className="mockup-ranking">
+                      <span>🏆 Ana · 18 pts</span>
+                      <span>2. Carlos · 15 pts</span>
+                      <span>3. Luis · 13 pts</span>
+                    </div>
+                    <div className="mockup-picks">
+                      <span>Picks de amigos</span>
+                      <strong>1-0 · 2-1 · 1-1</strong>
+                    </div>
+                    <div className="mockup-code">Código MP26</div>
+                  </div>
+                </section>
+
                 <section className="landing-card landing-code-panel" id="acceso">
                   <div>
                     <span className="market-kicker">¿Ya tienes código?</span>
