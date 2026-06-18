@@ -768,6 +768,33 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
       setQuickPickSaving(false);
     }
   }
+
+  useEffect(() => {
+    if (!selectedLeague || !featuredMatch) return;
+
+    let cancelled = false;
+
+    fetch(`/api/leagues/${selectedLeague.id}/predictions?matchId=${featuredMatch.id}`, { cache: "no-store" })
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error ?? "No se pudieron cargar los picks del partido.");
+        if (!cancelled) setPredictions(data.predictions ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setPredictions([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    selectedLeague?.id,
+    featuredMatch?.id,
+    featuredMatch?.status,
+    featuredMatch?.homeScore,
+    featuredMatch?.awayScore,
+  ]);
+
   const roomTabs: Array<[RoomView, string]> = [
     ["home", "Inicio"],
     ["matches", "Calendario"],

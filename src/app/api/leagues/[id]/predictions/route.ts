@@ -35,6 +35,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (response) return response;
 
   const { id } = await params;
+  const requestedMatchId = request.nextUrl.searchParams.get("matchId")?.trim() || null;
   const league = await prisma.league.findUnique({
     where: { id },
     select: {
@@ -90,19 +91,29 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     ...match,
     status: getScoringStatus(match, now),
   }));
-  const openMatches = matchesWithScoringStatus.filter((match) => match.status !== "FINISHED");
-  const liveMatches = matchesWithScoringStatus.filter((match) => match.status === "LIVE");
-  const lastFinishedMatch = [...matchesWithScoringStatus]
-    .filter((match) => match.status === "FINISHED")
-    .sort((left, right) => right.startsAt.getTime() - left.startsAt.getTime())[0];
-  const nearestOpenMatches = [...openMatches].sort(
-    (left, right) =>
-      Math.abs(left.startsAt.getTime() - now.getTime()) -
-      Math.abs(right.startsAt.getTime() - now.getTime()),
-  );
-  const visibleMatches = liveMatches.length ? liveMatches : nearestOpenMatches.slice(0, 1);
-  if (!visibleMatches.length && lastFinishedMatch) {
-    visibleMatches.push(lastFinishedMatch);
+
+  let visibleMatches: typeof matchesWithScoringStatus = [];
+  if (requestedMatchId) {
+    const requestedMatch = matchesWithScoringStatus.find((match) => match.id === requestedMatchId);
+    if (!requestedMatch) {
+      return Response.json({ error: "El partido no pertenece a esta sala" }, { status: 404 });
+    }
+    visibleMatches = [requestedMatch];
+  } else {
+    const openMatches = matchesWithScoringStatus.filter((match) => match.status !== "FINISHED");
+    const liveMatches = matchesWithScoringStatus.filter((match) => match.status === "LIVE");
+    const lastFinishedMatch = [...matchesWithScoringStatus]
+      .filter((match) => match.status === "FINISHED")
+      .sort((left, right) => right.startsAt.getTime() - left.startsAt.getTime())[0];
+    const nearestOpenMatches = [...openMatches].sort(
+      (left, right) =>
+        Math.abs(left.startsAt.getTime() - now.getTime()) -
+        Math.abs(right.startsAt.getTime() - now.getTime()),
+    );
+    visibleMatches = liveMatches.length ? liveMatches : nearestOpenMatches.slice(0, 1);
+    if (!visibleMatches.length && lastFinishedMatch) {
+      visibleMatches.push(lastFinishedMatch);
+    }
   }
   const visiblePredictions = visibleMatches.length
     ? await prisma.prediction.findMany({
@@ -156,6 +167,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
   return Response.json({
     matches: visibleMatches,
+    message: visibleMatches.some((match) => getScoringStatus(match, now) === "SCHEDULED")
+      ? "Los picks se mostrarán cuando inicie el partido."
+      : null,
     predictions: visibleMatches.flatMap((match) => {
       const matchStatus = getScoringStatus(match, now);
       if (matchStatus === "SCHEDULED") return [];
