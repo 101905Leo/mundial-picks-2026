@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { MatchCard } from "@/components/match-card";
 import { FormidableFacts } from "@/components/formidable-facts";
 import { StatisticsPanel } from "@/components/statistics-panel";
@@ -69,6 +69,8 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
   const [syncError, setSyncError] = useState("");
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isRoomMenuOpen, setIsRoomMenuOpen] = useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(true);
+  const [mobileNavTouchStart, setMobileNavTouchStart] = useState<number | null>(null);
   const [quickHomePick, setQuickHomePick] = useState(0);
   const [quickAwayPick, setQuickAwayPick] = useState(0);
   const [quickPickMessage, setQuickPickMessage] = useState("");
@@ -86,6 +88,26 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
   const canManageInvitation = Boolean(isSuperAdmin || isOwner || isRoomAdmin);
   const canCloseRoom = Boolean(isSuperAdmin || isOwner);
   const canDeleteRoom = isSuperAdmin;
+  const mobileNavTimerRef = useRef<number | null>(null);
+
+  function clearMobileNavTimer() {
+    if (!mobileNavTimerRef.current) return;
+    window.clearTimeout(mobileNavTimerRef.current);
+    mobileNavTimerRef.current = null;
+  }
+
+  function showMobileNav(autoHide = true) {
+    clearMobileNavTimer();
+    setIsMobileNavOpen(true);
+    if (autoHide) {
+      mobileNavTimerRef.current = window.setTimeout(() => setIsMobileNavOpen(false), 4200);
+    }
+  }
+
+  function hideMobileNavSoon(delay = 450) {
+    clearMobileNavTimer();
+    mobileNavTimerRef.current = window.setTimeout(() => setIsMobileNavOpen(false), delay);
+  }
 
   async function loadLeagues() {
     const [roomsResponse, competitionsResponse] = await Promise.all([
@@ -202,12 +224,19 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
   }, [embedded, initialLeagueId, leagues]);
 
   useEffect(() => {
+    if (!selectedLeague) return;
+    showMobileNav();
+    return clearMobileNavTimer;
+  }, [selectedLeague?.id]);
+
+  useEffect(() => {
     loadRoom();
   }, [selectedLeague?.id]);
 
   useEffect(() => {
     if (!roomMenuRequest || embedded) return;
     setIsRoomMenuOpen(true);
+    hideMobileNavSoon();
   }, [roomMenuRequest, embedded]);
 
   useEffect(() => {
@@ -731,6 +760,18 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
     setSelectedLeague(league);
     setRoomView("home");
     setIsRoomMenuOpen(false);
+    hideMobileNavSoon();
+  }
+
+  function handleMobileNavTouchEnd(y: number) {
+    if (mobileNavTouchStart === null) return;
+    if (mobileNavTouchStart - y > 28) showMobileNav();
+    setMobileNavTouchStart(null);
+  }
+
+  function openRoomTab(view: RoomView) {
+    setRoomView(view);
+    hideMobileNavSoon();
   }
 
   function shareRanking() {
@@ -810,7 +851,16 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
                 <strong>Vista de sala</strong>
                 <p className="muted">Estás viendo esta sala con permisos de control, sin competir como participante.</p>
               </div>
-              <button className="button secondary compact-button" onClick={() => setIsRoomMenuOpen(true)} type="button">Salas</button>
+              <button
+                className="button secondary compact-button"
+                onClick={() => {
+                  setIsRoomMenuOpen(true);
+                  hideMobileNavSoon();
+                }}
+                type="button"
+              >
+                Salas
+              </button>
             </div>
           ) : null}
           <div className="panel league-room-hero room-player-header">
@@ -828,7 +878,23 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
               {canManageInvitation ? (
                 <button className="button secondary compact-button" onClick={copyInvitation} type="button">Copiar invitación</button>
               ) : null}
-              {!embedded ? <button className="button secondary compact-button" onClick={() => setIsRoomMenuOpen(true)} type="button">Salas</button> : null}
+              {!embedded ? (
+                <button
+                  className="button secondary compact-button"
+                  onClick={() => {
+                    setIsRoomMenuOpen(true);
+                    hideMobileNavSoon();
+                  }}
+                  type="button"
+                >
+                  Salas
+                </button>
+              ) : null}
+              {onLogout ? (
+                <button className="button danger compact-button room-header-logout" onClick={onLogout} type="button">
+                  Salir
+                </button>
+              ) : null}
             </div>
           </div>
 
@@ -845,14 +911,49 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
             </section>
           ) : (
           <>
-          <div className="room-mobile-drawer">
+          <button
+            className={`room-mobile-nav-handle ${isMobileNavOpen ? "is-open" : ""}`}
+            onClick={() => showMobileNav()}
+            onTouchStart={(event) => setMobileNavTouchStart(event.touches[0]?.clientY ?? null)}
+            onTouchEnd={(event) => handleMobileNavTouchEnd(event.changedTouches[0]?.clientY ?? 0)}
+            type="button"
+            aria-label="Mostrar navegación de sala"
+          >
+            <span />
+          </button>
+
+          <div className={`room-mobile-drawer ${isMobileNavOpen ? "is-open" : "is-hidden"}`}>
             <span>{selectedLeague.name}</span>
             <div className="room-mobile-cajons">
-              {roomTabs.map(([view, label]) => (
+              {roomTabs.slice(0, 2).map(([view, label]) => (
                 <button
                   className={`room-mobile-cajon ${roomView === view || (view === "more" && moreRoomViews.includes(roomView)) ? "active" : ""}`}
                   key={view}
-                  onClick={() => setRoomView(view)}
+                  onClick={() => openRoomTab(view)}
+                  type="button"
+                >
+                  <strong>{label}</strong>
+                  <small>{roomView === view || (view === "more" && moreRoomViews.includes(roomView)) ? "Abierto" : "Tocar para abrir"}</small>
+                </button>
+              ))}
+              {!embedded ? (
+                <button
+                  className="room-mobile-cajon"
+                  onClick={() => {
+                    setIsRoomMenuOpen(true);
+                    hideMobileNavSoon();
+                  }}
+                  type="button"
+                >
+                  <strong>Salas</strong>
+                  <small>Cambiar sala</small>
+                </button>
+              ) : null}
+              {roomTabs.slice(2).map(([view, label]) => (
+                <button
+                  className={`room-mobile-cajon ${roomView === view || (view === "more" && moreRoomViews.includes(roomView)) ? "active" : ""}`}
+                  key={view}
+                  onClick={() => openRoomTab(view)}
                   type="button"
                 >
                   <strong>{label}</strong>
@@ -864,9 +965,9 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
 
           <nav className="admin-nav room-nav" aria-label="Secciones de la sala">
             {roomTabs.map(([view, label]) => (
-              <button
-                className={`tab ${roomView === view || (view === "more" && moreRoomViews.includes(roomView)) ? "active" : ""}`}
-                key={view}
+                <button
+                  className={`tab ${roomView === view || (view === "more" && moreRoomViews.includes(roomView)) ? "active" : ""}`}
+                  key={view}
                 onClick={() => setRoomView(view)}
                 type="button"
               >
@@ -1356,11 +1457,6 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
                 {canEditRoomInfo ? (
                   <button className="button secondary" onClick={() => setRoomView("participants")} type="button">
                     Configuración
-                  </button>
-                ) : null}
-                {onLogout ? (
-                  <button className="button danger room-logout-button" onClick={onLogout} type="button">
-                    Salir
                   </button>
                 ) : null}
               </div>

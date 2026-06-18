@@ -253,7 +253,6 @@ button {
   border: 1px solid rgba(255, 231, 168, 0.24);
   border-radius: 999px;
   color: rgba(255, 231, 168, 0.82);
-  cursor: pointer;
   display: inline-flex;
   font-size: 0.86rem;
   font-weight: 800;
@@ -1979,6 +1978,10 @@ button {
   display: none;
 }
 
+.room-mobile-nav-handle {
+  display: none;
+}
+
 .room-home-screen {
   display: grid;
   gap: 14px;
@@ -2845,35 +2848,6 @@ button {
   font-weight: 900;
   margin: -2px 0 0;
   text-align: center;
-}
-
-.public-more-panel {
-  max-width: 520px;
-}
-
-.public-more-actions {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.public-more-actions button {
-  background:
-    linear-gradient(135deg, rgba(47, 107, 255, 0.16), rgba(182, 255, 59, 0.08)),
-    rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 14px;
-  color: #fff;
-  cursor: pointer;
-  font-weight: 900;
-  min-height: 54px;
-  padding: 0 12px;
-  text-align: left;
-}
-
-.public-more-actions button:hover,
-.public-more-actions button:focus-visible {
-  border-color: rgba(182, 255, 59, 0.36);
 }
 
 .league-chat-message.own-message {
@@ -7551,6 +7525,36 @@ button {
     text-align: left;
   }
 
+  .room-mobile-nav-handle {
+    align-items: center;
+    background: rgba(6, 10, 18, 0.86);
+    border: 1px solid rgba(244, 189, 79, 0.2);
+    border-radius: 999px;
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.34);
+    display: inline-flex;
+    height: 26px;
+    justify-content: center;
+    left: 50%;
+    padding: 0 15px;
+    position: fixed;
+    transform: translateX(-50%);
+    width: 58px;
+    z-index: 42;
+  }
+
+  .room-mobile-nav-handle span {
+    background: rgba(255, 231, 168, 0.72);
+    border-radius: 999px;
+    display: block;
+    height: 3px;
+    width: 28px;
+  }
+
+  .room-mobile-nav-handle.is-open {
+    bottom: calc(58px + env(safe-area-inset-bottom));
+  }
+
   .room-mobile-drawer {
     background:
       linear-gradient(180deg, rgba(11, 16, 28, 0.94), rgba(5, 8, 15, 0.98)),
@@ -7567,7 +7571,20 @@ button {
     position: fixed;
     right: 0;
     top: auto;
+    transform: translateY(0);
+    transition: transform 180ms ease, opacity 180ms ease;
     z-index: 40;
+  }
+
+  .room-mobile-drawer.is-hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(calc(100% + 12px));
+  }
+
+  .room-mobile-drawer.is-open {
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .room-mobile-drawer > span {
@@ -7633,7 +7650,7 @@ button {
     border-radius: 14px;
     gap: 10px;
     grid-template-columns: 1fr;
-    padding: 12px;
+    padding: calc(12px + env(safe-area-inset-top)) 12px 12px;
   }
 
   .room-player-title h2 {
@@ -7644,6 +7661,22 @@ button {
   .room-player-title .muted {
     display: block;
     font-size: 0.75rem;
+  }
+
+  .room-header-actions {
+    align-items: center;
+    display: flex;
+    gap: 7px;
+    justify-content: space-between;
+  }
+
+  .room-header-actions .button {
+    min-height: 34px;
+    padding: 0 10px;
+  }
+
+  .room-header-logout {
+    margin-left: auto;
   }
 
   .room-player-metrics {
@@ -8281,9 +8314,6 @@ button {
     gap: 7px;
   }
 
-  .public-more-actions {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

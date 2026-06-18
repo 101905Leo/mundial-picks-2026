@@ -22,8 +22,6 @@ export function MundialPicksApp() {
   >("rooms");
   const [publicAuthMode, setPublicAuthMode] = useState<"login" | "register">("login");
   const [roomMenuRequest, setRoomMenuRequest] = useState(0);
-  const [publicMoreOpen, setPublicMoreOpen] = useState(false);
-  const [publicTouchStart, setPublicTouchStart] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   async function loadSession() {
@@ -140,23 +138,9 @@ export function MundialPicksApp() {
 
   function openPublicAccess(mode: "login" | "register") {
     setPublicAuthMode(mode);
-    setPublicMoreOpen(false);
     window.requestAnimationFrame(() => {
       document.getElementById("acceso")?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
-  }
-
-  function openPublicSection(sectionId: string) {
-    setPublicMoreOpen(false);
-    window.requestAnimationFrame(() => {
-      document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-  }
-
-  function handlePublicTouchEnd(y: number) {
-    if (publicTouchStart === null) return;
-    if (publicTouchStart - y > 42) setPublicMoreOpen(true);
-    setPublicTouchStart(null);
   }
 
   const groupCounts = matches.reduce<Record<string, number>>((counts, match) => {
@@ -219,11 +203,7 @@ export function MundialPicksApp() {
         </div>
       </header>
 
-      <section
-        className="hero-band"
-        onTouchStart={!user ? (event) => setPublicTouchStart(event.touches[0]?.clientY ?? null) : undefined}
-        onTouchEnd={!user ? (event) => handlePublicTouchEnd(event.changedTouches[0]?.clientY ?? 0) : undefined}
-      >
+      <section className="hero-band">
         <div className="hero-content">
           <div className="hero-title-group">
             <img className="hero-logo-image" src="/logo-copa-mundial-2026.png" alt="Copa Mundial de la FIFA 2026™" />
@@ -240,9 +220,7 @@ export function MundialPicksApp() {
                       Ingresar con código
                     </button>
                   </div>
-                  <button className="landing-swipe-hint" onClick={() => setPublicMoreOpen(true)} type="button">
-                    ↑ Desliza para ver más
-                  </button>
+                  <span className="landing-swipe-hint">↑ Desliza para ver más</span>
                 </>
               ) : null}
             </div>
@@ -382,31 +360,6 @@ export function MundialPicksApp() {
                   Chatear
                 </a>
               </section>
-            ) : null}
-
-            {!user && publicMoreOpen ? (
-              <div className="room-sheet-shell public-more-shell" role="dialog" aria-modal="true" aria-label="Ver mas">
-                <button className="room-sheet-backdrop" onClick={() => setPublicMoreOpen(false)} type="button" aria-label="Cerrar menu" />
-                <section className="room-sheet-panel public-more-panel">
-                  <div className="room-chat-handle" aria-hidden="true" />
-                  <header className="room-sheet-header">
-                    <div>
-                      <span className="market-kicker">Explorar</span>
-                      <h3>Ver más</h3>
-                      <p>Elige una sección y seguimos abajo en la página.</p>
-                    </div>
-                    <button className="room-chat-close" onClick={() => setPublicMoreOpen(false)} type="button" aria-label="Cerrar menu">
-                      ×
-                    </button>
-                  </header>
-                  <div className="public-more-actions">
-                    <button onClick={() => openPublicSection("como-funciona")} type="button">Cómo funciona</button>
-                    <button onClick={() => openPublicSection("reglas")} type="button">Reglas</button>
-                    <button onClick={() => openPublicSection("planes")} type="button">Planes</button>
-                    <button onClick={() => openPublicSection("noticias")} type="button">Noticias</button>
-                  </div>
-                </section>
-              </div>
             ) : null}
 
             {user ? (
