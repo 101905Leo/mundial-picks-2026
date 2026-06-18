@@ -21,6 +21,7 @@ export function MundialPicksApp() {
     "picks" | "ranking" | "facts" | "rooms" | "admin"
   >("rooms");
   const [publicAuthMode, setPublicAuthMode] = useState<"login" | "register">("login");
+  const [roomMenuRequest, setRoomMenuRequest] = useState(0);
   const [loading, setLoading] = useState(true);
 
   async function loadSession() {
@@ -199,7 +200,7 @@ export function MundialPicksApp() {
               Ingresar
             </button>
           ) : null}
-          {user ? (
+          {user?.role === "ADMIN" ? (
             <button className="button danger" onClick={logout}>
               Salir
             </button>
@@ -212,18 +213,19 @@ export function MundialPicksApp() {
           <div className="hero-title-group">
             <img className="hero-logo-image" src="/logo-copa-mundial-2026.png" alt="Copa Mundial de la FIFA 2026™" />
             <div>
-              <h1>{!user ? "Mundial Picks 2026" : "Copa Mundial de la FIFA 2026™"}</h1>
+              <h1>{!user ? "Tu liga privada del Mundial." : "Copa Mundial de la FIFA 2026™"}</h1>
               {!user ? (
                 <>
-                  <p>Crea tu quiniela privada del Mundial y compite con tus amigos.</p>
+                  <p>Crea una quiniela, invita a tus amigos y compite en un ranking en vivo.</p>
                   <div className="hero-actions">
                     <button className="button primary" onClick={() => openPublicAccess("register")} type="button">
-                      Crear sala
+                      Crear mi liga
                     </button>
                     <button className="button secondary" onClick={() => openPublicAccess("register")} type="button">
                       Ingresar con código
                     </button>
                   </div>
+                  <span className="landing-swipe-hint">↑ Desliza para ver más</span>
                 </>
               ) : null}
             </div>
@@ -313,10 +315,11 @@ export function MundialPicksApp() {
                     <h2>Sistema de puntos</h2>
                   </div>
                   <div className="score-rules compact-score-rules">
-                    <article><strong>5</strong><h3>Marcador exacto</h3></article>
-                    <article><strong>3</strong><h3>Ganador correcto</h3></article>
-                    <article><strong>2</strong><h3>Diferencia correcta</h3></article>
-                    <article><strong>1</strong><h3>Participación</h3></article>
+                    <article><strong>5</strong><h3>Marcador exacto</h3><small>Ej: queda 2-1 y pronosticaste 2-1.</small></article>
+                    <article><strong>3</strong><h3>Ganador correcto</h3><small>Ej: gana Colombia y elegiste victoria local.</small></article>
+                    <article><strong>2</strong><h3>Diferencia correcta</h3><small>Ej: gana por 2 goles y acertaste esa diferencia.</small></article>
+                    <article><strong>1</strong><h3>Participación</h3><small>Ej: hiciste pick, aunque no acertaste.</small></article>
+                    <article><strong>0</strong><h3>Sin pronóstico</h3><small>Ej: no guardaste pick antes del inicio.</small></article>
                   </div>
                   <p className="score-note">
                     En partidos definidos por penales, los puntos se calculan con el marcador antes de la tanda de penales.
@@ -378,7 +381,10 @@ export function MundialPicksApp() {
                 ) : (
                   <button
                     className={`tab ${activeView === "rooms" ? "active" : ""}`}
-                    onClick={() => setActiveView("rooms")}
+                    onClick={() => {
+                      setActiveView("rooms");
+                      setRoomMenuRequest((current) => current + 1);
+                    }}
                   >
                     Salas
                   </button>
@@ -469,7 +475,7 @@ export function MundialPicksApp() {
             ) : null}
 
             {user && activeView === "rooms" ? (
-              <LeaguePanel user={user} />
+              <LeaguePanel user={user} onLogout={logout} roomMenuRequest={roomMenuRequest} />
             ) : null}
 
             {user && activeView === "facts" ? <FormidableFacts /> : null}

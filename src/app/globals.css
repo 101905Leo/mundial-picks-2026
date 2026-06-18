@@ -239,6 +239,20 @@ button {
   max-width: 680px;
 }
 
+.app-shell:not(.action-view) .hero-band {
+  min-height: calc(100svh - 116px);
+}
+
+.landing-swipe-hint {
+  align-items: center;
+  color: rgba(255, 231, 168, 0.82);
+  display: inline-flex;
+  font-size: 0.86rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  margin-top: 14px;
+}
+
 .hero-logo-image {
   display: block;
   filter: drop-shadow(0 14px 34px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 20px rgba(244, 189, 79, 0.22));
@@ -571,11 +585,20 @@ button {
 }
 
 .compact-score-rules {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 }
 
 .compact-score-rules article {
-  min-height: 104px;
+  min-height: 128px;
+}
+
+.compact-score-rules small {
+  color: var(--muted);
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.35;
+  margin-top: 6px;
 }
 
 .landing-footer {
@@ -1822,6 +1845,102 @@ button {
   padding-right: 34px;
 }
 
+.room-picker-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.room-picker-panel .section-title p {
+  color: var(--muted);
+  margin: 4px 0 0;
+}
+
+.room-picker-list,
+.room-sheet-list {
+  display: grid;
+  gap: 10px;
+}
+
+.room-picker-row {
+  align-items: center;
+  background:
+    linear-gradient(135deg, rgba(19, 31, 56, 0.9), rgba(7, 12, 24, 0.96)),
+    var(--panel);
+  border: 1px solid rgba(93, 220, 255, 0.16);
+  border-radius: 14px;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  min-height: 68px;
+  padding: 12px 14px;
+  text-align: left;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+  width: 100%;
+}
+
+.room-picker-row:hover,
+.room-picker-row:focus-visible {
+  border-color: rgba(182, 255, 59, 0.42);
+  transform: translateY(-1px);
+}
+
+.room-picker-row span:first-child {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.room-picker-row strong {
+  color: #fff;
+  font-size: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.room-picker-row small {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.room-picker-meta {
+  align-items: center;
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 10px;
+}
+
+.room-picker-meta small {
+  background: rgba(182, 255, 59, 0.1);
+  border: 1px solid rgba(182, 255, 59, 0.28);
+  border-radius: 999px;
+  color: var(--lime-accent);
+  padding: 4px 8px;
+}
+
+.room-picker-meta b {
+  color: var(--gold-soft);
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.room-empty-actions {
+  display: grid;
+  gap: 12px;
+}
+
+.room-empty-actions > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.room-code-card {
+  align-content: start;
+}
+
 .room-first-match {
   background: rgba(5, 7, 13, 0.48);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -2532,6 +2651,102 @@ button {
 .room-chat-messages {
   max-height: min(430px, 48dvh);
   min-height: 220px;
+}
+
+.room-sheet-shell {
+  inset: 0;
+  pointer-events: none;
+  position: fixed;
+  z-index: 82;
+}
+
+.room-sheet-backdrop {
+  background: rgba(2, 6, 23, 0.52);
+  border: 0;
+  cursor: pointer;
+  inset: 0;
+  pointer-events: auto;
+  position: absolute;
+}
+
+.room-sheet-panel {
+  background:
+    linear-gradient(180deg, rgba(19, 31, 56, 0.99), rgba(7, 12, 24, 1)),
+    var(--panel);
+  border: 1px solid rgba(93, 220, 255, 0.2);
+  border-radius: 24px 24px 0 0;
+  bottom: 0;
+  box-shadow: 0 -24px 80px rgba(0, 0, 0, 0.5);
+  display: grid;
+  gap: 14px;
+  left: 50%;
+  max-height: min(84dvh, 720px);
+  max-width: 620px;
+  overflow: auto;
+  padding: 12px 16px calc(16px + env(safe-area-inset-bottom));
+  pointer-events: auto;
+  position: absolute;
+  transform: translateX(-50%);
+  width: min(100vw, 620px);
+}
+
+.room-sheet-panel .room-chat-handle {
+  display: block;
+}
+
+.room-sheet-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+}
+
+.room-sheet-header h3 {
+  color: #fff;
+  font-size: 1.25rem;
+  margin: 3px 0 4px;
+}
+
+.room-sheet-header p {
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.room-sheet-code-form {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.room-sheet-code-form label {
+  color: var(--gold-soft);
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.room-sheet-code-form > div {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.room-sheet-code-form input {
+  background: rgba(2, 6, 23, 0.74);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  color: #fff;
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.room-logout-button {
+  justify-self: stretch;
 }
 
 .league-chat-message.own-message {
@@ -7068,6 +7283,11 @@ button {
     padding: 18px 14px 22px;
   }
 
+  .app-shell:not(.action-view) .hero-band {
+    align-items: end;
+    min-height: calc(100svh - 88px);
+  }
+
   .hero-band h1 {
     font-size: clamp(1.75rem, 9vw, 2.55rem);
     margin-bottom: 8px;
@@ -7919,6 +8139,19 @@ button {
 
   .admin-nav .tab {
     flex: 1 1 100%;
+  }
+
+  .room-sheet-code-form > div {
+    grid-template-columns: 1fr;
+  }
+
+  .room-picker-row {
+    min-height: 62px;
+    padding: 11px 12px;
+  }
+
+  .room-picker-meta {
+    gap: 7px;
   }
 }
 
