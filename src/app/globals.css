@@ -1866,6 +1866,10 @@ button {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.room-home-summary.personal-room-summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .room-home-summary article {
   background: rgba(5, 9, 18, 0.62);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -1885,6 +1889,35 @@ button {
   display: block;
   font-size: 1.6rem;
   margin-top: 4px;
+}
+
+.room-create-promo-card {
+  align-items: center;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(182, 255, 59, 0.16), transparent 34%),
+    linear-gradient(145deg, rgba(17, 24, 39, 0.96), rgba(5, 9, 18, 0.98));
+  border-color: rgba(182, 255, 59, 0.2);
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.room-create-promo-card h3 {
+  color: #fff;
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
+  margin: 4px 0 6px;
+}
+
+.room-create-promo-card p {
+  color: var(--muted);
+  margin: 0;
+  max-width: 54ch;
+}
+
+.room-promo-action {
+  border-color: rgba(182, 255, 59, 0.3);
+  color: var(--lime-accent);
+  white-space: nowrap;
 }
 
 .room-home-games {
@@ -2092,6 +2125,13 @@ button {
   gap: 8px;
 }
 
+.room-complete-ranking .room-ranking-card-list,
+.room-all-picks-card .room-prediction-list {
+  max-height: 460px;
+  overflow: auto;
+  padding-right: 3px;
+}
+
 .room-ranking-card-list article {
   align-items: center;
   background: rgba(5, 9, 18, 0.56);
@@ -2106,6 +2146,17 @@ button {
 .room-ranking-card-list article.current-user {
   border-color: rgba(244, 189, 79, 0.42);
   box-shadow: inset 3px 0 0 var(--gold);
+}
+
+.room-ranking-card-list article.podium-rank {
+  background:
+    linear-gradient(135deg, rgba(244, 189, 79, 0.1), rgba(47, 107, 255, 0.08)),
+    rgba(5, 9, 18, 0.68);
+}
+
+.room-ranking-card-list article.podium-rank:first-child {
+  border-color: rgba(255, 204, 92, 0.34);
+  box-shadow: inset 3px 0 0 var(--gold), 0 0 0 1px rgba(255, 204, 92, 0.08);
 }
 
 .room-ranking-card-list span {
@@ -4545,13 +4596,142 @@ button {
 }
 
 .admin-rooms-title {
-  align-items: start;
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
 }
 
 .admin-rooms-title h3 {
   color: #fff;
   font-size: clamp(1.35rem, 2vw, 1.9rem);
   margin: 0 0 6px;
+}
+
+.admin-summary-heading {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+}
+
+.admin-refresh-inline {
+  background: rgba(5, 9, 18, 0.72);
+  border: 1px solid rgba(182, 255, 59, 0.22);
+  border-radius: 999px;
+  color: var(--lime-accent);
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 7px 13px;
+  width: auto;
+}
+
+.admin-refresh-inline:hover {
+  border-color: rgba(182, 255, 59, 0.42);
+  box-shadow: 0 0 0 3px var(--lime-soft);
+}
+
+.admin-room-card-list {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-room-list-card {
+  align-items: center;
+  background: rgba(5, 9, 18, 0.66);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(180px, 1fr) minmax(280px, 1.25fr) auto;
+  padding: 12px;
+}
+
+.admin-room-list-card.active {
+  background:
+    linear-gradient(135deg, rgba(47, 107, 255, 0.14), rgba(182, 255, 59, 0.07)),
+    rgba(5, 9, 18, 0.78);
+  border-color: rgba(182, 255, 59, 0.24);
+  box-shadow: inset 3px 0 0 var(--lime-accent);
+}
+
+.admin-room-list-main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.admin-room-list-main strong {
+  color: #fff;
+  font-size: 1.02rem;
+  overflow-wrap: anywhere;
+}
+
+.admin-room-list-main small {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.admin-room-list-meta {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.admin-room-list-meta span {
+  background: rgba(2, 6, 14, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  display: grid;
+  gap: 3px;
+  padding: 8px 10px;
+}
+
+.admin-room-list-meta small {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.admin-room-list-meta strong {
+  color: var(--gold-soft);
+  font-size: 0.95rem;
+}
+
+.room-empty-state {
+  align-items: center;
+  background: rgba(5, 9, 18, 0.58);
+  border: 1px dashed rgba(182, 255, 59, 0.22);
+  border-radius: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 16px;
+}
+
+.compact-selected-room {
+  gap: 10px;
+  grid-template-columns: 1fr;
+  padding: 12px;
+}
+
+.compact-selected-room .selected-room-main {
+  display: block;
+}
+
+.compact-selected-room .selected-room-main strong {
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
+}
+
+.compact-selected-room .selected-room-metrics {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.compact-create-room-panel {
+  background: rgba(5, 9, 18, 0.46);
+  border-color: rgba(93, 220, 255, 0.1);
 }
 
 .compact-room-command {
@@ -6509,6 +6689,37 @@ button {
 	    grid-template-columns: 1fr;
 	  }
 
+  .admin-summary-heading,
+  .admin-rooms-title {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-refresh-inline {
+    align-self: flex-start;
+  }
+
+  .admin-room-list-card,
+  .room-create-promo-card {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .admin-room-list-meta,
+  .compact-selected-room .selected-room-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .room-empty-state {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .room-promo-action {
+    justify-content: center;
+    width: 100%;
+  }
+
 	  .compact-actions-grid,
 	  .room-more-grid {
 	    grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -6960,6 +7171,10 @@ button {
 
   .room-home-summary.compact-home-summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .room-home-summary.personal-room-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .room-home-summary article {

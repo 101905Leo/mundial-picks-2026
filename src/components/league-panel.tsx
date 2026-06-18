@@ -558,8 +558,6 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
   const nextPendingPick = sortedMatches.find(
     (match) => match.status !== "FINISHED" && !(match.predictions ?? []).length,
   );
-  const upcomingRoomMatch = sortedMatches.find((match) => match.status !== "FINISHED") ?? null;
-  const rankingPreview = ranking.slice(0, 5);
   const recentUserPicks = [...savedPicks]
     .sort((first, second) => new Date(second.match.startsAt).getTime() - new Date(first.match.startsAt).getTime())
     .slice(0, 3);
@@ -567,10 +565,11 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
   const rankingTopThree = ranking.slice(0, 3);
   const livePredictionMatchIds = new Set(liveMatches.map((match) => match.id));
   const liveRoomPredictions = predictions.filter((prediction) => livePredictionMatchIds.has(prediction.match.id));
-  const previewPredictions = (liveRoomPredictions.length ? liveRoomPredictions : predictions).slice(0, 5);
+  const roomHomePredictions = liveRoomPredictions.length ? liveRoomPredictions : predictions;
   const userRankingIndex = ranking.findIndex((entry) => entry.id === user.id);
   const userRanking = userRankingIndex >= 0 ? ranking[userRankingIndex] : null;
   const userPickCount = userRanking?.predictions ?? savedPicks.length;
+  const userExactScores = userRanking?.exactScores ?? 0;
   const leader = ranking[0] ?? null;
   const pointsBehindLeader = userRanking && leader ? Math.max(0, leader.points - userRanking.points) : 0;
   const userPointsFromPicks = userRanking?.points ?? savedPicks.reduce((sum, { match, prediction }) => {
@@ -599,8 +598,6 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
       : selectedLeague?.status === "CLOSED"
         ? "Esta sala está cerrada."
         : "La sala debe estar activa para guardar picks.";
-  const roomFinishedMatches = matches.filter((match) => match.status === "FINISHED").length;
-  const roomLiveMatches = matches.filter((match) => match.status === "LIVE").length;
   const lastSeenChatIndex = lastSeenChatMessageId
     ? chatMessages.findIndex((chatMessage) => chatMessage.id === lastSeenChatMessageId)
     : -1;
@@ -908,109 +905,70 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false }: 
                     )}
                   </section>
 
-                  <section className="panel room-home-summary compact-home-summary">
-                    {isSuperAdmin ? (
-                      <>
-                        <article><span>Participantes</span><strong>{members.length}</strong></article>
-                        <article><span>Picks sala</span><strong>{totalPicks}</strong></article>
-                        <article><span>En vivo</span><strong>{roomLiveMatches}</strong></article>
-                        <article><span>Finalizados</span><strong>{roomFinishedMatches}</strong></article>
-                      </>
-                    ) : (
-                      <>
-                        <article><span>Mi posición</span><strong>{userRanking ? `#${userRankingIndex + 1}` : "-"}</strong></article>
-                        <article><span>Mis puntos</span><strong>{userRanking?.points ?? 0}</strong></article>
-                        <article><span>Picks realizados</span><strong>{userPickCount}</strong></article>
-                        <article><span>Próximo pick</span><strong>{nextPendingPick ? `${flagForTeam(nextPendingPick.homeTeam)} ${flagForTeam(nextPendingPick.awayTeam)}` : "-"}</strong></article>
-                      </>
-                    )}
+                  <section className="panel room-create-promo-card">
+                    <div>
+                      <span className="market-kicker">Juega con tus amigos</span>
+                      <h3>Crea una liga privada</h3>
+                      <p>Crea una liga privada, invita a tus amigos y compitan por el primer lugar.</p>
+                    </div>
+                    <a className="button secondary compact-button room-promo-action" href="/planes">
+                      Crear liga
+                    </a>
                   </section>
 
-                  <section className="panel room-home-games compact-room-games">
-                    <div className="section-title">
-                      <div>
-                        <span className="market-kicker">Siguiente acción</span>
-                        <h3>{upcomingRoomMatch ? "Próximo partido disponible" : "Calendario al día"}</h3>
-                      </div>
-                    </div>
-                    <div className="room-home-day-list">
-                      {upcomingRoomMatch ? (
-                        <article className="room-home-match" key={upcomingRoomMatch.id}>
-                          <div>
-                            <span>{flagForTeam(upcomingRoomMatch.homeTeam)}</span>
-                            <strong>{upcomingRoomMatch.homeTeam}</strong>
-                          </div>
-                          <div>
-                            <span>{flagForTeam(upcomingRoomMatch.awayTeam)}</span>
-                            <strong>{upcomingRoomMatch.awayTeam}</strong>
-                          </div>
-                          <small>{upcomingRoomMatch.status === "LIVE" ? "En vivo" : new Date(upcomingRoomMatch.startsAt).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}</small>
-                        </article>
-                      ) : (
-                        <div className="empty">No hay partidos pendientes publicados.</div>
-                      )}
-                    </div>
+                  <section className="panel room-home-summary compact-home-summary personal-room-summary">
+                    <article><span>Tu posición</span><strong>{userRanking ? `#${userRankingIndex + 1}` : "-"}</strong></article>
+                    <article><span>Tus puntos</span><strong>{userRanking?.points ?? 0}</strong></article>
+                    <article><span>Tus aciertos</span><strong>{userExactScores}</strong></article>
                   </section>
                 </div>
 
                 <aside className="room-home-sidebar">
-                  <section className="panel room-ranking-preview">
+                  <section className="panel room-ranking-preview room-complete-ranking">
                     <div className="section-title">
                       <div>
                         <span className="market-kicker">Ranking</span>
-                        <h3>Top de la sala</h3>
+                        <h3>Ranking completo</h3>
                       </div>
-                      <button className="button secondary compact-button" onClick={() => setRoomView("ranking")} type="button">Ver completo</button>
                     </div>
                     <div className="room-ranking-card-list">
-                      {rankingPreview.map((entry, index) => (
-                        <article className={entry.id === user.id ? "current-user" : ""} key={entry.id}>
-                          <span>#{index + 1}</span>
+                      {ranking.map((entry, index) => (
+                        <article
+                          className={`${entry.id === user.id ? "current-user" : ""} ${index < 3 ? "podium-rank" : ""}`}
+                          key={entry.id}
+                        >
+                          <span>{index === 0 ? "🏆" : `#${index + 1}`}</span>
                           <strong>{entry.name}</strong>
-                          <em>{entry.points} pts</em>
+                          <em>{entry.points} pts · {entry.predictions} picks</em>
                         </article>
                       ))}
-                      {!rankingPreview.length ? <div className="empty">El ranking aparecerá cuando haya participantes.</div> : null}
+                      {!ranking.length ? <div className="empty">El ranking aparecerá cuando haya participantes.</div> : null}
                     </div>
                   </section>
 
-                  <section className="panel room-recent-picks">
+                  <section className="panel room-recent-picks room-all-picks-card">
                     <div className="section-title">
                       <div>
-                        <span className="market-kicker">{liveRoomPredictions.length ? "Picks en vivo" : "Actividad"}</span>
-                        <h3>{liveRoomPredictions.length ? "Partido en juego" : "Picks recientes"}</h3>
+                        <span className="market-kicker">Transparencia</span>
+                        <h3>{liveRoomPredictions.length ? "Picks en vivo" : "Picks de participantes"}</h3>
                       </div>
-                      <button className="button secondary compact-button" onClick={() => setRoomView("picks")} type="button">Ver picks</button>
                     </div>
                     <div className="room-prediction-list compact-prediction-list">
-                      {previewPredictions.map((prediction) => (
+                      {roomHomePredictions.map((prediction) => (
                         <article className="room-prediction" key={prediction.id}>
-                          <div><strong>{prediction.user.name}</strong><span>{prediction.match.homeTeam} vs {prediction.match.awayTeam}</span></div>
+                          <div>
+                            <strong>{prediction.user.name}</strong>
+                            <span>
+                              {prediction.match.homeTeam} vs {prediction.match.awayTeam}
+                              {" · "}
+                              {matchStatusLabel(prediction.match.status)}
+                            </span>
+                          </div>
                           <strong>{prediction.homeScore} - {prediction.awayScore}</strong>
                           <span>{prediction.points} pts</span>
                         </article>
                       ))}
-                      {!previewPredictions.length ? <div className="empty">Todavía no hay picks para mostrar.</div> : null}
-                    </div>
-                  </section>
-
-                  <section className="panel room-recent-picks">
-                    <div className="section-title">
-                      <div>
-                        <span className="market-kicker">Mi historial</span>
-                        <h3>Últimos picks</h3>
-                      </div>
-                      <button className="button secondary compact-button" onClick={() => setRoomView("picks")} type="button">Ver todos</button>
-                    </div>
-                    <div className="room-prediction-list compact-prediction-list">
-                      {recentUserPicks.map(({ match, prediction }) => (
-                        <article className="room-prediction" key={prediction.id}>
-                          <div><strong>{match.homeTeam} vs {match.awayTeam}</strong><span>{matchStatusLabel(match.status)}</span></div>
-                          <strong>{prediction.homeScore} - {prediction.awayScore}</strong>
-                          <span>{prediction.points} pts</span>
-                        </article>
-                      ))}
-                      {!recentUserPicks.length ? <div className="empty">Tus picks guardados aparecerán aquí.</div> : null}
+                      {!roomHomePredictions.length ? <div className="empty">Todavía no hay picks para mostrar.</div> : null}
                     </div>
                   </section>
                 </aside>

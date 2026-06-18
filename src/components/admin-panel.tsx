@@ -1148,12 +1148,17 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
 
   return (
     <section className="panel">
-      <div className="section-title">
+      <div className="section-title admin-summary-heading">
         <div>
           <span className="market-kicker">Control general</span>
           <h2>Panel administrador</h2>
           <p>Control general de Mundial Picks 2026</p>
         </div>
+        {adminView === "overview" ? (
+          <button className="button admin-refresh-inline" onClick={updateResults} type="button">
+            ↻ Refrescar
+          </button>
+        ) : null}
       </div>
       {message ? <div className="notice">{message}</div> : null}
       <div className="admin-nav" aria-label="Secciones del administrador">
@@ -1255,42 +1260,6 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                   </div>
                 </section>
 
-                <section className="form admin-summary-section">
-                  <span className="market-kicker">Gestión</span>
-                  <div className="admin-action-grid admin-action-grid-secondary">
-                    <button
-                      className="button secondary"
-                      onClick={async () => {
-                        setAdminView("rooms");
-                        await loadRooms();
-                      }}
-                      type="button"
-                    >
-                      Administrar salas
-                    </button>
-                    <button className="button secondary" onClick={() => setAdminView("security")} type="button">
-                      Seguridad y permisos
-                    </button>
-                    <button className="button secondary" onClick={() => setAdminView("matches")} type="button">
-                      Ligas base
-                    </button>
-                  </div>
-                </section>
-
-                <section className="form admin-summary-section admin-tools-section">
-                  <div>
-                    <span className="market-kicker">Mantenimiento del sistema</span>
-                    <h3>Herramientas técnicas</h3>
-                  </div>
-                  <div className="admin-action-grid admin-action-grid-tools">
-                    <button className="button primary admin-tool-button admin-tool-primary" onClick={updateResults} type="button">
-                      Refrescar plataforma
-                    </button>
-                    <button className="button admin-tool-button" onClick={() => setAdminView("tools")} type="button">
-                      Ver herramientas
-                    </button>
-                  </div>
-                </section>
               </div>
 
               <aside className="admin-summary-side">
@@ -2001,65 +1970,71 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
               <div className="section-title admin-rooms-title">
                 <div>
                   <h3>Gestión de salas</h3>
-                  <p className="muted">Administra salas, invitaciones, participantes y herramientas de operación.</p>
+                  <p className="muted">Selecciona una sala para administrarla.</p>
                 </div>
+                <a className="button secondary compact-button" href="#crear-activar-salas">
+                  Crear sala / Activar sala
+                </a>
               </div>
 
-              <section className="selected-room-card admin-room-shell">
-                <div className="selected-room-main">
-                  <div>
-                    <span className="market-kicker">Sala seleccionada</span>
-                    <strong>{selectedRoom?.name ?? "Selecciona una sala"}</strong>
-                    <small>
-                      {selectedRoom
-                        ? `${selectedRoom.competition?.name ?? "Sin calendario base"} · Propietario: ${selectedRoom.owner.name}`
-                        : "El super usuario no entra a ninguna sala automáticamente."}
-                    </small>
-                  </div>
-                  <div className="room-picker-shell admin-room-picker">
-                    <label htmlFor="superAdminRoomSelector">Cambiar sala</label>
-                    <select
-                      id="superAdminRoomSelector"
-                      onChange={(event) => {
-                        void selectAdminRoom(event.target.value);
-                      }}
-                      value={selectedRoom?.id ?? ""}
-                    >
-                      <option value="">Selecciona sala</option>
-                      {adminRooms.map((room) => (
-                        <option key={room.id} value={room.id}>
-                          {room.name} · {room.inviteCode} · {roomStatusLabel(room.status)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+              <section className="admin-room-card-list" aria-label="Salas disponibles">
+                {adminRooms.length ? (
+                  adminRooms.map((room) => {
+                    const isSelected = selectedRoom?.id === room.id;
+                    const memberCount = room.memberships.length;
 
-                {selectedRoom ? (
-                  <>
-                    <div className="selected-room-metrics">
-                      <span><small>Código</small><strong>{selectedRoom.inviteCode}</strong></span>
-                      <span><small>Estado</small><strong>{roomStatusLabel(selectedRoom.status)}</strong></span>
-                      <span><small>Participantes</small><strong>{selectedRoomMemberships.length}/{selectedRoom.maxParticipants}</strong></span>
-                      <span><small>Publicados</small><strong>{roomDashboard?.matches.filter((match) => match.isPublished).length ?? "-"}</strong></span>
-                      <span><small>Plan</small><strong>{selectedRoom.plan?.name ?? "Personalizado"}</strong></span>
-                      <span><small>Vence</small><strong>{selectedRoom.expiresAt ? new Date(selectedRoom.expiresAt).toLocaleDateString("es") : "Sin fecha"}</strong></span>
-                    </div>
-                    <p className="room-loaded-state">
-                      Estás administrando "{selectedRoom.name}". El super usuario ve y corrige, pero no compite ni entra como participante.
-                    </p>
-                  </>
+                    return (
+                      <article className={`admin-room-list-card ${isSelected ? "active" : ""}`} key={room.id}>
+                        <div className="admin-room-list-main">
+                          <span className="market-kicker">{roomStatusLabel(room.status)}</span>
+                          <strong>{room.name}</strong>
+                          <small>Código {room.inviteCode}</small>
+                        </div>
+                        <div className="admin-room-list-meta">
+                          <span><small>Participantes</small><strong>{memberCount}/{room.maxParticipants}</strong></span>
+                          <span><small>Plan</small><strong>{room.plan?.name ?? "Personalizado"}</strong></span>
+                          <span><small>Vence</small><strong>{room.expiresAt ? new Date(room.expiresAt).toLocaleDateString("es") : "Sin fecha"}</strong></span>
+                        </div>
+                        <button
+                          className={`button ${isSelected ? "secondary" : "primary"} compact-button`}
+                          onClick={() => {
+                            void selectAdminRoom(room.id);
+                          }}
+                          type="button"
+                        >
+                          {isSelected ? "Administrando" : "Administrar"}
+                        </button>
+                      </article>
+                    );
+                  })
                 ) : (
-                  <div className="empty">
-                    {adminRooms.length
-                      ? "Selecciona una sala para cargar su tablero completo."
-                      : "Todavía no hay salas creadas."}
+                  <div className="empty room-empty-state">
+                    <strong>No hay salas disponibles.</strong>
+                    <a className="button secondary compact-button" href="#crear-activar-salas">Crear o activar sala</a>
                   </div>
                 )}
               </section>
 
               {selectedRoom ? (
                 <>
+	                  <section className="selected-room-card admin-room-shell compact-selected-room">
+	                    <div className="selected-room-main">
+	                      <div>
+	                        <span className="market-kicker">Sala seleccionada</span>
+	                        <strong>{selectedRoom.name}</strong>
+	                        <small>{selectedRoom.competition?.name ?? "Sin calendario base"} · Propietario: {selectedRoom.owner.name}</small>
+	                      </div>
+	                    </div>
+	                    <div className="selected-room-metrics">
+	                      <span><small>Código</small><strong>{selectedRoom.inviteCode}</strong></span>
+	                      <span><small>Estado</small><strong>{roomStatusLabel(selectedRoom.status)}</strong></span>
+	                      <span><small>Participantes</small><strong>{selectedRoomMemberships.length}/{selectedRoom.maxParticipants}</strong></span>
+	                      <span><small>Publicados</small><strong>{roomDashboard?.matches.filter((match) => match.isPublished).length ?? "-"}</strong></span>
+	                      <span><small>Plan</small><strong>{selectedRoom.plan?.name ?? "Personalizado"}</strong></span>
+	                      <span><small>Vence</small><strong>{selectedRoom.expiresAt ? new Date(selectedRoom.expiresAt).toLocaleDateString("es") : "Sin fecha"}</strong></span>
+	                    </div>
+	                  </section>
+
 	                  <div className="admin-room-action-layout compact-room-actions">
 	                    <section className="form admin-room-action-card primary-room-actions">
 	                      <div>
@@ -2072,13 +2047,6 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
 	                        </button>
 	                        <button className="button secondary" onClick={() => copyRoomInvitation(selectedRoom)} type="button">
 	                          Copiar invitación
-	                        </button>
-	                        <button
-	                          className="button secondary"
-	                          onClick={() => document.getElementById("superAdminRoomSelector")?.focus()}
-	                          type="button"
-	                        >
-	                          Cambiar sala
 	                        </button>
 	                      </div>
 	                    </section>
@@ -2436,8 +2404,8 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
               )}
             </section>
 
-            <details className="admin-room-section admin-room-section-wide room-admin-utilities">
-              <summary>Crear o activar salas</summary>
+            <details className="admin-room-section admin-room-section-wide room-admin-utilities compact-create-room-panel" id="crear-activar-salas">
+              <summary>Crear sala / Activar sala</summary>
               <div className="grid two-columns">
             <form className="form" onSubmit={createManualRoom}>
               <span className="market-kicker">Alta administrativa</span>
