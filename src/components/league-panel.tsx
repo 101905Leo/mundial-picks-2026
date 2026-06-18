@@ -537,8 +537,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
     nextScheduledMatch ??
     lastFinishedMatch ??
     null;
-  const nextRoomMatch = featuredMatch;
-  const nextStartsAt = nextRoomMatch ? new Date(nextRoomMatch.startsAt) : null;
+  const nextStartsAt = featuredMatch ? new Date(featuredMatch.startsAt) : null;
   const nextDiff = nextStartsAt ? Math.max(0, nextStartsAt.getTime() - now.getTime()) : 0;
   const nextCountdown = {
     days: Math.floor(nextDiff / 86_400_000),
@@ -595,13 +594,13 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
   const savedPicks = matches.flatMap((match) =>
     (match.predictions ?? []).map((prediction) => ({ match, prediction })),
   );
-  const featuredPrediction = nextRoomMatch?.predictions?.[0] ?? null;
-  const featuredActionLabel = nextRoomMatch
-    ? nextRoomMatch.status === "LIVE"
+  const featuredPrediction = featuredMatch?.predictions?.[0] ?? null;
+  const featuredActionLabel = featuredMatch
+    ? featuredMatch.status === "LIVE"
       ? featuredPrediction
         ? "Ver partido"
         : "Ver en vivo"
-      : nextRoomMatch.status === "FINISHED"
+      : featuredMatch.status === "FINISHED"
         ? "Ver resultado"
         : featuredPrediction
         ? "Editar pronóstico"
@@ -644,8 +643,8 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
     (selectedLeague?.status ?? "ACTIVE") === "ACTIVE" &&
     !roomHasExpired &&
     roomIsActivated;
-  const featuredPickClosed = nextRoomMatch ? isPickClosed(new Date(nextRoomMatch.startsAt)) || nextRoomMatch.status === "LIVE" || nextRoomMatch.status === "FINISHED" : true;
-  const canEditFeaturedPick = Boolean(nextRoomMatch && selectedLeague && roomCanPredict && !featuredPickClosed);
+  const featuredPickClosed = featuredMatch ? isPickClosed(new Date(featuredMatch.startsAt)) || featuredMatch.status === "LIVE" || featuredMatch.status === "FINISHED" : true;
+  const canEditFeaturedPick = Boolean(featuredMatch && selectedLeague && roomCanPredict && !featuredPickClosed);
   const roomDisabledMessage = isSuperAdmin
     ? "Modo espectador: administra la sala sin participar en la competencia."
     : roomHasExpired
@@ -665,7 +664,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
       : chatMessages.length;
   const chatActivityLabel = chatActivityCount > 9 ? "9+" : String(chatActivityCount);
   const hasChatActivity = chatActivityCount > 0;
-  const intelligenceMatch = nextRoomMatch ?? lastFinishedMatch ?? sortedMatches[0] ?? null;
+  const intelligenceMatch = featuredMatch ?? lastFinishedMatch ?? sortedMatches[0] ?? null;
   const intelligenceHasEnoughInfo = Boolean(intelligenceMatch);
   const intelligenceScore =
     intelligenceMatch?.homeScore !== null && intelligenceMatch?.homeScore !== undefined &&
@@ -707,10 +706,10 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
     setQuickHomePick(featuredPrediction?.homeScore ?? 0);
     setQuickAwayPick(featuredPrediction?.awayScore ?? 0);
     setQuickPickMessage("");
-  }, [nextRoomMatch?.id, featuredPrediction?.homeScore, featuredPrediction?.awayScore]);
+  }, [featuredMatch?.id, featuredPrediction?.homeScore, featuredPrediction?.awayScore]);
 
   async function saveFeaturedPick() {
-    if (!nextRoomMatch || !selectedLeague) return;
+    if (!featuredMatch || !selectedLeague) return;
 
     if (!canEditFeaturedPick) {
       setQuickPickMessage(roomDisabledMessage);
@@ -725,7 +724,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          matchId: nextRoomMatch.id,
+          matchId: featuredMatch.id,
           roomId: selectedLeague.id,
           leagueId: selectedLeague.id,
           roomKey: selectedLeague.id,
@@ -982,51 +981,51 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
                   <section className="room-next-card room-featured-match">
                     <div className="room-next-card-header">
                       <span>
-                        {nextRoomMatch
-                          ? nextRoomMatch.status === "LIVE"
+                        {featuredMatch
+                          ? featuredMatch.status === "LIVE"
                             ? "En vivo"
-                            : nextRoomMatch.status === "FINISHED"
+                            : featuredMatch.status === "FINISHED"
                               ? "Último resultado"
                               : "Próximo partido"
                           : "Sin partido abierto"}
                       </span>
                       <strong>{selectedLeague.name}</strong>
                     </div>
-                    {nextRoomMatch ? (
+                    {featuredMatch ? (
                       <>
                         <div className="room-next-teams">
                           <div>
-                            <span>{flagForTeam(nextRoomMatch.homeTeam)}</span>
-                            <strong>{nextRoomMatch.homeTeam}</strong>
+                            <span>{flagForTeam(featuredMatch.homeTeam)}</span>
+                            <strong>{featuredMatch.homeTeam}</strong>
                           </div>
                           <em>
-                            {(nextRoomMatch.status === "LIVE" || nextRoomMatch.status === "FINISHED") &&
-                            nextRoomMatch.homeScore !== null &&
-                            nextRoomMatch.awayScore !== null
-                              ? `${nextRoomMatch.homeScore} - ${nextRoomMatch.awayScore}`
+                            {(featuredMatch.status === "LIVE" || featuredMatch.status === "FINISHED") &&
+                            featuredMatch.homeScore !== null &&
+                            featuredMatch.awayScore !== null
+                              ? `${featuredMatch.homeScore} - ${featuredMatch.awayScore}`
                               : "vs"}
                           </em>
                           <div>
-                            <span>{flagForTeam(nextRoomMatch.awayTeam)}</span>
-                            <strong>{nextRoomMatch.awayTeam}</strong>
+                            <span>{flagForTeam(featuredMatch.awayTeam)}</span>
+                            <strong>{featuredMatch.awayTeam}</strong>
                           </div>
                         </div>
                         <p>
-                          {nextRoomMatch.group ? `${nextRoomMatch.group} · ` : ""}
-                          {new Date(nextRoomMatch.startsAt).toLocaleDateString("es", { weekday: "short", day: "2-digit", month: "short" })}
+                          {featuredMatch.group ? `${featuredMatch.group} · ` : ""}
+                          {new Date(featuredMatch.startsAt).toLocaleDateString("es", { weekday: "short", day: "2-digit", month: "short" })}
                           {" · "}
-                          <strong>{new Date(nextRoomMatch.startsAt).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}</strong>
-                          {nextRoomMatch.venue ? ` · ${nextRoomMatch.venue}` : ""}
+                          <strong>{new Date(featuredMatch.startsAt).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}</strong>
+                          {featuredMatch.venue ? ` · ${featuredMatch.venue}` : ""}
                         </p>
                         {featuredPrediction ? (
                           <div className="room-my-pick-pill">
                             <span>Mi pronóstico</span>
                             <strong>{featuredPrediction.homeScore} - {featuredPrediction.awayScore}</strong>
                           </div>
-                        ) : nextRoomMatch.status === "LIVE" || nextRoomMatch.status === "FINISHED" ? (
+                        ) : featuredMatch.status === "LIVE" || featuredMatch.status === "FINISHED" ? (
                           <div className="room-my-pick-pill">
-                            <span>{nextRoomMatch.status === "FINISHED" ? "Resultado final" : "Marcador actual"}</span>
-                            <strong>{nextRoomMatch.homeScore ?? 0} - {nextRoomMatch.awayScore ?? 0}</strong>
+                            <span>{featuredMatch.status === "FINISHED" ? "Resultado final" : "Marcador actual"}</span>
+                            <strong>{featuredMatch.homeScore ?? 0} - {featuredMatch.awayScore ?? 0}</strong>
                           </div>
                         ) : (
                           <div className="room-countdown-grid" aria-label="Cuenta regresiva">
@@ -1040,20 +1039,20 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
                           <div className="quick-home-pick-card" aria-label="Guardar pick rapido">
                             <div className="quick-home-scoreboard">
                               <div>
-                                <span>{nextRoomMatch.homeTeam}</span>
+                                <span>{featuredMatch.homeTeam}</span>
                                 <div className="quick-home-stepper">
-                                  <button aria-label={`Restar gol a ${nextRoomMatch.homeTeam}`} onClick={() => setQuickHomePick((score) => Math.max(0, score - 1))} type="button">−</button>
+                                  <button aria-label={`Restar gol a ${featuredMatch.homeTeam}`} onClick={() => setQuickHomePick((score) => Math.max(0, score - 1))} type="button">−</button>
                                   <strong>{quickHomePick}</strong>
-                                  <button aria-label={`Sumar gol a ${nextRoomMatch.homeTeam}`} onClick={() => setQuickHomePick((score) => score + 1)} type="button">+</button>
+                                  <button aria-label={`Sumar gol a ${featuredMatch.homeTeam}`} onClick={() => setQuickHomePick((score) => score + 1)} type="button">+</button>
                                 </div>
                               </div>
                               <em>:</em>
                               <div>
-                                <span>{nextRoomMatch.awayTeam}</span>
+                                <span>{featuredMatch.awayTeam}</span>
                                 <div className="quick-home-stepper">
-                                  <button aria-label={`Restar gol a ${nextRoomMatch.awayTeam}`} onClick={() => setQuickAwayPick((score) => Math.max(0, score - 1))} type="button">−</button>
+                                  <button aria-label={`Restar gol a ${featuredMatch.awayTeam}`} onClick={() => setQuickAwayPick((score) => Math.max(0, score - 1))} type="button">−</button>
                                   <strong>{quickAwayPick}</strong>
-                                  <button aria-label={`Sumar gol a ${nextRoomMatch.awayTeam}`} onClick={() => setQuickAwayPick((score) => score + 1)} type="button">+</button>
+                                  <button aria-label={`Sumar gol a ${featuredMatch.awayTeam}`} onClick={() => setQuickAwayPick((score) => score + 1)} type="button">+</button>
                                 </div>
                               </div>
                             </div>
