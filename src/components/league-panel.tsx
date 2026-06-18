@@ -5,6 +5,7 @@ import { MatchCard } from "@/components/match-card";
 import { FormidableFacts } from "@/components/formidable-facts";
 import { StatisticsPanel } from "@/components/statistics-panel";
 import type { Competition, League, LeagueMember, Match, RankingEntry, User } from "@/components/types";
+import { isPickClosed } from "@/lib/pick-lock";
 import { matchStatusLabel, roomStatusLabel } from "@/lib/status-labels";
 import { flagForTeam } from "@/lib/team-flags";
 
@@ -68,6 +69,10 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
   const [syncError, setSyncError] = useState("");
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isRoomMenuOpen, setIsRoomMenuOpen] = useState(false);
+  const [quickHomePick, setQuickHomePick] = useState(0);
+  const [quickAwayPick, setQuickAwayPick] = useState(0);
+  const [quickPickMessage, setQuickPickMessage] = useState("");
+  const [quickPickSaving, setQuickPickSaving] = useState(false);
   const [lastSeenChatMessageId, setLastSeenChatMessageId] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
   const [calendarFilter, setCalendarFilter] = useState<"ALL" | "TODAY" | "PENDING" | "LIVE" | "FINISHED">("ALL");
@@ -574,7 +579,10 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
   const rankingTopThree = ranking.slice(0, 3);
   const livePredictionMatchIds = new Set(liveMatches.map((match) => match.id));
   const liveRoomPredictions = predictions.filter((prediction) => livePredictionMatchIds.has(prediction.match.id));
-  const roomHomePredictions = liveRoomPredictions.length ? liveRoomPredictions : predictions;
+  const visibleRoomPredictions = predictions.filter(
+    (prediction) => prediction.match.status === "LIVE" || prediction.match.status === "FINISHED",
+  );
+  const roomHomePredictions = liveRoomPredictions.length ? liveRoomPredictions : visibleRoomPredictions;
   const userRankingIndex = ranking.findIndex((entry) => entry.id === user.id);
   const userRanking = userRankingIndex >= 0 ? ranking[userRankingIndex] : null;
   const userPickCount = userRanking?.predictions ?? savedPicks.length;
@@ -598,6 +606,8 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
     (selectedLeague?.status ?? "ACTIVE") === "ACTIVE" &&
     !roomHasExpired &&
     roomIsActivated;
+  const featuredPickClosed = nextRoomMatch ? isPickClosed(new Date(nextRoomMatch.startsAt)) || nextRoomMatch.status === "LIVE" || nextRoomMatch.status === "FINISHED" : true;
+  const canEditFeaturedPick = Boolean(nextRoomMatch && selectedLeague && roomCanPredict && !featuredPickClosed);
   const roomDisabledMessage = isSuperAdmin
     ? "Modo espectador: administra la sala sin participar en la competencia."
     : roomHasExpired
@@ -654,6 +664,52 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
         ? "Alta"
         : "Baja"
     : "Baja";
+
+  useEffect(() => {
+    setQuickHomePick(featuredPrediction?.homeScore ?? 0);
+    setQuickAwayPick(featuredPrediction?.awayScore ?? 0);
+    setQuickPickMessage("");
+  }, [nextRoomMatch?.id, featuredPrediction?.homeScore, featuredPrediction?.awayScore]);
+
+  async function saveFeaturedPick() {
+    if (!nextRoomMatch || !selectedLeague) return;
+
+    if (!canEditFeaturedPick) {
+      setQuickPickMessage(roomDisabledMessage);
+      return;
+    }
+
+    setQuickPickMessage("");
+    setQuickPickSaving(true);
+
+    try {
+      const response = await fetch("/api/predictions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          matchId: nextRoomMatch.id,
+          roomId: selectedLeague.id,
+          leagueId: selectedLeague.id,
+          roomKey: selectedLeague.id,
+          homeScore: quickHomePick,
+          awayScore: quickAwayPick,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setQuickPickMessage(data.error ?? "No se pudo guardar el pick");
+        return;
+      }
+
+      setQuickPickMessage("Pick guardado");
+      await loadRoom();
+    } catch {
+      setQuickPickMessage("No hay conexión con el servidor. Intenta nuevamente.");
+    } finally {
+      setQuickPickSaving(false);
+    }
+  }
   const roomTabs: Array<[RoomView, string]> = [
     ["home", "Inicio"],
     ["matches", "Calendario"],
@@ -769,6 +825,11 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
               <article><span>Partidos</span><strong>{matches.length}</strong></article>
             </div>
             <div className="room-owner-actions room-header-actions">
+              {onLogout ? (
+                <button className="button danger compact-button room-header-logout" onClick={onLogout} type="button">
+                  Salir
+                </button>
+              ) : null}
               {canManageInvitation ? (
                 <button className="button secondary compact-button" onClick={copyInvitation} type="button">Copiar invitación</button>
               ) : null}
@@ -868,11 +929,39 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
                             <article><strong>{String(nextCountdown.seconds).padStart(2, "0")}</strong><span>Seg</span></article>
                           </div>
                         )}
-                        <div className="room-home-actions single-action">
-                          <button className="button primary" onClick={() => setRoomView("picks")} type="button">
-                            {isSuperAdmin ? "Ver picks" : featuredActionLabel}
-                          </button>
-                        </div>
+                        {canEditFeaturedPick ? (
+                          <div className="quick-home-pick-card" aria-label="Guardar pick rapido">
+                            <div className="quick-home-scoreboard">
+                              <div>
+                                <span>{nextRoomMatch.homeTeam}</span>
+                                <div className="quick-home-stepper">
+                                  <button aria-label={`Restar gol a ${nextRoomMatch.homeTeam}`} onClick={() => setQuickHomePick((score) => Math.max(0, score - 1))} type="button">−</button>
+                                  <strong>{quickHomePick}</strong>
+                                  <button aria-label={`Sumar gol a ${nextRoomMatch.homeTeam}`} onClick={() => setQuickHomePick((score) => score + 1)} type="button">+</button>
+                                </div>
+                              </div>
+                              <em>:</em>
+                              <div>
+                                <span>{nextRoomMatch.awayTeam}</span>
+                                <div className="quick-home-stepper">
+                                  <button aria-label={`Restar gol a ${nextRoomMatch.awayTeam}`} onClick={() => setQuickAwayPick((score) => Math.max(0, score - 1))} type="button">−</button>
+                                  <strong>{quickAwayPick}</strong>
+                                  <button aria-label={`Sumar gol a ${nextRoomMatch.awayTeam}`} onClick={() => setQuickAwayPick((score) => score + 1)} type="button">+</button>
+                                </div>
+                              </div>
+                            </div>
+                            <button className="button primary quick-home-save" disabled={quickPickSaving} onClick={saveFeaturedPick} type="button">
+                              {quickPickSaving ? "Guardando..." : featuredPrediction ? "Actualizar pick" : "Guardar pick"}
+                            </button>
+                            {quickPickMessage ? <p className="quick-home-message">{quickPickMessage}</p> : null}
+                          </div>
+                        ) : (
+                          <div className="room-home-actions single-action">
+                            <button className="button primary" onClick={() => setRoomView("picks")} type="button">
+                              {isSuperAdmin ? "Ver picks" : featuredActionLabel}
+                            </button>
+                          </div>
+                        )}
                       </>
                     ) : (
                       <>
@@ -942,8 +1031,8 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
                   <section className="panel room-recent-picks room-all-picks-card">
                     <div className="section-title">
                       <div>
-                        <span className="market-kicker">Transparencia</span>
-                        <h3>{liveRoomPredictions.length ? "Picks en vivo" : "Picks de participantes"}</h3>
+                        <span className="market-kicker">Picks</span>
+                        <h3>{liveRoomPredictions.length ? "Picks en vivo" : "Picks finales"}</h3>
                       </div>
                     </div>
                     <div className="room-prediction-list compact-prediction-list">
@@ -961,7 +1050,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
                           <span>{prediction.points} pts</span>
                         </article>
                       ))}
-                      {!roomHomePredictions.length ? <div className="empty">Todavía no hay picks para mostrar.</div> : null}
+                      {!roomHomePredictions.length ? <div className="empty">Los picks se mostrarán cuando inicie el partido.</div> : null}
                     </div>
                   </section>
                 </aside>
@@ -1272,11 +1361,6 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
                 {canEditRoomInfo ? (
                   <button className="button secondary" onClick={() => setRoomView("participants")} type="button">
                     Configuración
-                  </button>
-                ) : null}
-                {onLogout ? (
-                  <button className="button danger room-logout-button" onClick={onLogout} type="button">
-                    Salir
                   </button>
                 ) : null}
               </div>

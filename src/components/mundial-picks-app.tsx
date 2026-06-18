@@ -352,6 +352,8 @@ export function MundialPicksApp() {
                   <a className="button primary" href="/planes">Ver planes</a>
                 </section>
 
+                <WorldCupNewsTicker />
+
                 <footer className="landing-footer">
                   <span>Desarrollado por Mundial Picks 2026</span>
                   <a href={salesWhatsAppUrl("Sala Básica")} rel="noreferrer" target="_blank">Contacto</a>

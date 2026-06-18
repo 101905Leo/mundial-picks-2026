@@ -2749,6 +2749,99 @@ button {
   justify-self: stretch;
 }
 
+.room-header-logout {
+  min-height: 36px;
+  padding-inline: 12px;
+}
+
+.quick-home-pick-card {
+  background: rgba(2, 6, 23, 0.38);
+  border: 1px solid rgba(182, 255, 59, 0.18);
+  border-radius: 16px;
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+
+.quick-home-scoreboard {
+  align-items: end;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+}
+
+.quick-home-scoreboard > div {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  min-width: 0;
+}
+
+.quick-home-scoreboard span {
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 900;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.quick-home-scoreboard em {
+  color: var(--gold-soft);
+  font-size: 1.6rem;
+  font-style: normal;
+  font-weight: 900;
+  line-height: 44px;
+}
+
+.quick-home-stepper {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 38px 48px 38px;
+}
+
+.quick-home-stepper button {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 1.25rem;
+  font-weight: 900;
+  height: 38px;
+  justify-content: center;
+}
+
+.quick-home-stepper strong {
+  align-items: center;
+  background: rgba(5, 7, 13, 0.8);
+  border: 1px solid rgba(244, 189, 79, 0.28);
+  border-radius: 14px;
+  color: var(--gold-soft);
+  display: inline-flex;
+  font-size: 1.45rem;
+  font-weight: 900;
+  height: 44px;
+  justify-content: center;
+}
+
+.quick-home-save {
+  width: 100%;
+}
+
+.quick-home-message {
+  color: var(--lime-accent);
+  font-size: 0.84rem;
+  font-weight: 900;
+  margin: -2px 0 0;
+  text-align: center;
+}
+
 .league-chat-message.own-message {
   border-left-color: var(--gold);
   margin-left: 22px;
