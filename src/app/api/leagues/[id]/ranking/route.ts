@@ -1,11 +1,10 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
-import { roomMatchScopeWhere } from "@/lib/room-match-scope";
+import { roomOwnedMatchWhere } from "@/lib/room-match-scope";
 import { hasRankingScore } from "@/lib/prediction-points";
 import { uniqueRoomPredictions } from "@/lib/room-predictions";
-import { resolveEffectiveMatchScore, sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
-import { roomMatchForPrediction, roomPredictionPoints } from "@/lib/room-scoring";
+import { roomPredictionPoints } from "@/lib/room-scoring";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { user, response } = await requireUser(request);
@@ -81,30 +80,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return Response.json({ error: "Sala no encontrada" }, { status: 404 });
   }
 
-  const [ownMatchCount, roomScopeMatches, scoredMatches] = await Promise.all([
-    prisma.match.count({ where: { roomId: league.id } }),
+  const [roomScopeMatches] = await Promise.all([
     prisma.match.findMany({
-      where: roomMatchScopeWhere(league),
-      select: {
-        id: true,
-        competitionId: true,
-        roomId: true,
-        sourceKey: true,
-        homeTeam: true,
-        awayTeam: true,
-        startsAt: true,
-        updatedAt: true,
-        homeScore: true,
-        awayScore: true,
-        status: true,
-      },
-    }),
-    prisma.match.findMany({
-      where: {
-        status: { in: ["LIVE", "FINISHED"] },
-        homeScore: { not: null },
-        awayScore: { not: null },
-      },
+      where: roomOwnedMatchWhere(league),
       select: {
         id: true,
         competitionId: true,
@@ -120,30 +98,20 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       },
     }),
   ]);
-  const effectiveRoomMatches = roomScopeMatches.map((match) => resolveEffectiveMatchScore(match, scoredMatches));
+  const roomMatchById = new Map(roomScopeMatches.map((match) => [match.id, match]));
   const weekStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const members = league.memberships
     .filter(({ user: member }) => member.role !== "ADMIN")
     .map(({ user: member, role }) => {
       const roomPredictions = member.predictions.filter(
         ({ match, leagueId, roomKey }) => {
-          if (leagueId === league.id || roomKey === league.id) return true;
-          if (leagueId !== null || roomKey !== "GLOBAL") return false;
-
-          return roomScopeMatches.some((candidate) => {
-            const candidateBelongsToRoom = candidate.roomId === league.id;
-            const candidateIsAllowedGlobal = ownMatchCount === 0 && candidate.roomId === null;
-
-            return (
-              (candidateBelongsToRoom || candidateIsAllowedGlobal) &&
-              sameMatchByTeamsAndKickoff(candidate, match)
-            );
-          });
+          const belongsToRoomPrediction = leagueId === league.id || roomKey === league.id;
+          return belongsToRoomPrediction && match.roomId === league.id && roomMatchById.has(match.id);
         },
       );
       const scopedPredictions = uniqueRoomPredictions(roomPredictions, league.id).map((prediction) => ({
         ...prediction,
-        match: roomMatchForPrediction(prediction, effectiveRoomMatches, scoredMatches),
+        match: roomMatchById.get(prediction.match.id) ?? prediction.match,
       }));
       const scoredPredictions = scopedPredictions.filter(({ match }) => hasRankingScore(match));
       const latestScoredPredictions = scoredPredictions

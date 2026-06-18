@@ -1,10 +1,8 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
-import { roomGlobalFallbackMatchWhere, roomOwnedMatchWhere } from "@/lib/room-match-scope";
+import { roomOwnedMatchWhere } from "@/lib/room-match-scope";
 import { uniqueRoomPredictions } from "@/lib/room-predictions";
-import { resolveEffectiveMatchScore, sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
-import { roomMatchForPrediction } from "@/lib/room-scoring";
 import { calculatePredictionPoints } from "@/lib/scoring";
 
 type LivePointsMatch = {
@@ -63,61 +61,31 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     .filter((member) => member.user.role !== "ADMIN")
     .map((member) => member.userId);
 
-  const ownPublishedMatches = await prisma.match.count({
-    where: { isPublished: true, ...roomOwnedMatchWhere(league) },
+  const roomMatches = await prisma.match.findMany({
+    where: {
+      isPublished: true,
+      ...roomOwnedMatchWhere(league),
+    },
+    select: {
+      id: true,
+      competitionId: true,
+      roomId: true,
+      sourceKey: true,
+      homeTeam: true,
+      awayTeam: true,
+      startsAt: true,
+      updatedAt: true,
+      status: true,
+      isPublished: true,
+      homeScore: true,
+      awayScore: true,
+    },
+    orderBy: { startsAt: "asc" },
   });
-  const matchScope = ownPublishedMatches > 0
-    ? roomOwnedMatchWhere(league)
-    : roomGlobalFallbackMatchWhere(league);
-
-  const [roomMatches, scoredMatches] = await Promise.all([
-    prisma.match.findMany({
-      where: {
-        isPublished: true,
-        ...matchScope,
-      },
-      select: {
-        id: true,
-        competitionId: true,
-        roomId: true,
-        sourceKey: true,
-        homeTeam: true,
-        awayTeam: true,
-        startsAt: true,
-        updatedAt: true,
-        status: true,
-        isPublished: true,
-        homeScore: true,
-        awayScore: true,
-      },
-      orderBy: { startsAt: "asc" },
-    }),
-    prisma.match.findMany({
-      where: {
-        status: { in: ["LIVE", "FINISHED"] },
-        homeScore: { not: null },
-        awayScore: { not: null },
-      },
-      select: {
-        id: true,
-        competitionId: true,
-        roomId: true,
-        sourceKey: true,
-        homeTeam: true,
-        awayTeam: true,
-        startsAt: true,
-        updatedAt: true,
-        homeScore: true,
-        awayScore: true,
-        status: true,
-      },
-    }),
-  ]);
 
   const now = new Date();
   const liveWindowStart = new Date(now.getTime() - 8 * 60 * 60 * 1000);
-  const effectiveRoomMatches = roomMatches.map((match) => resolveEffectiveMatchScore(match, scoredMatches));
-  const openMatches = effectiveRoomMatches.filter((match) => match.status !== "FINISHED");
+  const openMatches = roomMatches.filter((match) => match.status !== "FINISHED");
   const activeMatches = openMatches.filter((match) => {
     const hasPartialScore = match.homeScore !== null && match.awayScore !== null;
     const looksInPlayByTime = match.startsAt <= now && match.startsAt >= liveWindowStart;
@@ -133,7 +101,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     ? await prisma.prediction.findMany({
         where: {
           userId: { in: memberIds },
-          OR: [{ leagueId: id }, { roomKey: id }, { leagueId: null, roomKey: "GLOBAL" }],
+          matchId: { in: visibleMatches.map((match) => match.id) },
+          OR: [{ leagueId: id }, { roomKey: id }],
         },
         orderBy: [{ match: { startsAt: "asc" } }, { user: { name: "asc" } }],
         select: {
@@ -167,10 +136,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     : [];
   const scopedVisiblePredictions = visiblePredictions
     .map((prediction) => {
-      const match = roomMatchForPrediction(prediction, visibleMatches, scoredMatches);
-      const belongsToVisibleMatch = visibleMatches.some(
-        (visibleMatch) => match.id === visibleMatch.id || sameMatchByTeamsAndKickoff(match, visibleMatch),
-      );
+      const match = visibleMatches.find((visibleMatch) => visibleMatch.id === prediction.matchId) ?? prediction.match;
+      const belongsToVisibleMatch = visibleMatches.some((visibleMatch) => match.id === visibleMatch.id);
 
       return belongsToVisibleMatch ? { ...prediction, match } : null;
     })

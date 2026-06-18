@@ -4,10 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { isPickClosed } from "@/lib/pick-lock";
 import { predictionSchema } from "@/lib/validators";
 import { sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
-import {
-  matchBelongsToRoomScopeOrEquivalent,
-  roomMatchScopeWhere,
-} from "@/lib/room-match-scope";
+import { roomOwnedMatchWhere } from "@/lib/room-match-scope";
 
 export async function POST(request: NextRequest) {
   const { user, response } = await requireUser(request);
@@ -55,7 +52,7 @@ export async function POST(request: NextRequest) {
   }
 
   const roomMatches = await prisma.match.findMany({
-    where: roomMatchScopeWhere(roomAccess),
+    where: roomOwnedMatchWhere(roomAccess),
     select: {
       id: true,
       roomId: true,
@@ -66,17 +63,16 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  const matchBelongsToRoom = matchBelongsToRoomScopeOrEquivalent(incomingMatch, roomAccess, roomMatches);
-
-  if (!matchBelongsToRoom) {
-    return Response.json({ error: "Este partido no pertenece a tu sala" }, { status: 403 });
-  }
-
   const roomOwnedEquivalent = roomMatches.find(
     (candidate) =>
       candidate.roomId === roomAccess.id &&
       (candidate.id === incomingMatch.id || sameMatchByTeamsAndKickoff(candidate, incomingMatch)),
   );
+
+  if (!roomOwnedEquivalent) {
+    return Response.json({ error: "Este partido no pertenece a tu sala" }, { status: 403 });
+  }
+
   const resolvedMatch =
     roomOwnedEquivalent && roomOwnedEquivalent.id !== incomingMatch.id
       ? await prisma.match.findUnique({ where: { id: roomOwnedEquivalent.id } })

@@ -1,16 +1,11 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
-import {
-  roomGlobalFallbackMatchWhere,
-  roomMatchScopeWhere,
-  roomOwnedMatchWhere,
-} from "@/lib/room-match-scope";
+import { roomOwnedMatchWhere } from "@/lib/room-match-scope";
 import { hasRankingScore } from "@/lib/prediction-points";
 import { uniqueRoomPredictions } from "@/lib/room-predictions";
-import { resolveEffectiveMatchScore, sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
 import { removeSuperAdminRoomMemberships } from "@/lib/remove-super-admin-room-memberships";
-import { roomMatchForPrediction, roomPredictionPoints } from "@/lib/room-scoring";
+import { roomPredictionPoints } from "@/lib/room-scoring";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { response } = await requireAdmin(request);
@@ -38,19 +33,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return Response.json({ error: "Sala no encontrada" }, { status: 404 });
   }
 
-  const ownPublishedMatches = await prisma.match.count({
-    where: { isPublished: true, ...roomOwnedMatchWhere(room) },
-  });
-  const ownMatchCount = await prisma.match.count({
-    where: roomOwnedMatchWhere(room),
-  });
-  const matchScope = ownPublishedMatches > 0 ? roomOwnedMatchWhere(room) : roomGlobalFallbackMatchWhere(room);
   const visibleMemberships = room.memberships.filter((membership) => membership.user.role !== "ADMIN");
   const memberIds = visibleMemberships.map((membership) => membership.userId);
 
-  const [matches, rawPredictions, messages, scoredMatches, roomScopeMatches] = await Promise.all([
+  const [matches, rawPredictions, messages, roomScopeMatches] = await Promise.all([
     prisma.match.findMany({
-      where: { isPublished: true, ...matchScope },
+      where: { isPublished: true, ...roomOwnedMatchWhere(room) },
       orderBy: { startsAt: "asc" },
       select: {
         id: true,
@@ -70,7 +58,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     prisma.prediction.findMany({
       where: {
         userId: { in: memberIds },
-        OR: [{ leagueId: room.id }, { roomKey: room.id }, { leagueId: null, roomKey: "GLOBAL" }],
+        match: roomOwnedMatchWhere(room),
+        OR: [{ leagueId: room.id }, { roomKey: room.id }],
       },
       orderBy: [{ match: { startsAt: "asc" } }, { user: { name: "asc" } }],
       include: {
@@ -100,27 +89,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       include: { user: { select: { id: true, name: true, phone: true, role: true } } },
     }),
     prisma.match.findMany({
-      where: {
-        status: { in: ["LIVE", "FINISHED"] },
-        homeScore: { not: null },
-        awayScore: { not: null },
-      },
-      select: {
-        id: true,
-        competitionId: true,
-        roomId: true,
-        sourceKey: true,
-        homeTeam: true,
-        awayTeam: true,
-        startsAt: true,
-        updatedAt: true,
-        homeScore: true,
-        awayScore: true,
-        status: true,
-      },
-    }),
-    prisma.match.findMany({
-      where: roomMatchScopeWhere(room),
+      where: roomOwnedMatchWhere(room),
       select: {
         id: true,
         competitionId: true,
@@ -137,25 +106,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }),
   ]);
 
-  const effectiveRoomScopeMatches = roomScopeMatches.map((match) => resolveEffectiveMatchScore(match, scoredMatches));
+  const roomMatchById = new Map(roomScopeMatches.map((match) => [match.id, match]));
   const scopedPredictions = uniqueRoomPredictions(
     rawPredictions.filter((prediction) => {
-      if (prediction.leagueId === room.id || prediction.roomKey === room.id) return true;
-      if (prediction.leagueId !== null || prediction.roomKey !== "GLOBAL") return false;
-
-      return roomScopeMatches.some((candidate) => {
-        const candidateBelongsToRoom = candidate.roomId === room.id;
-        const candidateIsAllowedGlobal = ownMatchCount === 0 && candidate.roomId === null;
-
-        return (
-          (candidateBelongsToRoom || candidateIsAllowedGlobal) &&
-          sameMatchByTeamsAndKickoff(candidate, prediction.match)
-        );
-      });
+      const belongsToRoomPrediction = prediction.leagueId === room.id || prediction.roomKey === room.id;
+      return belongsToRoomPrediction && prediction.match.roomId === room.id && roomMatchById.has(prediction.match.id);
     }),
     room.id,
   ).map((prediction) => {
-    const match = roomMatchForPrediction(prediction, effectiveRoomScopeMatches, scoredMatches);
+    const match = roomMatchById.get(prediction.match.id) ?? prediction.match;
 
     return {
       ...prediction,
@@ -163,7 +122,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       points: roomPredictionPoints(prediction, match),
     };
   });
-  const effectiveMatches = matches.map((match) => resolveEffectiveMatchScore(match, scoredMatches));
 
   const ranking = visibleMemberships
     .map((membership) => {
@@ -200,11 +158,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     summary: {
       participants: visibleMemberships.length,
       admins: visibleMemberships.filter((membership) => membership.role === "ADMIN").length,
-      matches: effectiveMatches.length,
+      matches: matches.length,
       picks: scopedPredictions.length,
       messages: messages.length,
-      finishedMatches: effectiveMatches.filter((match) => match.status === "FINISHED").length,
-      liveMatches: effectiveMatches.filter((match) => match.status === "LIVE").length,
+      finishedMatches: matches.filter((match) => match.status === "FINISHED").length,
+      liveMatches: matches.filter((match) => match.status === "LIVE").length,
     },
     participants: visibleMemberships.map((membership) => ({
       id: membership.user.id,
@@ -216,7 +174,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       joinedAt: membership.joinedAt,
     })),
     ranking,
-    matches: effectiveMatches,
+    matches,
     predictions: scopedPredictions,
     messages: messages.reverse(),
   });
