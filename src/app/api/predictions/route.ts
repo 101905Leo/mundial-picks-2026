@@ -10,17 +10,18 @@ export async function POST(request: NextRequest) {
   const { user, response } = await requireUser(request);
   if (response) return response;
 
+  if (user!.role === "ADMIN") {
+    return Response.json(
+      { error: "Modo espectador: usa el panel admin para corregir picks de participantes." },
+      { status: 403 },
+    );
+  }
+
   const body = await request.json();
   const parsed = predictionSchema.safeParse(body);
   const incomingLeagueId = typeof body.leagueId === "string" ? body.leagueId : "";
   const incomingRoomKey = typeof body.roomKey === "string" ? body.roomKey : "";
   const incomingRoomId = typeof body.roomId === "string" ? body.roomId : "";
-  const requestedUserId =
-    typeof body.targetUserId === "string"
-      ? body.targetUserId
-      : typeof body.participantUserId === "string"
-        ? body.participantUserId
-        : user!.id;
   const roomId = incomingRoomId || incomingLeagueId || (incomingRoomKey && incomingRoomKey !== "GLOBAL" ? incomingRoomKey : "");
 
   if (!parsed.success) {
@@ -41,36 +42,13 @@ export async function POST(request: NextRequest) {
       id: roomId,
       status: "ACTIVE",
       OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
-      ...(user!.role === "ADMIN" ? {} : { memberships: { some: { userId: user!.id } } }),
+      memberships: { some: { userId: user!.id } },
     },
-    select: {
-      id: true,
-      ownerId: true,
-      competitionId: true,
-      memberships: { where: { userId: user!.id }, select: { role: true } },
-    },
+    select: { id: true, competitionId: true },
   });
 
   if (!roomAccess) {
     return Response.json({ error: "No tienes acceso a esta sala" }, { status: 403 });
-  }
-
-  const isSuperAdmin = user!.role === "ADMIN";
-  const isRoomOwner = roomAccess.ownerId === user!.id;
-  const isRoomAdmin = roomAccess.memberships[0]?.role === "ADMIN";
-  const isAdministrativeSave = requestedUserId !== user!.id;
-
-  if (isAdministrativeSave && !isSuperAdmin && !isRoomOwner && !isRoomAdmin) {
-    return Response.json({ error: "No puedes guardar picks de otro participante." }, { status: 403 });
-  }
-
-  const targetMembership = await prisma.leagueMembership.findUnique({
-    where: { userId_leagueId: { userId: requestedUserId, leagueId: roomAccess.id } },
-    select: { userId: true, user: { select: { role: true } } },
-  });
-
-  if (!targetMembership || targetMembership.user.role === "ADMIN") {
-    return Response.json({ error: "El participante no pertenece a esta sala." }, { status: 403 });
   }
 
   const roomMatches = await prisma.match.findMany({
@@ -108,23 +86,23 @@ export async function POST(request: NextRequest) {
   const matchStarted =
     resolvedMatch.startsAt <= now || resolvedMatch.status === "LIVE" || resolvedMatch.status === "FINISHED";
 
-  if (matchStarted && !isSuperAdmin) {
+  if (matchStarted) {
     return Response.json({ error: "El partido ya comenzo. No puedes guardar picks." }, { status: 409 });
   }
 
-  if (isPickClosed(resolvedMatch.startsAt, now) && !isSuperAdmin) {
+  if (isPickClosed(resolvedMatch.startsAt, now)) {
     return Response.json({ error: "La prediccion se cierra 5 minutos antes del partido." }, { status: 409 });
   }
 
-  const hasLeagueAccess = (await prisma.leagueMembership.count({ where: { userId: requestedUserId } })) > 0;
+  const hasLeagueAccess = (await prisma.leagueMembership.count({ where: { userId: user!.id } })) > 0;
 
-  if (!isSuperAdmin && !user!.isActive && !hasLeagueAccess) {
+  if (!user!.isActive && !hasLeagueAccess) {
     return Response.json({ error: "Tu usuario esta desactivado para guardar picks." }, { status: 403 });
   }
 
   const roomKey = roomAccess.id;
   const prediction = await prisma.prediction.upsert({
-    where: { userId_matchId_roomKey: { userId: requestedUserId, matchId: resolvedMatch.id, roomKey } },
+    where: { userId_matchId_roomKey: { userId: user!.id, matchId: resolvedMatch.id, roomKey } },
     update: {
       homeScore: parsed.data.homeScore,
       awayScore: parsed.data.awayScore,
@@ -133,7 +111,7 @@ export async function POST(request: NextRequest) {
       leagueId: roomAccess.id,
     },
     create: {
-      userId: requestedUserId,
+      userId: user!.id,
       matchId: resolvedMatch.id,
       leagueId: roomAccess.id,
       roomKey,
@@ -144,9 +122,7 @@ export async function POST(request: NextRequest) {
 
   if (process.env.NODE_ENV !== "production") {
     console.info("prediction-save-debug", {
-      userId: requestedUserId,
-      savedByUserId: user!.id,
-      isAdministrativeSave,
+      userId: user!.id,
       incomingMatchId: parsed.data.matchId,
       incomingLeagueId: incomingLeagueId || null,
       incomingRoomKey: incomingRoomKey || null,
@@ -157,11 +133,5 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  return Response.json({
-    ok: true,
-    prediction,
-    savedForUserId: requestedUserId,
-    savedByUserId: user!.id,
-    isAdministrativeSave,
-  });
+  return Response.json({ prediction });
 }
