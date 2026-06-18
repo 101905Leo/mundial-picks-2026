@@ -53,6 +53,19 @@ function isActiveLeague(league: League) {
   return (league.status ?? "ACTIVE") === "ACTIVE" && !expired;
 }
 
+function getEffectiveMatchStatus(match: Match, now: Date) {
+  const status = String(match.status).trim().toUpperCase();
+  const startsAt = new Date(match.startsAt);
+  const liveWindowMs = 150 * 60 * 1000;
+  const elapsedMs = now.getTime() - startsAt.getTime();
+
+  if (status === "SCHEDULED" && elapsedMs >= 0 && elapsedMs <= liveWindowMs) {
+    return "LIVE";
+  }
+
+  return status;
+}
+
 export function LeaguePanel({ user, initialLeagueId = null, embedded = false, roomMenuRequest = 0, onLogout }: Props) {
   const [leagues, setLeagues] = useState<League[]>([]);
   const [selectedLeague, setSelectedLeague] = useState<League | null>(null);
@@ -523,11 +536,11 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
   }
 
   const sortedMatches = [...matches].sort((first, second) => new Date(first.startsAt).getTime() - new Date(second.startsAt).getTime());
-  const matchStatus = (match: Match) => String(match.status).trim().toUpperCase();
-  const liveMatches = sortedMatches.filter((match) => matchStatus(match) === "LIVE");
-  const scheduledMatches = sortedMatches.filter((match) => matchStatus(match) === "SCHEDULED");
+  const effectiveMatchStatus = (match: Match) => getEffectiveMatchStatus(match, now);
+  const liveMatches = sortedMatches.filter((match) => effectiveMatchStatus(match) === "LIVE");
+  const scheduledMatches = sortedMatches.filter((match) => effectiveMatchStatus(match) === "SCHEDULED");
   const finishedMatchesWithScore = sortedMatches.filter(
-    (match) => matchStatus(match) === "FINISHED" && match.homeScore !== null && match.awayScore !== null,
+    (match) => effectiveMatchStatus(match) === "FINISHED" && match.homeScore !== null && match.awayScore !== null,
   );
   const nextScheduledMatch = scheduledMatches.find((match) => new Date(match.startsAt) >= now) ?? scheduledMatches[0] ?? null;
   const lastFinishedMatch = finishedMatchesWithScore[finishedMatchesWithScore.length - 1] ?? null;
@@ -537,6 +550,8 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
     nextScheduledMatch ??
     lastFinishedMatch ??
     null;
+  const featuredMatchStatus = featuredMatch ? effectiveMatchStatus(featuredMatch) : null;
+  const featuredMatchHasScore = Boolean(featuredMatch && featuredMatch.homeScore !== null && featuredMatch.awayScore !== null);
   const nextStartsAt = featuredMatch ? new Date(featuredMatch.startsAt) : null;
   const nextDiff = nextStartsAt ? Math.max(0, nextStartsAt.getTime() - now.getTime()) : 0;
   const nextCountdown = {
@@ -596,11 +611,11 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
   );
   const featuredPrediction = featuredMatch?.predictions?.[0] ?? null;
   const featuredActionLabel = featuredMatch
-    ? featuredMatch.status === "LIVE"
+    ? featuredMatchStatus === "LIVE"
       ? featuredPrediction
         ? "Ver partido"
         : "Ver en vivo"
-      : featuredMatch.status === "FINISHED"
+      : featuredMatchStatus === "FINISHED"
         ? "Ver resultado"
         : featuredPrediction
         ? "Editar pronóstico"
@@ -643,7 +658,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
     (selectedLeague?.status ?? "ACTIVE") === "ACTIVE" &&
     !roomHasExpired &&
     roomIsActivated;
-  const featuredPickClosed = featuredMatch ? isPickClosed(new Date(featuredMatch.startsAt)) || featuredMatch.status === "LIVE" || featuredMatch.status === "FINISHED" : true;
+  const featuredPickClosed = featuredMatch ? isPickClosed(new Date(featuredMatch.startsAt)) || featuredMatchStatus === "LIVE" || featuredMatchStatus === "FINISHED" : true;
   const canEditFeaturedPick = Boolean(featuredMatch && selectedLeague && roomCanPredict && !featuredPickClosed);
   const roomDisabledMessage = isSuperAdmin
     ? "Modo espectador: administra la sala sin participar en la competencia."
@@ -982,11 +997,11 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
                     <div className="room-next-card-header">
                       <span>
                         {featuredMatch
-                          ? featuredMatch.status === "LIVE"
-                            ? "En vivo"
-                            : featuredMatch.status === "FINISHED"
-                              ? "Último resultado"
-                              : "Próximo partido"
+                          ? featuredMatchStatus === "LIVE"
+                            ? "PARTIDO EN VIVO"
+                            : featuredMatchStatus === "FINISHED"
+                              ? "ÚLTIMO RESULTADO"
+                              : "PRÓXIMO PARTIDO"
                           : "Sin partido abierto"}
                       </span>
                       <strong>{selectedLeague.name}</strong>
@@ -999,11 +1014,12 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
                             <strong>{featuredMatch.homeTeam}</strong>
                           </div>
                           <em>
-                            {(featuredMatch.status === "LIVE" || featuredMatch.status === "FINISHED") &&
-                            featuredMatch.homeScore !== null &&
-                            featuredMatch.awayScore !== null
+                            {(featuredMatchStatus === "LIVE" || featuredMatchStatus === "FINISHED") &&
+                            featuredMatchHasScore
                               ? `${featuredMatch.homeScore} - ${featuredMatch.awayScore}`
-                              : "vs"}
+                              : featuredMatchStatus === "LIVE"
+                                ? "En vivo"
+                                : "vs"}
                           </em>
                           <div>
                             <span>{flagForTeam(featuredMatch.awayTeam)}</span>
@@ -1022,10 +1038,14 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
                             <span>Mi pronóstico</span>
                             <strong>{featuredPrediction.homeScore} - {featuredPrediction.awayScore}</strong>
                           </div>
-                        ) : featuredMatch.status === "LIVE" || featuredMatch.status === "FINISHED" ? (
+                        ) : featuredMatchStatus === "LIVE" || featuredMatchStatus === "FINISHED" ? (
                           <div className="room-my-pick-pill">
-                            <span>{featuredMatch.status === "FINISHED" ? "Resultado final" : "Marcador actual"}</span>
-                            <strong>{featuredMatch.homeScore ?? 0} - {featuredMatch.awayScore ?? 0}</strong>
+                            <span>{featuredMatchStatus === "FINISHED" ? "Resultado final" : "Marcador actual"}</span>
+                            <strong>
+                              {featuredMatchHasScore
+                                ? `${featuredMatch.homeScore} - ${featuredMatch.awayScore}`
+                                : "Marcador pendiente"}
+                            </strong>
                           </div>
                         ) : (
                           <div className="room-countdown-grid" aria-label="Cuenta regresiva">
