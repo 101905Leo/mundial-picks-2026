@@ -528,11 +528,12 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
   const lastFinishedMatch = [...sortedMatches]
     .reverse()
     .find((match) => match.status === "FINISHED" && match.homeScore !== null && match.awayScore !== null) ?? null;
-  const nextRoomMatch =
+  const featuredMatch =
     liveMatches[0] ??
     nextScheduledMatch ??
     lastFinishedMatch ??
     null;
+  const nextRoomMatch = featuredMatch;
   const nextStartsAt = nextRoomMatch ? new Date(nextRoomMatch.startsAt) : null;
   const nextDiff = nextStartsAt ? Math.max(0, nextStartsAt.getTime() - now.getTime()) : 0;
   const nextCountdown = {
@@ -800,7 +801,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
       </section> : null}
 
       {!selectedLeague ? <div className="grid room-entry-grid">
-        <section className="panel room-picker-panel">
+        <section className="panel room-picker-panel glass-room-selector">
           <div className="section-title compact-title">
             <div>
               <span className="market-kicker">{isSuperAdmin ? "Super usuario" : "Mis salas"}</span>
@@ -1635,7 +1636,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
       {isRoomMenuOpen && !embedded ? (
         <div className="room-sheet-shell" role="dialog" aria-modal="true" aria-label="Mis salas">
           <button className="room-sheet-backdrop" onClick={() => setIsRoomMenuOpen(false)} type="button" aria-label="Cerrar selector de salas" />
-          <section className="room-sheet-panel">
+          <section className="room-sheet-panel glass-room-selector">
             <div className="room-chat-handle" aria-hidden="true" />
             <header className="room-sheet-header">
               <div>

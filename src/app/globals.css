@@ -1393,6 +1393,10 @@ button {
   gap: 8px;
 }
 
+.super-room-entry-tab {
+  border-color: rgba(182, 255, 59, 0.28);
+}
+
 .tab,
 .button {
   align-items: center;
@@ -1865,6 +1869,15 @@ button {
   box-shadow: 0 22px 70px rgba(0, 0, 0, 0.34);
   display: grid;
   gap: 16px;
+}
+
+.glass-room-selector {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(182, 255, 59, 0.09), transparent 34%),
+    linear-gradient(145deg, rgba(11, 18, 32, 0.72), rgba(4, 8, 16, 0.84));
+  backdrop-filter: blur(20px);
+  border-color: rgba(255, 255, 255, 0.17);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
 }
 
 .room-picker-panel .section-title p {
@@ -2384,6 +2397,9 @@ button {
   display: inline-flex;
   gap: 6px;
   justify-content: center;
+  min-width: 76px;
+  position: relative;
+  z-index: 6;
   white-space: nowrap;
 }
 

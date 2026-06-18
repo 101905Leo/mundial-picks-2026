@@ -377,7 +377,7 @@ export function MundialPicksApp() {
                       Panel administrador
                     </button>
                     <button
-                      className={`tab ${activeView === "rooms" ? "active" : ""}`}
+                      className={`tab super-room-entry-tab ${activeView === "rooms" ? "active" : ""}`}
                       onClick={() => {
                         setActiveView("rooms");
                         setRoomMenuRequest((current) => current + 1);
