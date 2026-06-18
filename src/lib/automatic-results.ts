@@ -17,7 +17,7 @@ export function isAutomaticResultsWindow(date = new Date()) {
   return hourInBogota >= 14 || hourInBogota === 0;
 }
 
-export async function updateResultsAndRecalculate(options: { enforceSchedule?: boolean } = {}) {
+export async function updateResultsAndRecalculate(options: { enforceSchedule?: boolean; notify?: boolean } = {}) {
   if (options.enforceSchedule && !isAutomaticResultsWindow()) {
     return {
       checked: 0,
@@ -77,7 +77,7 @@ export async function updateResultsAndRecalculate(options: { enforceSchedule?: b
   const roomMatchesSynced = roomSync.updated;
   const predictionsUpdated = await recalculateFinishedMatchPoints();
 
-  if (resolvedResult.updatedMatches.length > 0 || roomMatchesSynced > 0) {
+  if (options.notify !== false && (resolvedResult.updatedMatches.length > 0 || roomMatchesSynced > 0)) {
     const scoreLines = resolvedResult.updatedMatches
       .slice(0, 8)
       .map((match) => `${match.homeTeam} ${match.homeScore}-${match.awayScore} ${match.awayTeam}`)

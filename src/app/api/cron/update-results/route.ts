@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     const forceRun = ["1", "true", "si", "yes"].includes(
       (request.nextUrl.searchParams.get("force") ?? "").toLowerCase(),
     );
-    const result = await updateResultsAndRecalculate({ enforceSchedule: !forceRun });
+    const result = await updateResultsAndRecalculate({ enforceSchedule: !forceRun, notify: false });
     return Response.json({
       ok: true,
       forced: forceRun,
