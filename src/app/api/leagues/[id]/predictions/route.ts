@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { roomOwnedMatchWhere } from "@/lib/room-match-scope";
-import { uniqueRoomPredictions } from "@/lib/room-predictions";
+import { pickRoomPrediction, uniqueRoomPredictions } from "@/lib/room-predictions";
 import { getScoringStatus, calculatePredictionPoints } from "@/lib/scoring";
 
 type LivePointsMatch = {
@@ -56,11 +56,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const roomMembers = await prisma.leagueMembership.findMany({
     where: { leagueId: id },
-    select: { userId: true, user: { select: { role: true } } },
+    select: { userId: true, user: { select: { id: true, name: true, role: true } } },
   });
-  const memberIds = roomMembers
+  const participantMembers = roomMembers
     .filter((member) => member.user.role !== "ADMIN")
-    .map((member) => member.userId);
+    .map((member) => member.user);
+  const memberIds = participantMembers.map((member) => member.id);
 
   const roomMatches = await prisma.match.findMany({
     where: {
@@ -85,19 +86,24 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   });
 
   const now = new Date();
-  const liveWindowStart = new Date(now.getTime() - 8 * 60 * 60 * 1000);
-  const openMatches = roomMatches.filter((match) => match.status !== "FINISHED");
-  const activeMatches = openMatches.filter((match) => {
-    const hasPartialScore = match.homeScore !== null && match.awayScore !== null;
-    const looksInPlayByTime = match.startsAt <= now && match.startsAt >= liveWindowStart;
-    return match.status === "LIVE" || hasPartialScore || looksInPlayByTime;
-  });
+  const matchesWithScoringStatus = roomMatches.map((match) => ({
+    ...match,
+    status: getScoringStatus(match, now),
+  }));
+  const openMatches = matchesWithScoringStatus.filter((match) => match.status !== "FINISHED");
+  const liveMatches = matchesWithScoringStatus.filter((match) => match.status === "LIVE");
+  const lastFinishedMatch = [...matchesWithScoringStatus]
+    .filter((match) => match.status === "FINISHED")
+    .sort((left, right) => right.startsAt.getTime() - left.startsAt.getTime())[0];
   const nearestOpenMatches = [...openMatches].sort(
     (left, right) =>
       Math.abs(left.startsAt.getTime() - now.getTime()) -
       Math.abs(right.startsAt.getTime() - now.getTime()),
   );
-  const visibleMatches = activeMatches.length ? activeMatches : nearestOpenMatches.slice(0, 1);
+  const visibleMatches = liveMatches.length ? liveMatches : nearestOpenMatches.slice(0, 1);
+  if (!visibleMatches.length && lastFinishedMatch) {
+    visibleMatches.push(lastFinishedMatch);
+  }
   const visiblePredictions = visibleMatches.length
     ? await prisma.prediction.findMany({
         where: {
@@ -143,29 +149,51 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return belongsToVisibleMatch ? { ...prediction, match } : null;
     })
     .filter((prediction): prediction is NonNullable<typeof prediction> => Boolean(prediction));
+  const uniqueVisiblePredictions = uniqueRoomPredictions(scopedVisiblePredictions, id);
+  const predictionsByMemberAndMatch = new Map<string, (typeof uniqueVisiblePredictions)[number]>();
+  for (const prediction of uniqueVisiblePredictions) {
+    predictionsByMemberAndMatch.set(`${prediction.userId}:${prediction.match.id}`, prediction);
+  }
   return Response.json({
     matches: visibleMatches,
-    predictions: uniqueRoomPredictions(scopedVisiblePredictions, id).map((prediction) => {
-      const points = livePredictionPoints(prediction, prediction.match);
-      const matchStatus = getScoringStatus(prediction.match);
+    predictions: visibleMatches.flatMap((match) => {
+      const matchStatus = getScoringStatus(match, now);
+      if (matchStatus === "SCHEDULED") return [];
 
-      return {
-        ...prediction,
-        points,
-        match: {
-          ...prediction.match,
-          status: matchStatus,
-        },
-        debug: {
-          predictionId: prediction.id,
-          predictionMatchId: prediction.matchId,
-          resolvedMatchId: prediction.match.id,
-          matchStatus,
-          realHomeScore: prediction.match.homeScore,
-          realAwayScore: prediction.match.awayScore,
-          calculatedPoints: points,
-        },
-      };
+      return participantMembers.map((member) => {
+        const prediction = pickRoomPrediction(
+          uniqueVisiblePredictions.filter((item) => item.userId === member.id && item.match.id === match.id),
+          id,
+        ) ?? predictionsByMemberAndMatch.get(`${member.id}:${match.id}`) ?? null;
+        const points = prediction ? livePredictionPoints(prediction, match) : 0;
+
+        return {
+          id: prediction?.id ?? `missing-${member.id}-${match.id}`,
+          predictionId: prediction?.id ?? null,
+          userId: member.id,
+          matchId: match.id,
+          leagueId: prediction?.leagueId ?? id,
+          roomKey: prediction?.roomKey ?? id,
+          homeScore: prediction?.homeScore ?? null,
+          awayScore: prediction?.awayScore ?? null,
+          updatedAt: prediction?.updatedAt ?? null,
+          user: { id: member.id, name: member.name },
+          match: {
+            ...match,
+            status: matchStatus,
+          },
+          points,
+          debug: {
+            predictionId: prediction?.id ?? null,
+            predictionMatchId: prediction?.matchId ?? null,
+            resolvedMatchId: match.id,
+            matchStatus,
+            realHomeScore: match.homeScore,
+            realAwayScore: match.awayScore,
+            calculatedPoints: points,
+          },
+        };
+      });
     }),
   });
 }

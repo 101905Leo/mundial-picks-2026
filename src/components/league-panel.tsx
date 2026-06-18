@@ -35,8 +35,9 @@ type GroupInfo = {
 
 type RoomPrediction = {
   id: string;
-  homeScore: number;
-  awayScore: number;
+  predictionId?: string | null;
+  homeScore: number | null;
+  awayScore: number | null;
   points: number;
   user: { id: string; name: string };
   match: {
@@ -56,11 +57,16 @@ function isActiveLeague(league: League) {
 function getEffectiveMatchStatus(match: Match, now: Date) {
   const status = String(match.status).trim().toUpperCase();
   const startsAt = new Date(match.startsAt);
-  const liveWindowMs = 150 * 60 * 1000;
+  const liveWindowMs = 120 * 60 * 1000;
   const elapsedMs = now.getTime() - startsAt.getTime();
+  const hasScore = match.homeScore !== null && match.awayScore !== null;
 
-  if (status === "SCHEDULED" && elapsedMs >= 0 && elapsedMs <= liveWindowMs) {
+  if (status === "SCHEDULED" && hasScore && elapsedMs >= 0 && elapsedMs <= liveWindowMs) {
     return "LIVE";
+  }
+
+  if (status === "SCHEDULED" && hasScore && elapsedMs > liveWindowMs) {
+    return "FINISHED";
   }
 
   return status;
@@ -1039,14 +1045,20 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
                             <strong>{featuredPrediction.homeScore} - {featuredPrediction.awayScore}</strong>
                           </div>
                         ) : featuredMatchStatus === "LIVE" || featuredMatchStatus === "FINISHED" ? (
-                          <div className="room-my-pick-pill">
-                            <span>{featuredMatchStatus === "FINISHED" ? "Resultado final" : "Marcador actual"}</span>
-                            <strong>
-                              {featuredMatchHasScore
-                                ? `${featuredMatch.homeScore} - ${featuredMatch.awayScore}`
-                                : "Marcador pendiente"}
-                            </strong>
-                          </div>
+                          <>
+                            <div className="room-my-pick-pill">
+                              <span>Mi pronóstico</span>
+                              <strong>Sin pronóstico</strong>
+                            </div>
+                            <div className="room-my-pick-pill">
+                              <span>{featuredMatchStatus === "FINISHED" ? "Resultado final" : "Marcador actual"}</span>
+                              <strong>
+                                {featuredMatchHasScore
+                                  ? `${featuredMatch.homeScore} - ${featuredMatch.awayScore}`
+                                  : "Marcador pendiente"}
+                              </strong>
+                            </div>
+                          </>
                         ) : (
                           <div className="room-countdown-grid" aria-label="Cuenta regresiva">
                             <article><strong>{String(nextCountdown.days).padStart(2, "0")}</strong><span>Días</span></article>
@@ -1172,7 +1184,11 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
                               {matchStatusLabel(prediction.match.status)}
                             </span>
                           </div>
-                          <strong>{prediction.homeScore} - {prediction.awayScore}</strong>
+                          <strong>
+                            {prediction.homeScore !== null && prediction.awayScore !== null
+                              ? `${prediction.homeScore} - ${prediction.awayScore}`
+                              : "Sin pronóstico"}
+                          </strong>
                           <span>{prediction.points} pts</span>
                         </article>
                       ))}

@@ -61,10 +61,15 @@ export function getScoringStatus(match: MatchForScoringStatus, now = new Date())
   const status = String(match.status).trim().toUpperCase();
   const hasScore = match.homeScore !== null && match.awayScore !== null;
   const startsAt = match.startsAt ? (match.startsAt instanceof Date ? match.startsAt : new Date(match.startsAt)) : null;
-  const started = startsAt !== null && !Number.isNaN(startsAt.getTime()) && startsAt.getTime() <= now.getTime();
+  const elapsedMs = startsAt !== null && !Number.isNaN(startsAt.getTime()) ? now.getTime() - startsAt.getTime() : Number.NaN;
+  const liveWindowMs = 120 * 60 * 1000;
 
-  if (status === "SCHEDULED" && hasScore && started) {
+  if (status === "SCHEDULED" && hasScore && elapsedMs >= 0 && elapsedMs <= liveWindowMs) {
     return "LIVE";
+  }
+
+  if (status === "SCHEDULED" && hasScore && elapsedMs > liveWindowMs) {
+    return "FINISHED";
   }
 
   if (status === "LIVE" || status === "FINISHED") return status;
