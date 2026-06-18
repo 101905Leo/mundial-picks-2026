@@ -340,7 +340,7 @@ button {
   grid-template-columns: minmax(0, 0.9fr) minmax(320px, 420px);
 }
 
-.landing-card.landing-login-glass-card {
+.public-landing .landing-card.landing-code-panel.landing-login-glass-card {
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 34%),
     radial-gradient(circle at 14% 0%, rgba(93, 220, 255, 0.22), transparent 38%),
@@ -358,7 +358,7 @@ button {
   z-index: 30;
 }
 
-.landing-card.landing-login-glass-card::before {
+.public-landing .landing-card.landing-code-panel.landing-login-glass-card::before {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.16), transparent 42%);
   content: "";
   inset: 0;
@@ -368,14 +368,14 @@ button {
   z-index: -1;
 }
 
-.landing-card.landing-login-glass-card > div:first-child {
+.public-landing .landing-card.landing-code-panel.landing-login-glass-card > div:first-child {
   background: rgba(2, 6, 23, 0.24);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
   padding: clamp(16px, 3vw, 22px);
 }
 
-.login-form-glass-panel {
+.public-landing .landing-card.landing-login-glass-card .login-form-glass-panel {
   background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(16px) saturate(135%);
   -webkit-backdrop-filter: blur(16px) saturate(135%);
@@ -385,7 +385,7 @@ button {
   overflow: hidden;
 }
 
-.login-form-glass-panel > section.panel {
+.public-landing .landing-card.landing-login-glass-card .login-form-glass-panel > section.panel {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.02)),
     rgba(2, 6, 23, 0.34);
@@ -394,24 +394,24 @@ button {
   margin: 0;
 }
 
-.login-form-glass-panel .tab {
+.public-landing .landing-card.landing-login-glass-card .login-form-glass-panel .tab {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.1);
 }
 
-.login-form-glass-panel .tab.active {
+.public-landing .landing-card.landing-login-glass-card .login-form-glass-panel .tab.active {
   background: rgba(244, 189, 79, 0.18);
   border-color: rgba(244, 189, 79, 0.34);
   color: var(--gold-soft);
 }
 
-.login-form-glass-panel .form-row input {
+.public-landing .landing-card.landing-login-glass-card .login-form-glass-panel .form-row input {
   background: rgba(2, 6, 23, 0.58);
   border-color: rgba(255, 255, 255, 0.14);
   color: #fff;
 }
 
-.login-form-glass-panel .form-row input::placeholder {
+.public-landing .landing-card.landing-login-glass-card .login-form-glass-panel .form-row input::placeholder {
   color: rgba(226, 232, 240, 0.54);
 }
 
