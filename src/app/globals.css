@@ -101,6 +101,10 @@ button {
   gap: 12px;
 }
 
+.top-actions:empty {
+  display: none;
+}
+
 .entry-panel {
   align-items: center;
   background: var(--premium-panel);
@@ -245,12 +249,18 @@ button {
 
 .landing-swipe-hint {
   align-items: center;
+  background: rgba(5, 7, 13, 0.46);
+  border: 1px solid rgba(255, 231, 168, 0.24);
+  border-radius: 999px;
   color: rgba(255, 231, 168, 0.82);
+  cursor: pointer;
   display: inline-flex;
   font-size: 0.86rem;
   font-weight: 800;
   letter-spacing: 0;
   margin-top: 14px;
+  min-height: 34px;
+  padding: 0 12px;
 }
 
 .hero-logo-image {
@@ -2749,11 +2759,6 @@ button {
   justify-self: stretch;
 }
 
-.room-header-logout {
-  min-height: 36px;
-  padding-inline: 12px;
-}
-
 .quick-home-pick-card {
   background: rgba(2, 6, 23, 0.38);
   border: 1px solid rgba(182, 255, 59, 0.18);
@@ -2840,6 +2845,35 @@ button {
   font-weight: 900;
   margin: -2px 0 0;
   text-align: center;
+}
+
+.public-more-panel {
+  max-width: 520px;
+}
+
+.public-more-actions {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.public-more-actions button {
+  background:
+    linear-gradient(135deg, rgba(47, 107, 255, 0.16), rgba(182, 255, 59, 0.08)),
+    rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 900;
+  min-height: 54px;
+  padding: 0 12px;
+  text-align: left;
+}
+
+.public-more-actions button:hover,
+.public-more-actions button:focus-visible {
+  border-color: rgba(182, 255, 59, 0.36);
 }
 
 .league-chat-message.own-message {
@@ -8245,6 +8279,10 @@ button {
 
   .room-picker-meta {
     gap: 7px;
+  }
+
+  .public-more-actions {
+    grid-template-columns: 1fr;
   }
 }
 

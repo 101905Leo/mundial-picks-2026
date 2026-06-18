@@ -22,6 +22,8 @@ export function MundialPicksApp() {
   >("rooms");
   const [publicAuthMode, setPublicAuthMode] = useState<"login" | "register">("login");
   const [roomMenuRequest, setRoomMenuRequest] = useState(0);
+  const [publicMoreOpen, setPublicMoreOpen] = useState(false);
+  const [publicTouchStart, setPublicTouchStart] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   async function loadSession() {
@@ -138,9 +140,23 @@ export function MundialPicksApp() {
 
   function openPublicAccess(mode: "login" | "register") {
     setPublicAuthMode(mode);
+    setPublicMoreOpen(false);
     window.requestAnimationFrame(() => {
       document.getElementById("acceso")?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
+  }
+
+  function openPublicSection(sectionId: string) {
+    setPublicMoreOpen(false);
+    window.requestAnimationFrame(() => {
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
+  function handlePublicTouchEnd(y: number) {
+    if (publicTouchStart === null) return;
+    if (publicTouchStart - y > 42) setPublicMoreOpen(true);
+    setPublicTouchStart(null);
   }
 
   const groupCounts = matches.reduce<Record<string, number>>((counts, match) => {
@@ -195,11 +211,6 @@ export function MundialPicksApp() {
         <Countdown matches={matches} compact />
         <div className="top-actions">
           {user ? <span className="user-chip">{user.name}</span> : null}
-          {!user ? (
-            <button className="button secondary compact-action" onClick={() => openPublicAccess("login")} type="button">
-              Ingresar
-            </button>
-          ) : null}
           {user?.role === "ADMIN" ? (
             <button className="button danger" onClick={logout}>
               Salir
@@ -208,7 +219,11 @@ export function MundialPicksApp() {
         </div>
       </header>
 
-      <section className="hero-band">
+      <section
+        className="hero-band"
+        onTouchStart={!user ? (event) => setPublicTouchStart(event.touches[0]?.clientY ?? null) : undefined}
+        onTouchEnd={!user ? (event) => handlePublicTouchEnd(event.changedTouches[0]?.clientY ?? 0) : undefined}
+      >
         <div className="hero-content">
           <div className="hero-title-group">
             <img className="hero-logo-image" src="/logo-copa-mundial-2026.png" alt="Copa Mundial de la FIFA 2026™" />
@@ -225,7 +240,9 @@ export function MundialPicksApp() {
                       Ingresar con código
                     </button>
                   </div>
-                  <span className="landing-swipe-hint">↑ Desliza para ver más</span>
+                  <button className="landing-swipe-hint" onClick={() => setPublicMoreOpen(true)} type="button">
+                    ↑ Desliza para ver más
+                  </button>
                 </>
               ) : null}
             </div>
@@ -242,7 +259,7 @@ export function MundialPicksApp() {
           <>
             {!user ? (
               <section className="public-landing">
-                <section className="landing-card landing-showcase">
+                <section className="landing-card landing-showcase" id="showcase">
                   <div className="landing-showcase-copy">
                     <span className="market-kicker">Vive el Mundial con tu grupo</span>
                     <h2>Todo tu grupo compitiendo en una sola sala.</h2>
@@ -296,7 +313,7 @@ export function MundialPicksApp() {
                   </button>
                 </section>
 
-                <section className="landing-card landing-steps">
+                <section className="landing-card landing-steps" id="como-funciona">
                   <div className="section-title compact-title">
                     <span className="market-kicker">Cómo funciona</span>
                     <h2>Cuatro pasos para jugar</h2>
@@ -309,7 +326,7 @@ export function MundialPicksApp() {
                   </div>
                 </section>
 
-                <section className="landing-card landing-score-card">
+                <section className="landing-card landing-score-card" id="reglas">
                   <div className="section-title compact-title">
                     <span className="market-kicker">Reglas resumidas</span>
                     <h2>Sistema de puntos</h2>
@@ -352,7 +369,9 @@ export function MundialPicksApp() {
                   <a className="button primary" href="/planes">Ver planes</a>
                 </section>
 
-                <WorldCupNewsTicker />
+                <section id="noticias">
+                  <WorldCupNewsTicker />
+                </section>
 
                 <footer className="landing-footer">
                   <span>Desarrollado por Mundial Picks 2026</span>
@@ -363,6 +382,31 @@ export function MundialPicksApp() {
                   Chatear
                 </a>
               </section>
+            ) : null}
+
+            {!user && publicMoreOpen ? (
+              <div className="room-sheet-shell public-more-shell" role="dialog" aria-modal="true" aria-label="Ver mas">
+                <button className="room-sheet-backdrop" onClick={() => setPublicMoreOpen(false)} type="button" aria-label="Cerrar menu" />
+                <section className="room-sheet-panel public-more-panel">
+                  <div className="room-chat-handle" aria-hidden="true" />
+                  <header className="room-sheet-header">
+                    <div>
+                      <span className="market-kicker">Explorar</span>
+                      <h3>Ver más</h3>
+                      <p>Elige una sección y seguimos abajo en la página.</p>
+                    </div>
+                    <button className="room-chat-close" onClick={() => setPublicMoreOpen(false)} type="button" aria-label="Cerrar menu">
+                      ×
+                    </button>
+                  </header>
+                  <div className="public-more-actions">
+                    <button onClick={() => openPublicSection("como-funciona")} type="button">Cómo funciona</button>
+                    <button onClick={() => openPublicSection("reglas")} type="button">Reglas</button>
+                    <button onClick={() => openPublicSection("planes")} type="button">Planes</button>
+                    <button onClick={() => openPublicSection("noticias")} type="button">Noticias</button>
+                  </div>
+                </section>
+              </div>
             ) : null}
 
             {user ? (

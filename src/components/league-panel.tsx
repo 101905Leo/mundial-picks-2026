@@ -825,11 +825,6 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
               <article><span>Partidos</span><strong>{matches.length}</strong></article>
             </div>
             <div className="room-owner-actions room-header-actions">
-              {onLogout ? (
-                <button className="button danger compact-button room-header-logout" onClick={onLogout} type="button">
-                  Salir
-                </button>
-              ) : null}
               {canManageInvitation ? (
                 <button className="button secondary compact-button" onClick={copyInvitation} type="button">Copiar invitación</button>
               ) : null}
@@ -1361,6 +1356,11 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
                 {canEditRoomInfo ? (
                   <button className="button secondary" onClick={() => setRoomView("participants")} type="button">
                     Configuración
+                  </button>
+                ) : null}
+                {onLogout ? (
+                  <button className="button danger room-logout-button" onClick={onLogout} type="button">
+                    Salir
                   </button>
                 ) : null}
               </div>
