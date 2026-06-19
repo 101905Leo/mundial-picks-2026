@@ -89,3 +89,36 @@ npm run test:scoring
 ```
 
 Do not use these checks as proof that production data is safe. They only validate compilation and scoring behavior.
+
+## Phase 1 Result - 2026-06-19
+
+Executed checks:
+
+```bash
+./node_modules/.bin/tsc --noEmit
+npm run build
+npm run test:scoring
+git status -sb
+```
+
+Result:
+
+- TypeScript passed.
+- Build passed.
+- `npm run test:scoring` initially failed because one test expected `0` for a `SCHEDULED` match that had already started and had a score.
+- The failure was caused by an outdated test, not by a scoring bug.
+- Only `src/lib/scoring.test.ts` was updated.
+- Scoring logic was not changed.
+- After the test update, `npm run test:scoring` passed with `Scoring tests passed`.
+- `tsconfig.tsbuildinfo` was modified by build and restored.
+- Working tree was clean after commit `f288337 Actualizar pruebas de scoring programado iniciado`.
+
+Current scoring smoke-test rule:
+
+- Future `SCHEDULED` match without score returns `0`.
+- Started `SCHEDULED` match with available score is puntuable.
+- Exact pick for a started `SCHEDULED` match with score returns `5`.
+
+Next Phase 1 step:
+
+- Create or run local/staging smoke checks for auth, active room access, own pick, admin pick, pick visibility, and ranking without touching production.

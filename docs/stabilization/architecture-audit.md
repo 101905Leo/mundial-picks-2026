@@ -103,8 +103,11 @@ Status: zone critical. Scoring can be correct while ranking is wrong if room ass
 
 - Main files: `src/lib/scoring.ts`, `src/lib/prediction-points.ts`, `src/lib/room-scoring.ts`.
 - Current point rules are centralized and should not be changed during stabilization.
+- Phase 1 confirmed the current live-scoring rule: a `SCHEDULED` match that already started and has `homeScore` and `awayScore` can be treated as puntuable.
+- A failing scoring test was updated in commit `f288337` because the test expected old behavior.
+- No scoring logic was changed.
 
-Status: base solid.
+Status: base solid, with the requirement that future scoring behavior must remain protected by tests before any module rebuild touches picks or ranking.
 
 ### Cron / Resultados
 
@@ -152,6 +155,7 @@ Classification: weak wall. Rebuild by extracting admin modules gradually.
 
 - Current schema for now.
 - Current scoring rules.
+- Current scoring helpers, with tests covering future scheduled matches without score and started scheduled matches with score.
 - Auth/session foundation.
 - Normal pick endpoint for user-owned picks.
 - Admin pick endpoint for super user administrative picks.

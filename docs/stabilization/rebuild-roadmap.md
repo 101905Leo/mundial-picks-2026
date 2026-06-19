@@ -57,6 +57,16 @@ Acceptance criteria:
 
 - Auth, room, picks, ranking, and admin-pick flows have documented checks.
 - Write tests are limited to local or staging unless approved.
+- Base checks pass: TypeScript, build, and scoring tests.
+
+Current result:
+
+- TypeScript passed.
+- Build passed.
+- Scoring tests pass after commit `f288337 Actualizar pruebas de scoring programado iniciado`.
+- The scoring issue found in Phase 1 was a stale test, not a scoring logic bug.
+- Scoring logic remains unchanged.
+- Next work should focus on local/staging smoke checks for auth, active room, own pick, admin pick, pick visibility, and ranking.
 
 ## Phase 2 - Separate Permission Helpers
 
