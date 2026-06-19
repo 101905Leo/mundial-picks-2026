@@ -122,3 +122,51 @@ Current scoring smoke-test rule:
 Next Phase 1 step:
 
 - Create or run local/staging smoke checks for auth, active room access, own pick, admin pick, pick visibility, and ranking without touching production.
+
+## Smoke Test Manual De Lectura - 2026-06-19
+
+Scope:
+
+- Manual read-only validation.
+- No data writes.
+- No recalculations.
+- No cron/result updates.
+- No payment actions.
+
+### Super Usuario Global
+
+- `/api/auth/me` returns `User.role === "ADMIN"`.
+- Room, ranking, and matches load with HTTP `200`.
+- No data writes were performed.
+
+Result: passed for read-only global admin access.
+
+### Admin De Sala
+
+- User: `Leoavella`.
+- `User.role === "USER"`.
+- User is a room admin through `LeagueMembership`, not a global super user.
+- `/api/admin/users` returns HTTP `403`.
+- `/api/admin/rooms` returns HTTP `403`.
+- Room, ranking, and matches load with HTTP `200`.
+- No data writes were performed.
+
+Result: passed. Room admin does not receive global admin permissions.
+
+### Participante Normal
+
+- User: `Sebastián avella`.
+- `User.role === "USER"`.
+- `isActive === false`.
+- Room, ranking, and matches load with HTTP `200`.
+- User does not see global admin tools.
+- No data writes were performed.
+
+Result: passed for read-only participant access.
+
+### Summary
+
+- Global super user read access works.
+- Room admin remains separate from global admin.
+- Normal participant read access works even with `isActive === false`.
+- No production data was modified during this read-only smoke test.
