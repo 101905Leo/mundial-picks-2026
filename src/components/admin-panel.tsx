@@ -166,6 +166,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
   const [roomDashboard, setRoomDashboard] = useState<AdminRoomDashboard | null>(null);
   const [roomDashboardLoading, setRoomDashboardLoading] = useState(false);
   const [selectedPublishDate, setSelectedPublishDate] = useState("");
+  const [adminPickSaving, setAdminPickSaving] = useState(false);
   const publishedMatches = matches.filter((match) => match.isPublished).length;
   const resultLoadedMatches = matches.filter((match) => match.homeScore !== null && match.awayScore !== null).length;
   const activeUsers = users.filter((user) => user.isActive).length;
@@ -929,34 +930,59 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
 
   async function saveAdminPick(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (adminPickSaving) return;
     setMessage("");
     const form = event.currentTarget;
     const formData = new FormData(form);
     const leagueId = String(formData.get("adminPickLeagueId") ?? "");
+    const payload = {
+      userId: String(formData.get("adminPickUserId")),
+      matchId: String(formData.get("adminPickMatchId")),
+      homeScore: Number(formData.get("adminPickHomeScore")),
+      awayScore: Number(formData.get("adminPickAwayScore")),
+      leagueId: leagueId || undefined,
+    };
 
-    const response = await fetch("/api/admin/predictions", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId: String(formData.get("adminPickUserId")),
-        matchId: String(formData.get("adminPickMatchId")),
-        homeScore: Number(formData.get("adminPickHomeScore")),
-        awayScore: Number(formData.get("adminPickAwayScore")),
-        leagueId: leagueId || undefined,
-      }),
-    });
-    const data = await response.json();
-
-    if (!response.ok) {
-      setMessage(data.error ?? "No se pudo guardar el pick");
-      return;
+    if (process.env.NODE_ENV !== "production") {
+      console.info("admin-pick-save-payload", payload);
     }
 
-    setMessage(`Pick actualizado por super admin: ${data.user} - ${data.match}.`);
-    form.reset();
-    await loadUsers();
-    if (leagueId) await loadRoomDashboard(leagueId);
-    onChanged();
+    setAdminPickSaving(true);
+    try {
+      const response = await fetch("/api/admin/predictions", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+
+      if (process.env.NODE_ENV !== "production") {
+        console.info("admin-pick-save-response", { ok: response.ok, status: response.status, data });
+      }
+
+      if (!response.ok) {
+        setMessage(data.error ?? "No se pudo guardar el pick");
+        return;
+      }
+
+      const savedHomeScore =
+        typeof data.prediction?.homeScore === "number" ? data.prediction.homeScore : payload.homeScore;
+      const savedAwayScore =
+        typeof data.prediction?.awayScore === "number" ? data.prediction.awayScore : payload.awayScore;
+      const savedMatch = typeof data.match === "string" ? data.match : "Partido";
+      const savedMatchLabel = savedMatch.includes(" vs ")
+        ? savedMatch.replace(" vs ", ` ${savedHomeScore} - ${savedAwayScore} `)
+        : `${savedMatch} ${savedHomeScore} - ${savedAwayScore}`;
+      const savedRoom = typeof data.room === "string" && data.room ? ` en ${data.room}` : "";
+
+      setMessage(`Pick guardado: ${savedMatchLabel} para ${data.user ?? "participante"}${savedRoom}.`);
+      form.reset();
+      await loadUsers();
+      if (leagueId) await loadRoomDashboard(leagueId);
+      onChanged();
+    } finally {
+      setAdminPickSaving(false);
+    }
   }
 
   async function saveAdminPickPoints(event: FormEvent<HTMLFormElement>) {
@@ -1814,7 +1840,9 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                   <span className="muted">Los puntos manuales se editan abajo, separados del pick.</span>
                 </div>
               </div>
-              <button className="button primary" type="submit">Guardar pick</button>
+              <button className="button primary" disabled={adminPickSaving} type="submit">
+                {adminPickSaving ? "Guardando..." : "Guardar pick"}
+              </button>
             </form>
             <form className="form" onSubmit={saveAdminPickPoints}>
               <h3>Ajustar puntos manuales</h3>
@@ -2303,7 +2331,9 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                                       <input id="roomUserPickAway" name="adminPickAwayScore" type="number" min={0} required />
                                     </div>
                                   </div>
-                                  <button className="button primary" type="submit">Guardar pick en sala</button>
+                                  <button className="button primary" disabled={adminPickSaving} type="submit">
+                                    {adminPickSaving ? "Guardando..." : "Guardar pick en sala"}
+                                  </button>
                                 </form>
 
                                 <form className="room-user-mini-form" onSubmit={saveAdminPickPoints}>

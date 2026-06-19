@@ -277,5 +277,8 @@ Scope:
 - The originally expected score was `2 - 1`.
 - Database verification showed the saved value as `2 - 2`.
 - The verified database value is recorded as the source of truth for this smoke test.
+- Because the user reports entering `2 - 1`, this smoke test is marked as partial and pending reconfirmation.
+- The admin panel was updated to display the score confirmed by the `/api/admin/predictions` response after save.
+- The admin pick save button is disabled while the save request is in progress to reduce accidental double submit risk.
 
-Result: passed for existing admin-pick write scope.
+Result: partial / pending reconfirmation. Scope and room assignment passed, but UI-entered score, endpoint response, and database value must be rechecked in a repeat test before admin pick is considered fully validated.
