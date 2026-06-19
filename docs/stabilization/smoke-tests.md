@@ -218,3 +218,64 @@ Result: passed for normal user own-pick write scope.
 - Duplicate matches exist in calendar/imported data for some fixtures, including `Scotland vs Morocco`.
 - This was not corrected in this phase.
 - Track as technical debt for a later calendar/import stabilization phase.
+
+## Smoke Test Manual De Escritura Admin Pick - 2026-06-19
+
+Scope:
+
+- Manual controlled write test for the existing admin pick flow.
+- No featured-card or mobile-card pick flow was used.
+- No recalculation was executed.
+- Ranking, cron, and payments were not touched.
+
+### Actor
+
+- Super user: `mundialpick`.
+- `User.role === "ADMIN"`.
+- Session confirmed through `/api/auth/me`.
+
+### Usuario Objetivo
+
+- User: `Sebastián avella`.
+- `userRole: USER`.
+- `userId: cmq9t1i0i0001jr04eoav6hat`.
+
+### Sala
+
+- Room: `familia avella`.
+- `leagueId: cmq9oosaa0001jo04h0u7htg7`.
+
+### Flujo Usado
+
+- Existing admin panel.
+- Existing section: `Crear o editar pick de participante`.
+- Expected endpoint: `/api/admin/predictions`.
+- Main featured card was not used.
+- Mobile pick card was not used.
+- `league-panel.tsx` was not touched.
+
+### Pick Guardado
+
+- Match: `Turkey vs Paraguay`.
+- `matchId: cmqec4b20001rjl04xqou9juf`.
+- `predictionId: cmqlfemes0003jm04ziekrynm`.
+- Saved score verified in database: `2 - 2`.
+- `points: 0`.
+
+### Verificaciones
+
+- `leagueId` was correctly saved as `cmq9oosaa0001jo04h0u7htg7`.
+- `roomKey` was correctly saved as `cmq9oosaa0001jo04h0u7htg7`.
+- `GLOBAL_OR_WITHOUT_LEAGUE_COUNT: 0`.
+- No global pick was created.
+- No pick without league was created.
+- No recalculation was executed.
+- Ranking, cron, and payments were not touched.
+
+### Nota
+
+- The originally expected score was `2 - 1`.
+- Database verification showed the saved value as `2 - 2`.
+- The verified database value is recorded as the source of truth for this smoke test.
+
+Result: passed for existing admin-pick write scope.
