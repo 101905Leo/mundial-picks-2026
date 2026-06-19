@@ -150,6 +150,33 @@ function datetimeLocalValue(value: string | null) {
   return offsetDate.toISOString().slice(0, 16);
 }
 
+function bogotaDateTimeLabel(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "fecha invalida";
+  const parts = new Intl.DateTimeFormat("es-CO", {
+    timeZone: "America/Bogota",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
+
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((item) => item.type === type)?.value ?? "00";
+
+  return `${part("year")}-${part("month")}-${part("day")} ${part("hour")}:${part("minute")}`;
+}
+
+function formatAdminMatchOption(
+  match: Pick<Match, "id" | "homeTeam" | "awayTeam" | "startsAt" | "status" | "isPublished">,
+) {
+  const shortId = match.id.slice(-6);
+  const hiddenLabel = match.isPublished ? "" : " — oculto";
+  return `${match.homeTeam} vs ${match.awayTeam} — ${bogotaDateTimeLabel(match.startsAt)} — ${match.status}${hiddenLabel} — ${shortId}`;
+}
+
 export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: Props) {
   const [message, setMessage] = useState("");
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -1821,8 +1848,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                   <option value="">Selecciona partido</option>
                   {matches.map((match) => (
                     <option key={match.id} value={match.id}>
-                      {match.homeTeam} vs {match.awayTeam} · {matchStatusLabel(match.status)}
-                      {match.isPublished ? "" : " · oculto"}
+                      {formatAdminMatchOption(match)}
                     </option>
                   ))}
                 </select>
@@ -2315,8 +2341,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                                       <option value="">Selecciona partido</option>
                                       {roomDashboard.matches.map((match) => (
                                         <option key={match.id} value={match.id}>
-                                          {match.homeTeam} vs {match.awayTeam} · {matchStatusLabel(match.status)}
-                                          {match.homeScore !== null && match.awayScore !== null ? ` · ${match.homeScore}-${match.awayScore}` : ""}
+                                          {formatAdminMatchOption(match)}
                                         </option>
                                       ))}
                                     </select>
