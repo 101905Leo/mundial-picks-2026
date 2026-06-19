@@ -74,12 +74,23 @@ assert.equal(
   roomPredictionPoints({ homeScore: 0, awayScore: 1 }, {
     homeTeam: "Belgium",
     awayTeam: "Egypt",
+    startsAt: new Date(Date.now() + 60 * 60 * 1000),
+    status: "SCHEDULED",
+    homeScore: null,
+    awayScore: null,
+  }),
+  0,
+);
+assert.equal(
+  roomPredictionPoints({ homeScore: 0, awayScore: 1 }, {
+    homeTeam: "Belgium",
+    awayTeam: "Egypt",
     startsAt: new Date(),
     status: "SCHEDULED",
     homeScore: 0,
     awayScore: 1,
   }),
-  0,
+  5,
 );
 
 console.log("Scoring tests passed");
