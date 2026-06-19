@@ -265,11 +265,6 @@ export function MundialPicksApp() {
                 </section>
 
                 <section className="landing-card landing-code-panel landing-login-glass-card" id="acceso">
-                  <div>
-                    <span className="market-kicker">¿Ya tienes código?</span>
-                    <h2>Ingresa a tu sala y empieza a jugar.</h2>
-                    <p>Haz tus pronósticos, revisa tu posición en el ranking y sigue los resultados de tu grupo.</p>
-                  </div>
                   <div className="login-form-glass-panel">
                     <AuthPanel
                       initialMode={publicAuthMode}
