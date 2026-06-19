@@ -85,8 +85,8 @@ export async function PUT(request: NextRequest) {
     return Response.json({ error: "Usuario o partido no encontrado" }, { status: 404 });
   }
 
-  if (user.role === "ADMIN") {
-    return Response.json({ error: "Modo espectador: solo puedes modificar picks de participantes." }, { status: 403 });
+  if (!roomId && match.roomId) {
+    return Response.json({ error: "Selecciona la sala para guardar este pick administrativo." }, { status: 400 });
   }
 
   if (roomId) {
@@ -188,10 +188,6 @@ export async function PATCH(request: NextRequest) {
 
   if (!prediction) {
     return Response.json({ error: "Primero crea el pick del participante y luego ajusta sus puntos" }, { status: 404 });
-  }
-
-  if (prediction.user.role === "ADMIN") {
-    return Response.json({ error: "Modo espectador: solo puedes ajustar puntos de participantes." }, { status: 403 });
   }
 
   const updatedPrediction = await prisma.prediction.update({
