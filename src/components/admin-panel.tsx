@@ -1770,17 +1770,6 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                 Los puntos se calculan automáticamente si el partido ya tiene marcador.
               </p>
               <div className="form-row">
-                <label htmlFor="adminPickLeagueId">Sala</label>
-                <select id="adminPickLeagueId" name="adminPickLeagueId" required>
-                  <option value="">Selecciona sala</option>
-                  {adminRooms.map((room) => (
-                    <option key={room.id} value={room.id}>
-                      {room.name} · {room.inviteCode}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-row">
                 <label htmlFor="adminPickUserId">Usuario</label>
                 <select id="adminPickUserId" name="adminPickUserId" onFocus={() => !usersLoaded && loadUsers()} required>
                   <option value="">Selecciona usuario</option>
