@@ -170,3 +170,51 @@ Result: passed for read-only participant access.
 - Room admin remains separate from global admin.
 - Normal participant read access works even with `isActive === false`.
 - No production data was modified during this read-only smoke test.
+
+## Smoke Test Manual De Escritura Pick Propio - 2026-06-19
+
+Scope:
+
+- Manual controlled write test for a normal user's own pick.
+- No admin-pick flow was used.
+- No recalculation was executed.
+- No ranking, cron, or payment action was executed.
+
+### Usuario
+
+- User: `Sebastián avella`.
+- `userId: cmq9t1i0i0001jr04eoav6hat`.
+- `User.role === "USER"`.
+- Room membership role: `MEMBER`.
+
+### Sala
+
+- Room: `familia avella`.
+- `leagueId: cmq9oosaa0001jo04h0u7htg7`.
+
+### Pick Guardado
+
+- Match: `Scotland vs Morocco`.
+- `matchId: cmqec4b1t001njl04ly68njuc`.
+- Saved score: `8 - 2`.
+- `predictionId: cmqlf29bj0001stjp30aotueh`.
+- `points: 0`.
+
+### Verificaciones
+
+- `leagueId` was correctly saved as `cmq9oosaa0001jo04h0u7htg7`.
+- `roomKey` was correctly saved as `cmq9oosaa0001jo04h0u7htg7`.
+- `GLOBAL_OR_WITHOUT_LEAGUE_COUNT: 0`.
+- No global pick was created.
+- No pick without league was created.
+- No recalculation was executed.
+- Admin pick flow was not touched.
+- Ranking, cron, and payments were not touched.
+
+Result: passed for normal user own-pick write scope.
+
+### Riesgo Observado
+
+- Duplicate matches exist in calendar/imported data for some fixtures, including `Scotland vs Morocco`.
+- This was not corrected in this phase.
+- Track as technical debt for a later calendar/import stabilization phase.
