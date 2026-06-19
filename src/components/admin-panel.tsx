@@ -193,6 +193,9 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
   const [roomDashboard, setRoomDashboard] = useState<AdminRoomDashboard | null>(null);
   const [roomDashboardLoading, setRoomDashboardLoading] = useState(false);
   const [selectedPublishDate, setSelectedPublishDate] = useState("");
+  const [adminPickLeagueId, setAdminPickLeagueId] = useState("");
+  const [adminPickMatches, setAdminPickMatches] = useState<AdminRoomDashboard["matches"]>([]);
+  const [adminPickMatchesLoading, setAdminPickMatchesLoading] = useState(false);
   const [adminPickSaving, setAdminPickSaving] = useState(false);
   const publishedMatches = matches.filter((match) => match.isPublished).length;
   const resultLoadedMatches = matches.filter((match) => match.homeScore !== null && match.awayScore !== null).length;
@@ -305,6 +308,28 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
     setSelectedRoomUserId((current) =>
       current && data.participants?.some((participant: { id: string }) => participant.id === current) ? current : "",
     );
+  }
+
+  async function loadAdminPickMatches(roomId: string) {
+    setAdminPickLeagueId(roomId);
+    setAdminPickMatches([]);
+
+    if (!roomId) return;
+
+    setAdminPickMatchesLoading(true);
+    try {
+      const response = await fetch(`/api/admin/rooms/${roomId}/dashboard`, { cache: "no-store" });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setMessage(data.error ?? "No se pudieron cargar los partidos de la sala.");
+        return;
+      }
+
+      setAdminPickMatches(data.matches ?? []);
+    } finally {
+      setAdminPickMatchesLoading(false);
+    }
   }
 
   async function selectAdminRoom(roomId: string) {
@@ -1004,6 +1029,8 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
 
       setMessage(`Pick guardado: ${savedMatchLabel} para ${data.user ?? "participante"}${savedRoom}.`);
       form.reset();
+      setAdminPickLeagueId("");
+      setAdminPickMatches([]);
       await loadUsers();
       if (leagueId) await loadRoomDashboard(leagueId);
       onChanged();
@@ -1824,7 +1851,15 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
               </p>
               <div className="form-row">
                 <label htmlFor="adminPickLeagueId">Sala</label>
-                <select id="adminPickLeagueId" name="adminPickLeagueId" required>
+                <select
+                  id="adminPickLeagueId"
+                  name="adminPickLeagueId"
+                  onChange={(event) => {
+                    void loadAdminPickMatches(event.target.value);
+                  }}
+                  required
+                  value={adminPickLeagueId}
+                >
                   <option value="">Selecciona sala</option>
                   {adminRooms.map((room) => (
                     <option key={room.id} value={room.id}>
@@ -1844,9 +1879,15 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
               </div>
               <div className="form-row">
                 <label htmlFor="adminPickMatchId">Partido</label>
-                <select id="adminPickMatchId" name="adminPickMatchId" required>
-                  <option value="">Selecciona partido</option>
-                  {matches.map((match) => (
+                <select id="adminPickMatchId" name="adminPickMatchId" disabled={!adminPickLeagueId || adminPickMatchesLoading} required>
+                  <option value="">
+                    {adminPickMatchesLoading
+                      ? "Cargando partidos de la sala..."
+                      : adminPickLeagueId
+                        ? "Selecciona partido de esta sala"
+                        : "Selecciona sala primero"}
+                  </option>
+                  {adminPickMatches.map((match) => (
                     <option key={match.id} value={match.id}>
                       {formatAdminMatchOption(match)}
                     </option>
