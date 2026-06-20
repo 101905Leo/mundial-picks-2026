@@ -7947,6 +7947,80 @@ button {
     margin-top: 4px;
   }
 
+  .room-featured-match .quick-home-pick-card {
+    background:
+      radial-gradient(circle at 50% 0%, rgba(244, 189, 79, 0.1), transparent 36%),
+      rgba(4, 10, 24, 0.78);
+    border-color: rgba(244, 189, 79, 0.2);
+    border-radius: 18px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.3);
+    gap: 14px;
+    margin-top: 2px;
+    padding: 14px;
+  }
+
+  .room-featured-match .quick-home-scoreboard {
+    align-items: stretch;
+    gap: 8px;
+    grid-template-columns: minmax(0, 1fr) 18px minmax(0, 1fr);
+  }
+
+  .room-featured-match .quick-home-scoreboard > div {
+    align-content: start;
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    gap: 10px;
+    min-width: 0;
+    padding: 10px 8px;
+  }
+
+  .room-featured-match .quick-home-scoreboard span {
+    font-size: 0.74rem;
+    line-height: 1.15;
+    min-height: 1.8em;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
+  .room-featured-match .quick-home-scoreboard em {
+    align-self: center;
+    font-size: 1.15rem;
+    line-height: 1;
+  }
+
+  .room-featured-match .quick-home-stepper {
+    gap: 6px;
+    grid-template-columns: 42px minmax(44px, 1fr) 42px;
+    width: 100%;
+  }
+
+  .room-featured-match .quick-home-stepper button {
+    border-radius: 13px;
+    font-size: 1.35rem;
+    height: 44px;
+    min-width: 42px;
+  }
+
+  .room-featured-match .quick-home-stepper strong {
+    border-radius: 14px;
+    font-size: 1.35rem;
+    height: 46px;
+    min-width: 44px;
+  }
+
+  .room-featured-match .quick-home-save {
+    border-radius: 14px;
+    min-height: 50px;
+    padding: 0 14px;
+  }
+
+  .room-featured-match .quick-home-message {
+    margin: -2px 0 0;
+    overflow-wrap: anywhere;
+    text-align: center;
+  }
+
   .room-home-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
