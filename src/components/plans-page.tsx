@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
-import { roomPlanCatalog, salesWhatsAppUrl } from "@/lib/room-plan-catalog";
+import { FormEvent, useState } from "react";
+import { roomPlanCatalog, salesWhatsAppUrl, type RoomPlanCatalogItem } from "@/lib/room-plan-catalog";
 
 function formatPrice(priceCop: number | null) {
   if (priceCop === null) return "Cotización";
@@ -11,6 +14,57 @@ function formatPrice(priceCop: number | null) {
 }
 
 export function PlansPage() {
+  const [roomNames, setRoomNames] = useState<Record<string, string>>({});
+  const [pendingPlan, setPendingPlan] = useState<string | null>(null);
+  const [message, setMessage] = useState("");
+
+  async function startRoomCheckout(event: FormEvent<HTMLFormElement>, plan: RoomPlanCatalogItem) {
+    event.preventDefault();
+    if (!plan.participantLimit) return;
+
+    const roomName = (roomNames[plan.slug] ?? "").trim();
+    if (roomName.length < 3) {
+      setMessage("Escribe un nombre de sala de mínimo 3 caracteres.");
+      return;
+    }
+
+    setPendingPlan(plan.slug);
+    setMessage("Creando sala y preparando pago...");
+
+    try {
+      const response = await fetch("/api/leagues", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: roomName,
+          maxParticipants: plan.participantLimit,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (response.status === 401) {
+        setMessage("Inicia sesión o regístrate antes de crear y pagar una sala.");
+        return;
+      }
+
+      if (!response.ok) {
+        setMessage(data.error ?? "No se pudo crear la sala ni abrir Wompi.");
+        return;
+      }
+
+      if (!data.checkout?.checkoutUrl) {
+        setMessage("La sala se creó, pero no recibimos el enlace de pago. Usa WhatsApp como alternativa.");
+        return;
+      }
+
+      window.location.href = data.checkout.checkoutUrl;
+    } catch {
+      setMessage("No se pudo conectar con el checkout. Intenta de nuevo o usa WhatsApp como alternativa.");
+    } finally {
+      setPendingPlan(null);
+    }
+  }
+
   return (
     <main className="plans-shell">
       <header className="plans-header">
@@ -45,12 +99,39 @@ export function PlansPage() {
             <ul>
               {plan.benefits.map((benefit) => <li key={benefit}>{benefit}</li>)}
             </ul>
-            <a className="button primary" href={salesWhatsAppUrl(plan.name)} rel="noreferrer" target="_blank">
-              Solicitar sala por WhatsApp
-            </a>
+            {plan.participantLimit ? (
+              <form className="form" onSubmit={(event) => startRoomCheckout(event, plan)}>
+                <div className="form-row">
+                  <label htmlFor={`room-name-${plan.slug}`}>Nombre de la sala</label>
+                  <input
+                    id={`room-name-${plan.slug}`}
+                    maxLength={80}
+                    minLength={3}
+                    onChange={(event) =>
+                      setRoomNames((current) => ({ ...current, [plan.slug]: event.target.value }))
+                    }
+                    placeholder="Ej: Familia Avella"
+                    required
+                    value={roomNames[plan.slug] ?? ""}
+                  />
+                </div>
+                <button className="button primary" disabled={pendingPlan !== null} type="submit">
+                  {pendingPlan === plan.slug ? "Abriendo Wompi..." : "Crear y pagar con Wompi/Nequi"}
+                </button>
+                <a className="button secondary" href={salesWhatsAppUrl(plan.name)} rel="noreferrer" target="_blank">
+                  Ayuda por WhatsApp
+                </a>
+              </form>
+            ) : (
+              <a className="button primary" href={salesWhatsAppUrl(plan.name)} rel="noreferrer" target="_blank">
+                Solicitar sala por WhatsApp
+              </a>
+            )}
           </article>
         ))}
       </section>
+
+      {message ? <div className="notice">{message}</div> : null}
 
       <section className="panel room-legal-notice plans-legal">
         Mundial Picks solo proporciona la plataforma tecnológica para crear y administrar salas privadas. Los premios,
