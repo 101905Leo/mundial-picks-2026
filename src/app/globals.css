@@ -8039,9 +8039,9 @@ button {
   }
 
   .room-chat-fab {
-    bottom: calc(72px + env(safe-area-inset-bottom));
+    bottom: calc(96px + env(safe-area-inset-bottom));
     min-height: 44px;
-    right: 12px;
+    right: max(16px, env(safe-area-inset-right));
   }
 
   .room-chat-fab.has-activity {
