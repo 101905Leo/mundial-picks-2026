@@ -698,7 +698,8 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
     (selectedLeague?.status ?? "ACTIVE") === "ACTIVE" &&
     !roomHasExpired &&
     roomIsActivated;
-  const showMobileAdSlot = Boolean(selectedLeague && roomIsActivated && roomView === "home" && mobileAdVisible);
+  const shouldRenderMobileAdSlot = Boolean(selectedLeague && roomIsActivated && roomView === "home");
+  const showMobileAdSlot = Boolean(shouldRenderMobileAdSlot && mobileAdVisible);
   const featuredPickClosed = featuredMatch ? isPickClosed(new Date(featuredMatch.startsAt)) || featuredMatchStatus === "LIVE" || featuredMatchStatus === "FINISHED" : true;
   const canEditFeaturedPick = Boolean(featuredMatch && selectedLeague && roomCanPredict && !featuredPickClosed);
   const roomDisabledMessage = isSuperAdmin
@@ -1110,8 +1111,8 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
             </div>
           </div>
 
-          {showMobileAdSlot ? (
-            <section className="room-mobile-ad-slot" aria-label="Publicidad">
+          {shouldRenderMobileAdSlot ? (
+            <section className={`room-mobile-ad-slot ${showMobileAdSlot ? "is-visible" : "is-hidden"}`} aria-hidden={!showMobileAdSlot} aria-label="Publicidad">
               <span className="room-mobile-ad-label">Publicidad</span>
               <div className="room-mobile-ad-content">
                 <strong>Espacio patrocinado</strong>
