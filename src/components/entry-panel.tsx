@@ -18,7 +18,6 @@ type PaymentInfo = {
 };
 
 export function EntryPanel({ user }: Props) {
-  const [message, setMessage] = useState("");
   const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null);
   const [showPaymentInfo, setShowPaymentInfo] = useState(false);
   const isActive = user.role === "ADMIN" || Boolean(user.entryPaidAt);
@@ -35,19 +34,6 @@ export function EntryPanel({ user }: Props) {
     }
   }, [isActive]);
 
-  async function startEntryPayment() {
-    setMessage("Preparando inscripción...");
-    const response = await fetch("/api/entry/create-checkout", { method: "POST" });
-    const data = await response.json();
-
-    if (!response.ok) {
-      setMessage(data.error ?? "No se pudo iniciar la inscripción");
-      return;
-    }
-
-    window.location.href = data.checkoutUrl;
-  }
-
   return (
     <section className={`entry-panel ${isActive ? "active" : ""}`}>
       <div>
@@ -56,9 +42,6 @@ export function EntryPanel({ user }: Props) {
       </div>
       {!isActive ? (
         <div className="entry-actions">
-          <button className="button primary" onClick={startEntryPayment}>
-            Pagar con Wompi
-          </button>
           <button className="button secondary" onClick={() => setShowPaymentInfo((visible) => !visible)} type="button">
             Cuenta de pago
           </button>
@@ -72,7 +55,6 @@ export function EntryPanel({ user }: Props) {
           <small>{paymentInfo?.note || "Envía el comprobante al administrador para activar tu inscripción."}</small>
         </div>
       ) : null}
-      {message ? <span className="muted">{message}</span> : null}
     </section>
   );
 }
