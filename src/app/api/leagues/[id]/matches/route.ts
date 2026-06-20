@@ -6,6 +6,7 @@ import { roomOwnedMatchWhere } from "@/lib/room-match-scope";
 import { rankingPredictionPoints } from "@/lib/prediction-points";
 import { pickRoomPrediction } from "@/lib/room-predictions";
 import { getScoringStatus } from "@/lib/scoring";
+import { isRoomActivated, ROOM_PENDING_PAYMENT_ERROR, ROOM_PENDING_PAYMENT_STATUS } from "@/lib/room-activation";
 
 const privateMatchSchema = z.object({
   homeTeam: z.string().trim().min(2).max(80),
@@ -42,12 +43,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       id: true,
       ownerId: true,
       competitionId: true,
+      paidAt: true,
+      paymentStatus: true,
       memberships: { where: { userId: user!.id }, select: { role: true } },
     },
   });
 
   if (!league) {
     return Response.json({ error: user!.role === "ADMIN" ? "Sala no encontrada" : "No perteneces a esta sala" }, { status: user!.role === "ADMIN" ? 404 : 403 });
+  }
+  if (!isRoomActivated(league)) {
+    return Response.json({ error: ROOM_PENDING_PAYMENT_ERROR }, { status: ROOM_PENDING_PAYMENT_STATUS });
   }
 
   const includeHidden = request.nextUrl.searchParams.get("includeHidden") === "true";
@@ -120,6 +126,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const league = await getManageableLeague(id, user!.id, user!.role);
   if (!league) {
     return Response.json({ error: "No tienes permisos para crear partidos en esta sala." }, { status: 403 });
+  }
+  if (!isRoomActivated(league)) {
+    return Response.json({ error: ROOM_PENDING_PAYMENT_ERROR }, { status: ROOM_PENDING_PAYMENT_STATUS });
   }
 
   const parsed = privateMatchSchema.safeParse(await request.json().catch(() => ({})));

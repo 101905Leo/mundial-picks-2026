@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
+import { isRoomActivated, ROOM_PENDING_PAYMENT_ERROR, ROOM_PENDING_PAYMENT_STATUS } from "@/lib/room-activation";
 
 export async function DELETE(
   request: NextRequest,
@@ -14,6 +15,8 @@ export async function DELETE(
     where: { id },
     select: {
       ownerId: true,
+      paidAt: true,
+      paymentStatus: true,
       memberships: {
         where: { userId: user!.id },
         select: { role: true },
@@ -28,6 +31,9 @@ export async function DELETE(
   const canManage = user!.role === "ADMIN" || league.ownerId === user!.id || league.memberships[0]?.role === "ADMIN";
   if (!canManage) {
     return Response.json({ error: "Solo un administrador de sala puede administrar integrantes" }, { status: 403 });
+  }
+  if (!isRoomActivated(league)) {
+    return Response.json({ error: ROOM_PENDING_PAYMENT_ERROR }, { status: ROOM_PENDING_PAYMENT_STATUS });
   }
 
   if (userId === league.ownerId) {

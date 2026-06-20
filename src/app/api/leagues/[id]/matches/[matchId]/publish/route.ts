@@ -2,12 +2,13 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
+import { isRoomActivated, ROOM_PENDING_PAYMENT_ERROR, ROOM_PENDING_PAYMENT_STATUS } from "@/lib/room-activation";
 
 const publishRoomMatchSchema = z.object({
   publish: z.boolean(),
 });
 
-async function canManageRoom(leagueId: string, userId: string, role: "USER" | "ADMIN") {
+async function getManageableRoom(leagueId: string, userId: string, role: "USER" | "ADMIN") {
   const league = await prisma.league.findUnique({
     where: { id: leagueId },
     include: {
@@ -18,8 +19,9 @@ async function canManageRoom(leagueId: string, userId: string, role: "USER" | "A
     },
   });
 
-  if (!league) return false;
-  return role === "ADMIN" || league.ownerId === userId || league.memberships[0]?.role === "ADMIN";
+  if (!league) return null;
+  const canManage = role === "ADMIN" || league.ownerId === userId || league.memberships[0]?.role === "ADMIN";
+  return canManage ? league : null;
 }
 
 export async function PATCH(
@@ -37,9 +39,12 @@ export async function PATCH(
     return Response.json({ error: "Accion invalida." }, { status: 400 });
   }
 
-  const manageable = await canManageRoom(id, user!.id, user!.role);
-  if (!manageable) {
+  const league = await getManageableRoom(id, user!.id, user!.role);
+  if (!league) {
     return Response.json({ error: "No tienes permisos para publicar partidos en esta sala." }, { status: 403 });
+  }
+  if (!isRoomActivated(league)) {
+    return Response.json({ error: ROOM_PENDING_PAYMENT_ERROR }, { status: ROOM_PENDING_PAYMENT_STATUS });
   }
 
   const match = await prisma.match.findUnique({

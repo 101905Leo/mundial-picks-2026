@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { roomOwnedMatchWhere } from "@/lib/room-match-scope";
 import { pickRoomPrediction, uniqueRoomPredictions } from "@/lib/room-predictions";
 import { getScoringStatus, calculatePredictionPoints } from "@/lib/scoring";
+import { isRoomActivated, ROOM_PENDING_PAYMENT_ERROR, ROOM_PENDING_PAYMENT_STATUS } from "@/lib/room-activation";
 
 type LivePointsMatch = {
   id?: string;
@@ -55,6 +56,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     select: {
       id: true,
       competitionId: true,
+      paidAt: true,
+      paymentStatus: true,
       memberships: {
         where: { userId: user!.id },
         select: { id: true },
@@ -67,6 +70,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
   if (user!.role !== "ADMIN" && league.memberships.length === 0) {
     return Response.json({ error: "No perteneces a esta sala" }, { status: 403 });
+  }
+  if (!isRoomActivated(league)) {
+    return Response.json({ error: ROOM_PENDING_PAYMENT_ERROR }, { status: ROOM_PENDING_PAYMENT_STATUS });
   }
 
   const roomMembers = await prisma.leagueMembership.findMany({

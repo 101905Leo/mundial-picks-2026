@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
+import { isRoomActivated, ROOM_PENDING_PAYMENT_ERROR, ROOM_PENDING_PAYMENT_STATUS } from "@/lib/room-activation";
 
 const importMatchesSchema = z.object({
   competitionId: z.string().min(1),
@@ -39,6 +40,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const league = await getManageableLeague(id, user!.id, user!.role);
   if (!league) {
     return Response.json({ error: "No tienes permisos para cargar partidos en esta sala." }, { status: 403 });
+  }
+  if (!isRoomActivated(league)) {
+    return Response.json({ error: ROOM_PENDING_PAYMENT_ERROR }, { status: ROOM_PENDING_PAYMENT_STATUS });
   }
 
   const competition = await prisma.competition.findUnique({

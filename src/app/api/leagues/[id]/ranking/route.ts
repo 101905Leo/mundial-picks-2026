@@ -5,6 +5,7 @@ import { roomOwnedMatchWhere } from "@/lib/room-match-scope";
 import { hasRankingScore } from "@/lib/prediction-points";
 import { uniqueRoomPredictions } from "@/lib/room-predictions";
 import { roomPredictionPoints } from "@/lib/room-scoring";
+import { isRoomActivated, ROOM_PENDING_PAYMENT_ERROR, ROOM_PENDING_PAYMENT_STATUS } from "@/lib/room-activation";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { user, response } = await requireUser(request);
@@ -15,6 +16,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     where: { id },
     select: {
       id: true,
+      paidAt: true,
+      paymentStatus: true,
       memberships: {
         where: { userId: user!.id },
         select: { id: true },
@@ -27,6 +30,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
   if (user!.role !== "ADMIN" && access.memberships.length === 0) {
     return Response.json({ error: "No perteneces a esta sala" }, { status: 403 });
+  }
+  if (!isRoomActivated(access)) {
+    return Response.json({ error: ROOM_PENDING_PAYMENT_ERROR }, { status: ROOM_PENDING_PAYMENT_STATUS });
   }
 
   const league = await prisma.league.findUnique({

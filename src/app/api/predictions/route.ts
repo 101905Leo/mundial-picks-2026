@@ -5,6 +5,7 @@ import { isPickClosed } from "@/lib/pick-lock";
 import { predictionSchema } from "@/lib/validators";
 import { sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
 import { roomOwnedMatchWhere } from "@/lib/room-match-scope";
+import { isRoomActivated, ROOM_PENDING_PAYMENT_ERROR, ROOM_PENDING_PAYMENT_STATUS } from "@/lib/room-activation";
 
 export async function POST(request: NextRequest) {
   const { user, response } = await requireUser(request);
@@ -44,11 +45,14 @@ export async function POST(request: NextRequest) {
       OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
       memberships: { some: { userId: user!.id } },
     },
-    select: { id: true, competitionId: true },
+    select: { id: true, competitionId: true, paidAt: true, paymentStatus: true },
   });
 
   if (!roomAccess) {
     return Response.json({ error: "No tienes acceso a esta sala" }, { status: 403 });
+  }
+  if (!isRoomActivated(roomAccess)) {
+    return Response.json({ error: ROOM_PENDING_PAYMENT_ERROR }, { status: ROOM_PENDING_PAYMENT_STATUS });
   }
 
   const roomMatches = await prisma.match.findMany({

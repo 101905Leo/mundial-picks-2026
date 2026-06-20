@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
+import { isRoomActivated, ROOM_PENDING_PAYMENT_ERROR, ROOM_PENDING_PAYMENT_STATUS } from "@/lib/room-activation";
 
 const messageSchema = z.object({
   body: z.string().trim().min(1, "Escribe un mensaje").max(500, "El mensaje es demasiado largo"),
@@ -11,7 +12,7 @@ async function getLeagueAccess(userId: string, userRole: "USER" | "ADMIN", leagu
   if (userRole === "ADMIN") {
     const league = await prisma.league.findUnique({
       where: { id: leagueId },
-      select: { status: true, expiresAt: true },
+      select: { status: true, expiresAt: true, paidAt: true, paymentStatus: true },
     });
     return league ? { id: "SUPER_ADMIN", league } : null;
   }
@@ -20,7 +21,7 @@ async function getLeagueAccess(userId: string, userRole: "USER" | "ADMIN", leagu
     where: { userId_leagueId: { userId, leagueId } },
     select: {
       id: true,
-      league: { select: { status: true, expiresAt: true } },
+      league: { select: { status: true, expiresAt: true, paidAt: true, paymentStatus: true } },
     },
   });
 }
@@ -30,8 +31,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (response) return response;
 
   const { id } = await params;
-  if (!(await getLeagueAccess(user!.id, user!.role, id))) {
+  const access = await getLeagueAccess(user!.id, user!.role, id);
+  if (!access) {
     return Response.json({ error: "No perteneces a esta sala" }, { status: 403 });
+  }
+  if (!isRoomActivated(access.league)) {
+    return Response.json({ error: ROOM_PENDING_PAYMENT_ERROR }, { status: ROOM_PENDING_PAYMENT_STATUS });
   }
 
   const messages = await prisma.leagueMessage.findMany({
@@ -57,6 +62,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const access = await getLeagueAccess(user!.id, user!.role, id);
   if (!access) {
     return Response.json({ error: "No perteneces a esta sala" }, { status: 403 });
+  }
+  if (!isRoomActivated(access.league)) {
+    return Response.json({ error: ROOM_PENDING_PAYMENT_ERROR }, { status: ROOM_PENDING_PAYMENT_STATUS });
   }
   if (
     access.league.status !== "ACTIVE" ||
