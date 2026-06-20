@@ -89,6 +89,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
   const [leagues, setLeagues] = useState<League[]>([]);
   const [selectedLeague, setSelectedLeague] = useState<League | null>(null);
   const [roomView, setRoomView] = useState<RoomView>("home");
+  const [previousRoomView, setPreviousRoomView] = useState<RoomView | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [managedMatches, setManagedMatches] = useState<Match[]>([]);
   const [competitions, setCompetitions] = useState<Competition[]>([]);
@@ -249,11 +250,13 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
     if (!embedded) return;
     if (!initialLeagueId) {
       setSelectedLeague(null);
+      setPreviousRoomView(null);
       return;
     }
 
     const nextLeague = leagues.find((league) => league.id === initialLeagueId) ?? null;
     setSelectedLeague((current) => (current?.id === nextLeague?.id ? current : nextLeague));
+    setPreviousRoomView(null);
     setRoomView("home");
   }, [embedded, initialLeagueId, leagues]);
 
@@ -364,6 +367,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
     setMessage(`Entraste a la sala ${data.league.name}`);
     await loadLeagues();
     setSelectedLeague(data.league);
+    setPreviousRoomView(null);
     setRoomView("home");
     setIsRoomMenuOpen(false);
     form.reset();
@@ -921,6 +925,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
 
   function selectRoom(league: League) {
     setSelectedLeague(league);
+    setPreviousRoomView(null);
     setRoomView("home");
     setIsRoomMenuOpen(false);
     hideMobileNavSoon();
@@ -932,9 +937,29 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
     setMobileNavTouchStart(null);
   }
 
-  function openRoomTab(view: RoomView) {
+  function goToRoomView(view: RoomView, options: { rememberPrevious?: boolean; hideMobileNav?: boolean } = {}) {
+    const { rememberPrevious = true, hideMobileNav = false } = options;
+    if (view === roomView) {
+      if (hideMobileNav) hideMobileNavSoon();
+      return;
+    }
+    if (rememberPrevious) setPreviousRoomView(roomView);
     setRoomView(view);
-    hideMobileNavSoon();
+    if (hideMobileNav) hideMobileNavSoon();
+  }
+
+  function openRoomTab(view: RoomView) {
+    goToRoomView(view, { hideMobileNav: true });
+  }
+
+  function resolvePreviousRoomView() {
+    return previousRoomView && previousRoomView !== roomView ? previousRoomView : "home";
+  }
+
+  function returnToPreviousRoomView() {
+    const targetView = resolvePreviousRoomView();
+    setPreviousRoomView(null);
+    setRoomView(targetView);
   }
 
   function shouldIgnoreRoomEdgeSwipe(target: EventTarget | null) {
@@ -981,7 +1006,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
     if (!isClearHorizontalSwipe) return;
 
     if (roomView !== "home") {
-      setRoomView("home");
+      returnToPreviousRoomView();
       showMobileNav();
       return;
     }
@@ -1171,7 +1196,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
                 <button
                   className={`tab ${roomView === view || (view === "more" && moreRoomViews.includes(roomView)) ? "active" : ""}`}
                   key={view}
-                onClick={() => setRoomView(view)}
+                onClick={() => goToRoomView(view)}
                 type="button"
               >
                 {label}
@@ -1281,7 +1306,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
                           </div>
                         ) : (
                           <div className="room-home-actions single-action">
-                            <button className="button primary" onClick={() => setRoomView("picks")} type="button">
+                            <button className="button primary" onClick={() => goToRoomView("picks")} type="button">
                               {isSuperAdmin ? "Ver picks" : featuredActionLabel}
                             </button>
                           </div>
@@ -1296,7 +1321,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
                           <span>picks guardados</span>
                         </div>
                         <div className="room-home-actions single-action">
-                          <button className="button primary" onClick={() => setRoomView("matches")} type="button">Ver calendario</button>
+                          <button className="button primary" onClick={() => goToRoomView("matches")} type="button">Ver calendario</button>
                         </div>
                       </>
                     )}
@@ -1573,7 +1598,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
                             {prediction ? <span>Mi pick {prediction.homeScore} - {prediction.awayScore} · {prediction.points} pts</span> : <span>Sin pick</span>}
                           </div>
                           <div className="room-calendar-actions">
-                            <button className="button primary compact-button" onClick={() => setRoomView("picks")} type="button">
+                            <button className="button primary compact-button" onClick={() => goToRoomView("picks")} type="button">
                               {actionLabel}
                             </button>
                             {canEditRoomInfo ? (
@@ -1649,7 +1674,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
                       <span><small>Marcador</small><strong>{intelligenceSuggestedScore}</strong></span>
                       <span><small>Confianza</small><strong>{intelligenceConfidence}</strong></span>
                     </div>
-                    <button className="button secondary compact-button" onClick={() => setRoomView("picks")} type="button">
+                    <button className="button secondary compact-button" onClick={() => goToRoomView("picks")} type="button">
                       Usar como referencia
                     </button>
                   </article>
@@ -1680,7 +1705,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
                     <p>Consulta integrantes y comparte el acceso cuando corresponda.</p>
                   </div>
                   <div className="room-more-grid">
-                    <button className={`button secondary room-more-action ${canEditRoomInfo ? "is-admin" : ""}`} onClick={() => setRoomView("participants")} type="button">
+                    <button className={`button secondary room-more-action ${canEditRoomInfo ? "is-admin" : ""}`} onClick={() => goToRoomView("participants")} type="button">
                       <span>
                         <strong>{canEditRoomInfo ? "Participantes y ajustes" : "Participantes"}</strong>
                         <small>{canEditRoomInfo ? "Integrantes, reglas y administración" : "Integrantes y puntos de la sala"}</small>
