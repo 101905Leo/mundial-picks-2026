@@ -14,7 +14,7 @@ export const roomPlanCatalog: RoomPlanCatalogItem[] = [
     participantLimit: 20,
     durationDays: 365,
     priceCop: 40000,
-    benefits: ["Código privado", "Ranking de la sala", "Chat del grupo", "Panel del dueño"],
+    benefits: ["Sala privada para organizar predicciones", "Ranking de participantes", "Chat de sala", "Picks y resultados"],
   },
   {
     slug: "sala-pro",
@@ -22,7 +22,7 @@ export const roomPlanCatalog: RoomPlanCatalogItem[] = [
     participantLimit: 50,
     durationDays: 365,
     priceCop: 80000,
-    benefits: ["Todo lo de Básica", "Hasta 50 participantes", "Estadísticas del grupo", "Administradores adicionales"],
+    benefits: ["Todo lo de Básica", "Hasta 50 participantes", "Administración de participantes", "Gestión cómoda para grupos medianos"],
   },
   {
     slug: "sala-premium",
@@ -30,7 +30,7 @@ export const roomPlanCatalog: RoomPlanCatalogItem[] = [
     participantLimit: 100,
     durationDays: 365,
     priceCop: 120000,
-    benefits: ["Todo lo de Pro", "Hasta 100 participantes", "Panel avanzado", "Soporte prioritario"],
+    benefits: ["Todo lo de Pro", "Hasta 100 participantes", "Código privado de invitación", "Herramientas de administración de sala"],
   },
   {
     slug: "sala-empresarial",
@@ -38,7 +38,7 @@ export const roomPlanCatalog: RoomPlanCatalogItem[] = [
     participantLimit: null,
     durationDays: 365,
     priceCop: null,
-    benefits: ["Cupo personalizado", "Configuración a medida", "Atención comercial", "Soporte prioritario"],
+    benefits: ["Cupo personalizado", "Configuración de sala acompañada", "Atención comercial por WhatsApp", "Activación manual según acuerdo"],
   },
 ];
 

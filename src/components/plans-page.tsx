@@ -81,8 +81,8 @@ export function PlansPage() {
 
       <section className="plans-intro">
         <span className="market-kicker">Alquila una sala para tu grupo</span>
-        <h1>Organiza tus picks y administra tu propio ranking</h1>
-        <p>Crea una sala privada, invita a tus amigos o compañeros y define las reglas internas de tu grupo.</p>
+        <h1>Organiza predicciones de fútbol y otros torneos</h1>
+        <p>Crea una sala privada, invita a tu grupo y administra picks, resultados y ranking desde un solo lugar.</p>
       </section>
 
       <section className="plans-grid">
@@ -90,7 +90,7 @@ export function PlansPage() {
           <article className={`plan-card ${plan.slug === "sala-pro" ? "featured" : ""}`} key={plan.slug}>
             <div>
               <div className="plan-card-topline">
-                <span className="market-kicker">{plan.durationDays} días</span>
+                <span className="market-kicker">{plan.participantLimit ? "Sala privada" : "Plan personalizado"}</span>
                 {plan.slug === "sala-pro" ? <span className="plan-badge">Recomendado</span> : null}
               </div>
               <h2>{plan.name}</h2>
