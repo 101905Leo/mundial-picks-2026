@@ -2639,9 +2639,9 @@ button {
 
 .room-more-chat-button {
   align-items: center;
-  display: inline-flex;
-  gap: 8px;
-  justify-content: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
 }
 
 .room-more-badge {
@@ -6578,10 +6578,75 @@ button {
   gap: 12px;
 }
 
+.room-more-menu,
+.room-more-section {
+  display: grid;
+  gap: 12px;
+}
+
+.room-more-section-title {
+  display: grid;
+  gap: 3px;
+}
+
+.room-more-section-title p {
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
 .room-more-grid {
   display: grid;
   gap: 10px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.room-more-action {
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+  min-height: 74px;
+  padding: 12px 14px;
+  text-align: left;
+  width: 100%;
+}
+
+.room-more-action > span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.room-more-action strong {
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.room-more-action small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.room-more-action::after {
+  color: var(--gold-soft);
+  content: "›";
+  flex: 0 0 auto;
+  font-size: 1.45rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.room-more-action.is-admin {
+  border-color: rgba(244, 189, 79, 0.22);
+}
+
+.room-more-action.is-invite {
+  border-color: rgba(191, 219, 254, 0.2);
 }
 
 .admin-room-user-header {
@@ -8382,6 +8447,62 @@ button {
 
   .room-more-grid {
     grid-template-columns: 1fr;
+  }
+
+  .room-more-panel {
+    gap: 14px;
+  }
+
+  .room-more-menu {
+    gap: 14px;
+  }
+
+  .room-more-section {
+    gap: 8px;
+  }
+
+  .room-more-section-title p {
+    font-size: 0.82rem;
+  }
+
+  .room-more-action {
+    border-radius: 16px;
+    min-height: 64px;
+    padding: 13px 14px;
+  }
+
+  .room-more-action strong {
+    font-size: 0.98rem;
+  }
+
+  .room-more-action small {
+    font-size: 0.76rem;
+  }
+
+  .room-more-communication-section {
+    display: none;
+  }
+
+  .room-more-info {
+    gap: 10px;
+  }
+
+  .room-more-info article {
+    border-radius: 16px;
+    padding: 13px;
+  }
+
+  .room-more-info h4 {
+    overflow-wrap: anywhere;
+  }
+
+  .room-more-info p {
+    font-size: 0.86rem;
+    overflow-wrap: anywhere;
+  }
+
+  .room-legal-notice {
+    font-size: 0.76rem;
   }
 
   .room-chat-fab {

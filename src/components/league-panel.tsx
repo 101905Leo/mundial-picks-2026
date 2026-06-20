@@ -1669,27 +1669,48 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
               <div className="section-title">
                 <div>
                   <span className="market-kicker">Más opciones</span>
-                  <h3>Participantes, chat y reglas</h3>
+                  <h3>Opciones y reglas</h3>
                 </div>
               </div>
-              <div className="room-more-grid">
-                <button className="button secondary" onClick={() => setRoomView("participants")} type="button">
-                  Participantes
-                </button>
-                <button className={`button secondary room-more-chat-button ${hasChatActivity ? "has-activity" : ""}`} onClick={() => setIsChatOpen(true)} type="button">
-                  <span>Chat de la sala</span>
-                  {hasChatActivity ? <small className="room-more-badge">{chatActivityLabel}</small> : null}
-                </button>
-                {canManageInvitation ? (
-                  <button className="button secondary" onClick={shareInvitation} type="button">
-                    Compartir invitación
-                  </button>
-                ) : null}
-                {canEditRoomInfo ? (
-                  <button className="button secondary" onClick={() => setRoomView("participants")} type="button">
-                    Configuración
-                  </button>
-                ) : null}
+              <div className="room-more-menu">
+                <section className="room-more-section" aria-label="Opciones de sala">
+                  <div className="room-more-section-title">
+                    <span className="market-kicker">Sala</span>
+                    <p>Consulta integrantes y comparte el acceso cuando corresponda.</p>
+                  </div>
+                  <div className="room-more-grid">
+                    <button className={`button secondary room-more-action ${canEditRoomInfo ? "is-admin" : ""}`} onClick={() => setRoomView("participants")} type="button">
+                      <span>
+                        <strong>{canEditRoomInfo ? "Participantes y ajustes" : "Participantes"}</strong>
+                        <small>{canEditRoomInfo ? "Integrantes, reglas y administración" : "Integrantes y puntos de la sala"}</small>
+                      </span>
+                    </button>
+                    {canManageInvitation ? (
+                      <button className="button secondary room-more-action is-invite" onClick={shareInvitation} type="button">
+                        <span>
+                          <strong>Compartir invitación</strong>
+                          <small>Código y enlace para nuevos participantes</small>
+                        </span>
+                      </button>
+                    ) : null}
+                  </div>
+                </section>
+
+                <section className="room-more-section room-more-communication-section" aria-label="Comunicación">
+                  <div className="room-more-section-title">
+                    <span className="market-kicker">Comunicación</span>
+                    <p>Abre el chat de esta sala.</p>
+                  </div>
+                  <div className="room-more-grid">
+                    <button className={`button secondary room-more-action room-more-chat-button ${hasChatActivity ? "has-activity" : ""}`} onClick={() => setIsChatOpen(true)} type="button">
+                      <span>
+                        <strong>Chat de la sala</strong>
+                        <small>{hasChatActivity ? "Hay mensajes nuevos" : "Conversación del grupo"}</small>
+                      </span>
+                      {hasChatActivity ? <small className="room-more-badge">{chatActivityLabel}</small> : null}
+                    </button>
+                  </div>
+                </section>
               </div>
               <div className="room-more-info">
                 <article>
