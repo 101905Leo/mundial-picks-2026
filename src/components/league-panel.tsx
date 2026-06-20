@@ -98,6 +98,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
   const [quickPickMessage, setQuickPickMessage] = useState("");
   const [quickPickSaving, setQuickPickSaving] = useState(false);
   const [lastSeenChatMessageId, setLastSeenChatMessageId] = useState<string | null>(null);
+  const [mobileAdVisible, setMobileAdVisible] = useState(true);
   const [now, setNow] = useState(() => new Date());
   const [calendarFilter, setCalendarFilter] = useState<"ALL" | "TODAY" | "PENDING" | "LIVE" | "FINISHED">("ALL");
   const [picksFilter, setPicksFilter] = useState<"PENDING" | "LIVE" | "FINISHED" | "ALL">("PENDING");
@@ -254,6 +255,25 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
   useEffect(() => {
     loadRoom();
   }, [selectedLeague?.id]);
+
+  useEffect(() => {
+    let visible = true;
+    let timeoutId: number | null = null;
+
+    const scheduleNextAdState = () => {
+      timeoutId = window.setTimeout(() => {
+        visible = !visible;
+        setMobileAdVisible(visible);
+        scheduleNextAdState();
+      }, visible ? 30000 : 60000);
+    };
+
+    scheduleNextAdState();
+
+    return () => {
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+    };
+  }, []);
 
   useEffect(() => {
     if (!roomMenuRequest || embedded) return;
@@ -667,6 +687,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
     (selectedLeague?.status ?? "ACTIVE") === "ACTIVE" &&
     !roomHasExpired &&
     roomIsActivated;
+  const showMobileAdSlot = Boolean(selectedLeague && roomIsActivated && roomView === "home" && mobileAdVisible);
   const featuredPickClosed = featuredMatch ? isPickClosed(new Date(featuredMatch.startsAt)) || featuredMatchStatus === "LIVE" || featuredMatchStatus === "FINISHED" : true;
   const canEditFeaturedPick = Boolean(featuredMatch && selectedLeague && roomCanPredict && !featuredPickClosed);
   const roomDisabledMessage = isSuperAdmin
@@ -944,6 +965,16 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
               ) : null}
             </div>
           </div>
+
+          {showMobileAdSlot ? (
+            <section className="room-mobile-ad-slot" aria-label="Publicidad">
+              <span className="room-mobile-ad-label">Publicidad</span>
+              <div className="room-mobile-ad-content">
+                <strong>Espacio patrocinado</strong>
+                <small>Aliados de la sala y mensajes temporales.</small>
+              </div>
+            </section>
+          ) : null}
 
           {!roomIsActivated ? (
             <section className="panel room-payment-required">
