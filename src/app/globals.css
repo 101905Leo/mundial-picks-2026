@@ -7959,7 +7959,29 @@ button {
   .room-ranking-list article {
     align-items: center;
     grid-template-columns: 48px minmax(0, 1fr) auto;
+    min-width: 0;
     row-gap: 4px;
+  }
+
+  .room-ranking-hero,
+  .room-podium-grid article,
+  .room-ranking-list strong,
+  .room-ranking-list small {
+    min-width: 0;
+  }
+
+  .room-podium-grid strong,
+  .room-podium-grid small,
+  .room-ranking-list strong,
+  .room-ranking-list small {
+    overflow-wrap: anywhere;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .room-ranking-list span,
+  .room-ranking-list em {
+    white-space: nowrap;
   }
 
   .room-ranking-list article small {
