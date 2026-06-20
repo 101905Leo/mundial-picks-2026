@@ -1831,7 +1831,9 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
                     <p>Conversa con los participantes de esta quiniela.</p>
                   </div>
                   <button className="room-chat-close" onClick={() => setIsChatOpen(false)} type="button" aria-label="Cerrar chat">
-                    ×
+                    <span className="room-chat-close-mobile-icon" aria-hidden="true">‹</span>
+                    <span className="room-chat-close-desktop-icon" aria-hidden="true">×</span>
+                    <strong className="room-chat-close-text">Cerrar</strong>
                   </button>
                 </header>
                 <div className="league-chat-messages room-chat-messages" aria-live="polite">

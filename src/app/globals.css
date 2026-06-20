@@ -2742,6 +2742,19 @@ button {
   width: 38px;
 }
 
+.room-chat-close span {
+  line-height: 1;
+}
+
+.room-chat-close-mobile-icon,
+.room-chat-close-text {
+  display: none;
+}
+
+.room-chat-close-desktop-icon {
+  display: inline;
+}
+
 .room-chat-messages {
   max-height: min(430px, 48dvh);
   min-height: 220px;
@@ -8305,10 +8318,14 @@ button {
   .room-chat-panel {
     border-radius: 22px 22px 0 0;
     bottom: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    height: min(88dvh, 720px);
     left: 0;
-    max-height: min(78dvh, 680px);
+    max-height: min(88dvh, 720px);
     max-width: none;
-    padding: 10px 14px calc(14px + env(safe-area-inset-bottom));
+    overflow: hidden;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
     right: 0;
     width: 100%;
   }
@@ -8321,18 +8338,64 @@ button {
     font-size: 1.1rem;
   }
 
+  .room-chat-header {
+    align-items: center;
+    gap: 10px;
+  }
+
+  .room-chat-header p {
+    display: none;
+  }
+
+  .room-chat-close {
+    gap: 6px;
+    height: 38px;
+    min-width: 88px;
+    padding: 0 12px;
+    width: auto;
+  }
+
+  .room-chat-close-mobile-icon {
+    display: inline;
+    font-size: 1.35rem;
+  }
+
+  .room-chat-close-desktop-icon {
+    display: none;
+  }
+
+  .room-chat-close-text {
+    display: inline;
+    font-size: 0.78rem;
+    letter-spacing: 0;
+  }
+
   .room-chat-messages {
-    max-height: min(44dvh, 420px);
-    min-height: 230px;
+    max-height: none;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 2px 2px 8px;
+    scroll-padding-bottom: 12px;
   }
 
   .room-chat-form {
+    align-items: center;
+    background: rgba(3, 8, 18, 0.88);
+    border-radius: 18px;
     grid-template-columns: minmax(0, 1fr) auto;
+    margin-top: 0;
+    padding: 8px;
+  }
+
+  .room-chat-form input {
+    min-height: 46px;
   }
 
   .room-chat-form .button {
-    min-height: 42px;
-    padding: 0 12px;
+    border-radius: 14px;
+    min-height: 46px;
+    padding: 0 14px;
   }
 
   .market-columns {
