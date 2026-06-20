@@ -926,7 +926,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
               ) : null}
               {!embedded ? (
                 <button
-                  className="button secondary compact-button"
+                  className="button secondary compact-button room-header-rooms"
                   onClick={() => {
                     setIsRoomMenuOpen(true);
                     hideMobileNavSoon();
