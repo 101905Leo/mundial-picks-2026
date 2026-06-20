@@ -8690,18 +8690,25 @@ button {
     width: 100%;
   }
 
+  .room-chat-shell {
+    height: 100svh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
   .room-chat-panel {
     border-radius: 22px 22px 0 0;
     bottom: 0;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr) auto;
-    height: min(88dvh, 720px);
     left: 0;
-    max-height: min(88dvh, 720px);
+    max-height: none;
     max-width: none;
+    min-height: 0;
     overflow: hidden;
     padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
     right: 0;
+    top: calc(8px + env(safe-area-inset-top));
     width: 100%;
   }
 
@@ -8752,18 +8759,24 @@ button {
     overscroll-behavior: contain;
     padding: 2px 2px 8px;
     scroll-padding-bottom: 12px;
+    -webkit-overflow-scrolling: touch;
   }
 
   .room-chat-form {
     align-items: center;
     background: rgba(3, 8, 18, 0.88);
     border-radius: 18px;
+    box-shadow: 0 -12px 28px rgba(0, 0, 0, 0.26);
     grid-template-columns: minmax(0, 1fr) auto;
     margin-top: 0;
     padding: 8px;
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
   }
 
   .room-chat-form input {
+    font-size: 16px;
     min-height: 46px;
   }
 
