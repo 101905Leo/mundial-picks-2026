@@ -7154,7 +7154,11 @@ button {
     flex-direction: row;
     flex-wrap: wrap;
     gap: 10px;
-    padding: 10px 12px;
+    padding:
+      calc(12px + env(safe-area-inset-top))
+      max(16px, env(safe-area-inset-right))
+      12px
+      max(16px, env(safe-area-inset-left));
   }
 
   .top-actions {
@@ -7531,7 +7535,11 @@ button {
 
   .app-shell.action-view .topbar {
     gap: 8px;
-    padding: 8px 12px;
+    padding:
+      calc(10px + env(safe-area-inset-top))
+      max(16px, env(safe-area-inset-right))
+      10px
+      max(16px, env(safe-area-inset-left));
   }
 
   .app-shell.action-view .topbar .countdown-panel.compact {
@@ -7728,7 +7736,11 @@ button {
     border-radius: 14px;
     gap: 10px;
     grid-template-columns: 1fr;
-    padding: calc(12px + env(safe-area-inset-top)) 12px 12px;
+    padding:
+      calc(18px + env(safe-area-inset-top))
+      max(16px, env(safe-area-inset-right))
+      14px
+      max(16px, env(safe-area-inset-left));
   }
 
   .room-player-title h2 {
@@ -7746,6 +7758,7 @@ button {
     display: flex;
     gap: 7px;
     justify-content: space-between;
+    padding-right: max(2px, env(safe-area-inset-right));
   }
 
   .room-header-actions .button {
@@ -7754,7 +7767,12 @@ button {
   }
 
   .room-header-logout {
+    align-self: flex-end;
     margin-left: auto;
+    min-height: 42px;
+    min-width: 88px;
+    padding-inline: 14px;
+    width: auto;
   }
 
   .room-player-metrics {
@@ -7781,6 +7799,10 @@ button {
 
   .room-header-actions .button {
     width: 100%;
+  }
+
+  .room-header-actions .room-header-logout {
+    width: auto;
   }
 
   .room-status-line,
