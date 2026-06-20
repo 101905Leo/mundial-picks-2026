@@ -8137,6 +8137,12 @@ button {
     justify-content: flex-start;
     margin-inline: -2px;
     padding-bottom: 4px;
+    scroll-padding-inline: 2px;
+    scrollbar-width: none;
+  }
+
+  .room-filter-pills::-webkit-scrollbar {
+    display: none;
   }
 
   .room-filter-pills button {
@@ -8145,21 +8151,72 @@ button {
   }
 
   .room-calendar-card {
-    border-radius: 13px;
+    border-radius: 16px;
     grid-template-columns: 1fr;
-    padding: 12px;
+    gap: 10px;
+    padding: 13px;
+    width: 100%;
   }
 
   .room-calendar-teams {
-    grid-template-columns: auto minmax(0, 1fr);
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 14px;
+    gap: 8px 10px;
+    grid-template-columns: 38px minmax(0, 1fr);
+    padding: 10px;
   }
 
   .room-calendar-teams em {
     display: none;
   }
 
+  .room-calendar-teams span {
+    align-items: center;
+    background: rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+    display: grid;
+    font-size: 1.35rem;
+    height: 38px;
+    justify-items: center;
+    width: 38px;
+  }
+
+  .room-calendar-teams strong {
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .room-calendar-meta {
+    gap: 7px;
+  }
+
+  .room-calendar-meta span {
+    max-width: 100%;
+    min-height: 30px;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
   .room-calendar-result {
-    justify-items: start;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(244, 189, 79, 0.14);
+    border-radius: 14px;
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    justify-items: stretch;
+    min-width: 0;
+    padding: 10px 11px;
+  }
+
+  .room-calendar-result span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    text-align: right;
   }
 
   .room-calendar-actions {
@@ -8169,10 +8226,37 @@ button {
     justify-content: stretch;
   }
 
+  .room-calendar-actions .button,
+  .room-calendar-actions input {
+    min-height: 44px;
+  }
+
   .room-picks-summary,
   .room-ranking-hero,
   .room-podium-grid {
     grid-template-columns: 1fr;
+  }
+
+  .room-picks-summary {
+    gap: 8px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .room-picks-summary article {
+    min-width: 0;
+    padding: 10px 8px;
+  }
+
+  .room-picks-summary span {
+    display: block;
+    font-size: 0.68rem;
+    line-height: 1.12;
+    min-height: 2.25em;
+    overflow-wrap: anywhere;
+  }
+
+  .room-picks-summary strong {
+    font-size: 1.35rem;
   }
 
   .room-group-mini {
@@ -8404,11 +8488,18 @@ button {
 
   .market-row {
     align-items: stretch;
-    border-radius: 12px;
-    gap: 10px;
+    border-radius: 16px;
+    gap: 11px;
     grid-template-columns: 1fr;
     min-height: 0;
-    padding: 10px;
+    padding: 12px;
+  }
+
+  .match-cell,
+  .match-pick-action,
+  .teams-stack > span,
+  .points-cell {
+    min-width: 0;
   }
 
   .teams-stack {
@@ -8424,7 +8515,8 @@ button {
   .teams-stack > span {
     border-radius: 10px;
     gap: 7px;
-    padding: 8px;
+    min-height: 72px;
+    padding: 9px;
   }
 
   .teams-stack > span > strong {
@@ -8435,6 +8527,11 @@ button {
 
   .teams-stack b {
     font-size: 0.9rem;
+    line-height: 1.15;
+    min-height: 2.3em;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    word-break: break-word;
   }
 
   .teams-stack small,
@@ -8445,28 +8542,40 @@ button {
   }
 
   .match-time {
+    align-items: center;
     font-size: 0.72rem;
     gap: 6px;
   }
 
+  .match-time > span {
+    max-width: 100%;
+  }
+
   .match-pick-action .pick-launcher {
     align-items: stretch;
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
     gap: 8px;
+    grid-template-columns: minmax(0, 1fr) minmax(112px, 0.72fr);
   }
 
   .pick-open-button {
-    flex: 1 1 140px;
-    min-height: 38px;
+    min-height: 44px;
     padding: 8px 12px;
   }
 
+  .pick-open-button:only-child {
+    grid-column: 1 / -1;
+  }
+
   .saved-pick-pill {
-    flex: 1 1 112px;
     justify-content: center;
-    min-height: 36px;
+    min-height: 44px;
+    min-width: 0;
     padding: 6px 10px;
+  }
+
+  .saved-pick-pill strong {
+    overflow-wrap: anywhere;
   }
 
   .official-score,
@@ -8478,6 +8587,7 @@ button {
     display: flex;
     gap: 8px;
     justify-content: space-between;
+    min-height: 48px;
     padding: 8px;
   }
 
@@ -8681,6 +8791,24 @@ button {
 
   .points-cell strong {
     font-size: 1.1rem;
+  }
+
+  .compact-prediction-list .room-prediction {
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 11px;
+  }
+
+  .compact-prediction-list .room-prediction div {
+    min-width: 0;
+  }
+
+  .compact-prediction-list .room-prediction div strong {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .compact-prediction-list .room-prediction > span {
+    grid-column: 1 / -1;
   }
 
   .payment-gate {
