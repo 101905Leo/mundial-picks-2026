@@ -60,6 +60,10 @@ export async function POST(request: NextRequest) {
     const planSlug =
       maxParticipants === 20 ? "sala-basica" : maxParticipants === 50 ? "sala-pro" : "sala-premium";
     const plan = await prisma.roomPlan.findUnique({ where: { slug: planSlug } });
+    if (!plan || !plan.isActive || plan.participantLimit !== maxParticipants || plan.priceInCents <= 0) {
+      return Response.json({ error: "El plan seleccionado no está disponible para pago." }, { status: 409 });
+    }
+
     const competition =
       (parsed.data.competitionId
         ? await prisma.competition.findUnique({ where: { id: parsed.data.competitionId } })
@@ -114,6 +118,7 @@ export async function POST(request: NextRequest) {
     const checkout = await createWompiRoomCheckout({
       leagueId: league.id,
       user: { name: user!.name, phone: user!.phone },
+      amountInCents: plan.priceInCents,
       maxParticipants,
     });
 

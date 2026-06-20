@@ -10,7 +10,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { id } = await params;
   const league = await prisma.league.findFirst({
     where: { id, ownerId: user!.id },
-    select: { id: true, maxParticipants: true, paidAt: true },
+    select: { id: true, paymentAmountInCents: true, paidAt: true },
   });
 
   if (!league) {
@@ -20,12 +20,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (league.paidAt) {
     return Response.json({ error: "Esta sala ya tiene su cupo pagado" }, { status: 409 });
   }
+  if (league.paymentAmountInCents <= 0) {
+    return Response.json({ error: "La sala no tiene un monto de pago válido" }, { status: 409 });
+  }
 
   try {
     const checkout = await createWompiRoomCheckout({
       leagueId: league.id,
       user: { name: user!.name, phone: user!.phone },
-      maxParticipants: league.maxParticipants,
+      amountInCents: league.paymentAmountInCents,
     });
     return Response.json({ checkout });
   } catch (error) {

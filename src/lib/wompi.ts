@@ -44,16 +44,6 @@ export function entryFee() {
   };
 }
 
-export const roomPlans = [
-  { maxParticipants: 20, priceCop: 40000 },
-  { maxParticipants: 50, priceCop: 80000 },
-  { maxParticipants: 100, priceCop: 120000 },
-] as const;
-
-export function roomPlanFor(maxParticipants: number) {
-  return roomPlans.find((plan) => plan.maxParticipants === maxParticipants) ?? roomPlans[0];
-}
-
 export function wompiCheckoutUrl(params: {
   publicKey: string;
   reference: string;
@@ -120,11 +110,15 @@ export async function createWompiEntryCheckout(user: { id: string; name: string;
 export async function createWompiRoomCheckout(params: {
   leagueId: string;
   user: { name: string; phone: string };
-  maxParticipants: number;
+  amountInCents: number;
+  maxParticipants?: number;
 }) {
   const { publicKey, integritySecret } = wompiKeys();
-  const plan = roomPlanFor(params.maxParticipants);
-  const amountInCents = plan.priceCop * 100;
+  const amountInCents = params.amountInCents;
+  if (!Number.isInteger(amountInCents) || amountInCents <= 0) {
+    throw new Error("El plan de la sala no tiene un monto valido para Wompi");
+  }
+
   const reference = `room_${params.leagueId}_${Date.now()}`;
   const signature = sha256(`${reference}${amountInCents}${currency}${integritySecret}`);
 
@@ -135,13 +129,13 @@ export async function createWompiRoomCheckout(params: {
       paymentStatus: "PENDING",
       paymentAmountInCents: amountInCents,
       paidAt: null,
-      maxParticipants: plan.maxParticipants,
+      ...(typeof params.maxParticipants === "number" ? { maxParticipants: params.maxParticipants } : {}),
     },
   });
 
   return {
     reference,
-    plan,
+    amountInCents,
     checkoutUrl: wompiCheckoutUrl({
       publicKey,
       reference,
