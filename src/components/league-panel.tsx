@@ -1066,7 +1066,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
 
       {selectedLeague ? (
         <section
-          className={`league-room ${embedded ? "embedded-room-view" : ""}`}
+          className={`league-room ${embedded ? "embedded-room-view" : ""} ${roomIsActivated && isMobileNavOpen ? "is-mobile-nav-open" : ""}`}
           onTouchCancel={() => {
             roomEdgeSwipeRef.current = null;
           }}
