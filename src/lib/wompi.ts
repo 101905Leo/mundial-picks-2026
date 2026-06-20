@@ -22,6 +22,20 @@ function envNumber(name: string, fallback: number) {
   return Number.isFinite(value) && value > 0 ? value : fallback;
 }
 
+function requiresWompiEventSecret() {
+  return process.env.NODE_ENV === "production" || process.env.WOMPI_ENVIRONMENT === "production";
+}
+
+function assertMatchingAmount(receivedAmountInCents: number | undefined, expectedAmountInCents: number, label: string) {
+  if (!Number.isFinite(receivedAmountInCents)) {
+    throw new Error(`Wompi no entrego un monto valido para validar ${label}`);
+  }
+
+  if (receivedAmountInCents !== expectedAmountInCents) {
+    throw new Error(`El monto recibido por Wompi no coincide con el monto esperado para ${label}`);
+  }
+}
+
 export function entryFee() {
   const priceCop = envNumber("ENTRY_FEE_COP", 50000);
   return {
@@ -166,7 +180,7 @@ export async function getWompiTransaction(transactionId: string) {
   };
 }
 
-export async function approveEntryPayment(reference: string, transactionId?: string) {
+export async function approveEntryPayment(reference: string, transactionId?: string, amountInCents?: number) {
   return prisma.$transaction(async (tx) => {
     const payment = await tx.entryPayment.findUnique({
       where: { reference },
@@ -175,6 +189,8 @@ export async function approveEntryPayment(reference: string, transactionId?: str
     if (!payment) {
       throw new Error("Inscripcion no encontrada");
     }
+
+    assertMatchingAmount(amountInCents, payment.amountInCents, "la inscripcion");
 
     if (payment.paidAt) {
       return payment;
@@ -202,7 +218,20 @@ export async function approveEntryPayment(reference: string, transactionId?: str
   });
 }
 
-export async function approveRoomPayment(reference: string, transactionId?: string, status = "APPROVED") {
+export async function approveRoomPayment(reference: string, transactionId?: string, status = "APPROVED", amountInCents?: number) {
+  const currentPayment = await prisma.league.findUnique({
+    where: { paymentReference: reference },
+    select: { paymentAmountInCents: true },
+  });
+
+  if (!currentPayment) {
+    throw new Error("Pago de sala no encontrado");
+  }
+
+  if (status === "APPROVED") {
+    assertMatchingAmount(amountInCents, currentPayment.paymentAmountInCents, "la sala");
+  }
+
   const paidAt = status === "APPROVED" ? new Date() : null;
 
   return prisma.league.update({
@@ -222,18 +251,23 @@ export async function approveRoomPayment(reference: string, transactionId?: stri
   });
 }
 
-export async function applyWompiPayment(reference: string, transactionId?: string, status = "APPROVED") {
+export async function applyWompiPayment(
+  reference: string,
+  transactionId?: string,
+  status = "APPROVED",
+  amountInCents?: number,
+) {
   if (reference.startsWith("room_")) {
     return {
       type: "room" as const,
-      payment: await approveRoomPayment(reference, transactionId, status),
+      payment: await approveRoomPayment(reference, transactionId, status, amountInCents),
     };
   }
 
   if (status === "APPROVED") {
     return {
       type: "entry" as const,
-      payment: await approveEntryPayment(reference, transactionId),
+      payment: await approveEntryPayment(reference, transactionId, amountInCents),
     };
   }
 
@@ -261,7 +295,7 @@ export function verifyWompiEvent(event: {
 }) {
   const secret = process.env.WOMPI_EVENTS_SECRET;
 
-  if (!secret) return true;
+  if (!secret) return !requiresWompiEventSecret();
   if (!event.signature?.properties?.length || !event.signature.checksum || !event.timestamp) return false;
 
   const values = event.signature.properties.map((property) => String(getByPath(event.data, property) ?? "")).join("");

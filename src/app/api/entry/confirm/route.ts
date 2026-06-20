@@ -35,7 +35,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const result = await applyWompiPayment(transaction.reference, transaction.id, transaction.status);
+    const result = await applyWompiPayment(
+      transaction.reference,
+      transaction.id,
+      transaction.status,
+      transaction.amount_in_cents,
+    );
     const updatedUser = await prisma.user.findUnique({
       where: { id: user.id },
       select: { id: true, name: true, phone: true, role: true, isActive: true, entryPaidAt: true },
@@ -44,6 +49,6 @@ export async function POST(request: NextRequest) {
     return Response.json({ user: updatedUser, status: transaction.status, paymentType: result.type });
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudo confirmar la inscripcion";
-    return Response.json({ error: message }, { status: 500 });
+    return Response.json({ error: message }, { status: message.includes("monto") ? 400 : 500 });
   }
 }

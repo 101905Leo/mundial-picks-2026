@@ -12,16 +12,26 @@ export async function POST(request: Request) {
     const transaction = event.data?.transaction;
 
     if (transaction?.reference) {
-      await prisma.entryPayment.updateMany({
-        where: { reference: transaction.reference },
-        data: {
-          status: transaction.status,
-          transactionId: transaction.id,
-        },
-      });
+      const reference = String(transaction.reference);
+      const status = String(transaction.status ?? "");
+      const transactionId = String(transaction.id ?? "");
+      const amountInCents = Number(transaction.amount_in_cents);
 
-      if (transaction.status === "APPROVED" || String(transaction.reference).startsWith("room_")) {
-        await applyWompiPayment(transaction.reference, transaction.id, transaction.status);
+      try {
+        if (status === "APPROVED" || reference.startsWith("room_")) {
+          await applyWompiPayment(reference, transactionId, status, amountInCents);
+        } else {
+          await prisma.entryPayment.updateMany({
+            where: { reference },
+            data: {
+              status,
+              transactionId,
+            },
+          });
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "No se pudo aplicar el evento de pago";
+        return Response.json({ error: message }, { status: message.includes("monto") ? 400 : 500 });
       }
     }
   }
