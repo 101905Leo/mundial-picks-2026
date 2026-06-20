@@ -76,6 +76,7 @@ export function PlansPage() {
           </span>
         </Link>
         <Link className="button secondary" href="/">Volver al inicio</Link>
+        <Link className="button secondary" href="/mi-sala">Entrar a la app</Link>
       </header>
 
       <section className="plans-intro">
@@ -110,7 +111,6 @@ export function PlansPage() {
                     onChange={(event) =>
                       setRoomNames((current) => ({ ...current, [plan.slug]: event.target.value }))
                     }
-                    placeholder="Ej: Familia Avella"
                     required
                     value={roomNames[plan.slug] ?? ""}
                   />
