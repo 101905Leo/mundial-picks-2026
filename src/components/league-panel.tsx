@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
+import type { TouchEvent } from "react";
 import { MatchCard } from "@/components/match-card";
 import { FormidableFacts } from "@/components/formidable-facts";
 import { StatisticsPanel } from "@/components/statistics-panel";
@@ -112,6 +113,7 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
   const canCloseRoom = Boolean(isSuperAdmin || isOwner);
   const canDeleteRoom = isSuperAdmin;
   const mobileNavTimerRef = useRef<number | null>(null);
+  const roomEdgeSwipeRef = useRef<{ startX: number; startY: number; lastX: number; lastY: number } | null>(null);
 
   function clearMobileNavTimer() {
     if (!mobileNavTimerRef.current) return;
@@ -858,6 +860,64 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
     hideMobileNavSoon();
   }
 
+  function shouldIgnoreRoomEdgeSwipe(target: EventTarget | null) {
+    if (!(target instanceof Element)) return false;
+    return Boolean(
+      target.closest(
+        "a, button, input, select, textarea, summary, [role='button'], [contenteditable='true'], .quick-home-pick-card, .room-chat-panel, .room-chat-fab, .room-mobile-drawer, .room-mobile-nav-handle, .prediction-modal",
+      ),
+    );
+  }
+
+  function handleRoomEdgeTouchStart(event: TouchEvent<HTMLElement>) {
+    if (!selectedLeague || event.touches.length !== 1) return;
+    if (!window.matchMedia("(max-width: 850px)").matches) return;
+    if (shouldIgnoreRoomEdgeSwipe(event.target)) return;
+
+    const touch = event.touches[0];
+    if (!touch || touch.clientX > 32) return;
+
+    roomEdgeSwipeRef.current = {
+      startX: touch.clientX,
+      startY: touch.clientY,
+      lastX: touch.clientX,
+      lastY: touch.clientY,
+    };
+  }
+
+  function handleRoomEdgeTouchMove(event: TouchEvent<HTMLElement>) {
+    if (!roomEdgeSwipeRef.current || event.touches.length !== 1) return;
+    const touch = event.touches[0];
+    if (!touch) return;
+    roomEdgeSwipeRef.current.lastX = touch.clientX;
+    roomEdgeSwipeRef.current.lastY = touch.clientY;
+  }
+
+  function handleRoomEdgeTouchEnd() {
+    const swipe = roomEdgeSwipeRef.current;
+    roomEdgeSwipeRef.current = null;
+    if (!swipe) return;
+
+    const deltaX = swipe.lastX - swipe.startX;
+    const deltaY = swipe.lastY - swipe.startY;
+    const isClearHorizontalSwipe = deltaX >= 60 && Math.abs(deltaY) <= 40 && deltaX > Math.abs(deltaY) * 1.4;
+    if (!isClearHorizontalSwipe) return;
+
+    if (roomView !== "home") {
+      setRoomView("home");
+      showMobileNav();
+      return;
+    }
+
+    if (!roomIsActivated) return;
+    if (isMobileNavOpen) {
+      clearMobileNavTimer();
+      setIsMobileNavOpen(false);
+    } else {
+      showMobileNav();
+    }
+  }
+
   function shareRanking() {
     if (!selectedLeague || !userRanking) return;
     const text = `${user.name} está en la posición #${userRankingIndex + 1} de "${selectedLeague.name}" con ${userRanking.points} puntos en Mundial Picks. https://www.mundialpicks.online`;
@@ -929,7 +989,15 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
       {syncError ? <div className="notice error">{syncError}</div> : null}
 
       {selectedLeague ? (
-        <section className={`league-room ${embedded ? "embedded-room-view" : ""}`}>
+        <section
+          className={`league-room ${embedded ? "embedded-room-view" : ""}`}
+          onTouchCancel={() => {
+            roomEdgeSwipeRef.current = null;
+          }}
+          onTouchEnd={handleRoomEdgeTouchEnd}
+          onTouchMove={handleRoomEdgeTouchMove}
+          onTouchStart={handleRoomEdgeTouchStart}
+        >
           <div className="panel league-room-hero room-player-header">
             <div className="room-player-title">
               <span className="market-kicker">{selectedLeague.competition?.name ?? "Sala privada"}</span>
