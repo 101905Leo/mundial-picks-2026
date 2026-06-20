@@ -1804,13 +1804,22 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
           ) : null}
 
           {roomView === "participants" ? (
-            <div className="league-room-grid">
-              <section className="panel">
-                <div className="section-title"><div><span className="market-kicker">Integrantes</span><h3>{members.length} participantes</h3></div></div>
+            <div className="league-room-grid room-participants-screen">
+              <section className="panel room-participants-panel">
+                <div className="section-title">
+                  <div>
+                    <span className="market-kicker">Integrantes</span>
+                    <h3>{members.length} participantes</h3>
+                    <p>Revisa quiénes están en la sala y sus puntos actuales.</p>
+                  </div>
+                </div>
                 <div className="league-member-list">
                   {members.map((member) => (
                     <article className="league-member" key={member.id}>
-                      <div><strong>{member.name}</strong><span>{member.predictions} picks · {member.points} puntos</span></div>
+                      <div className="league-member-copy">
+                        <strong>{member.name}</strong>
+                        <span>{member.predictions} picks · {member.points} puntos</span>
+                      </div>
                       {canModerateRoom && member.id !== user.id ? (
                         <button className="button danger compact-button" onClick={() => removeMember(member)} type="button">Retirar</button>
                       ) : null}
@@ -1820,15 +1829,45 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
                 </div>
               </section>
               {canEditRoomInfo ? (
-                <section className="panel room-management">
+                <section className="panel room-management room-participants-settings">
                   <form className="form" onSubmit={updateLeague}>
-                    <h3>{isSuperAdmin ? "Control de super usuario" : "Administrar sala"}</h3>
-                    <div className="form-row"><label htmlFor="rename-league">Nombre</label><input id="rename-league" name="name" defaultValue={selectedLeague.name} minLength={3} required /></div>
-                    <div className="form-row"><label htmlFor="room-description">Descripción</label><textarea id="room-description" name="description" defaultValue={selectedLeague.description ?? ""} maxLength={500} rows={3} /></div>
-                    <div className="form-row"><label htmlFor="room-rules">Reglas internas</label><textarea id="room-rules" name="rules" defaultValue={selectedLeague.rules ?? ""} maxLength={3000} rows={7} /></div>
-                    <button className="button primary" type="submit">Guardar cambios</button>
-                    {canCloseRoom ? <button className="button secondary" onClick={closeRoom} type="button">Cerrar sala</button> : null}
-                    {canDeleteRoom ? <button className="button danger" onClick={deleteRoom} type="button">Eliminar sala</button> : null}
+                    <div className="room-settings-intro">
+                      <span className="market-kicker">{isSuperAdmin ? "Control de super usuario" : "Administrar sala"}</span>
+                      <h3>Información y reglas</h3>
+                      <p>Actualiza los datos visibles para los participantes.</p>
+                    </div>
+
+                    {canManageInvitation ? (
+                      <section className="room-settings-section room-invitation-section" aria-label="Invitación">
+                        <div>
+                          <span className="market-kicker">Invitación</span>
+                          <strong>Código {selectedLeague.inviteCode}</strong>
+                          <p>Comparte el acceso solo con las personas que participarán en esta sala.</p>
+                        </div>
+                        <button className="button secondary" onClick={shareInvitation} type="button">Compartir invitación</button>
+                      </section>
+                    ) : null}
+
+                    <section className="room-settings-section" aria-label="Configuración de sala">
+                      <div className="form-row"><label htmlFor="rename-league">Nombre</label><input id="rename-league" name="name" defaultValue={selectedLeague.name} minLength={3} required /></div>
+                      <div className="form-row"><label htmlFor="room-description">Descripción</label><textarea id="room-description" name="description" defaultValue={selectedLeague.description ?? ""} maxLength={500} rows={3} /></div>
+                      <div className="form-row"><label htmlFor="room-rules">Reglas internas</label><textarea id="room-rules" name="rules" defaultValue={selectedLeague.rules ?? ""} maxLength={3000} rows={7} /></div>
+                      <button className="button primary" type="submit">Guardar cambios</button>
+                    </section>
+
+                    {canCloseRoom || canDeleteRoom ? (
+                      <section className="room-settings-section room-danger-actions" aria-label="Acciones sensibles">
+                        <div>
+                          <span className="market-kicker">Zona sensible</span>
+                          <strong>Acciones administrativas</strong>
+                          <p>Estas opciones afectan el acceso o la existencia de la sala.</p>
+                        </div>
+                        <div className="room-danger-buttons">
+                          {canCloseRoom ? <button className="button secondary" onClick={closeRoom} type="button">Cerrar sala</button> : null}
+                          {canDeleteRoom ? <button className="button danger" onClick={deleteRoom} type="button">Eliminar sala</button> : null}
+                        </div>
+                      </section>
+                    ) : null}
                   </form>
                 </section>
               ) : null}
