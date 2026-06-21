@@ -914,7 +914,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
       return;
     }
 
-    setMessage(`${data.user.name} fue creado desactivado. Activalo cuando confirme el pago.`);
+    setMessage(`${data.user.name} fue creado desactivado con PIN inicial. Entrega ese PIN de forma segura.`);
     form.reset();
     await loadUsers();
   }
@@ -942,11 +942,11 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
     const data = await response.json();
 
     if (!response.ok) {
-      setMessage(data.error ?? "No se pudo cambiar la contrasena del usuario");
+      setMessage(data.error ?? "No se pudo asignar el PIN del usuario");
       return;
     }
 
-    setMessage(`Contrasena actualizada para ${data.user.name}. Ya puede ingresar con la nueva clave.`);
+    setMessage(`PIN actualizado para ${data.user.name}. Entrega ese PIN al participante de forma segura.`);
     form.reset();
     setSelectedPasswordUserId("");
     if (selectedRoom?.id) await loadRoomDashboard(selectedRoom.id);
@@ -1125,7 +1125,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
       return;
     }
 
-    setMessage("Contrasena actualizada. Usa la nueva clave en tu proximo ingreso.");
+    setMessage("PIN actualizado. Usa el nuevo PIN en tu próximo ingreso.");
     form.reset();
   }
 
@@ -1782,15 +1782,24 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                 />
               </div>
               <div className="form-row">
-                <label htmlFor="newUserPassword">Contraseña inicial</label>
-                <input id="newUserPassword" name="newUserPassword" type="password" minLength={8} required />
+                <label htmlFor="newUserPassword">PIN inicial de 4 números</label>
+                <input
+                  id="newUserPassword"
+                  inputMode="numeric"
+                  maxLength={4}
+                  name="newUserPassword"
+                  pattern="\d{4}"
+                  required
+                  title="El PIN debe tener exactamente 4 números"
+                  type="password"
+                />
               </div>
               <button className="button primary" type="submit">
                 Crear usuario desactivado
               </button>
             </form>
             <form className="form" onSubmit={resetUserPassword}>
-              <h3>Cambiar contraseña de usuario</h3>
+              <h3>Asignar nuevo PIN de usuario</h3>
               <div className="form-row">
                 <label htmlFor="passwordUserId">Usuario</label>
                 <select
@@ -1810,11 +1819,20 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                 </select>
               </div>
               <div className="form-row">
-                <label htmlFor="userNewPassword">Nueva contraseña</label>
-                <input id="userNewPassword" name="userNewPassword" type="password" minLength={8} required />
+                <label htmlFor="userNewPassword">Nuevo PIN de 4 números</label>
+                <input
+                  id="userNewPassword"
+                  inputMode="numeric"
+                  maxLength={4}
+                  name="userNewPassword"
+                  pattern="\d{4}"
+                  required
+                  title="El PIN debe tener exactamente 4 números"
+                  type="password"
+                />
               </div>
               <button className="button primary" type="submit">
-                Guardar contraseña
+                Guardar PIN
               </button>
               {!usersLoaded ? (
                 <button className="button secondary" type="button" onClick={loadUsers}>
@@ -2364,12 +2382,21 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
 
                                 <form className="room-user-mini-form" onSubmit={resetUserPassword}>
                                   <input name="passwordUserId" type="hidden" value={selectedRoomParticipant.id} />
-                                  <h4>Cambiar contraseña</h4>
+                                  <h4>Asignar nuevo PIN</h4>
                                   <div className="form-row">
-                                    <label htmlFor="roomUserNewPassword">Nueva contraseña</label>
-                                    <input id="roomUserNewPassword" name="userNewPassword" type="password" minLength={8} required />
+                                    <label htmlFor="roomUserNewPassword">Nuevo PIN de 4 números</label>
+                                    <input
+                                      id="roomUserNewPassword"
+                                      inputMode="numeric"
+                                      maxLength={4}
+                                      name="userNewPassword"
+                                      pattern="\d{4}"
+                                      required
+                                      title="El PIN debe tener exactamente 4 números"
+                                      type="password"
+                                    />
                                   </div>
-                                  <button className="button primary" type="submit">Guardar clave</button>
+                                  <button className="button primary" type="submit">Guardar PIN</button>
                                 </form>
 
                                 <form className="room-user-mini-form" onSubmit={saveAdminPick}>
@@ -2602,29 +2629,38 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
               <span className="market-kicker">Seguridad</span>
               <h3>Permisos y acceso</h3>
               <p className="muted">
-                Aquí se agrupan usuarios generales, administradores, contraseñas y acciones sensibles de la plataforma.
+                Aquí se agrupan usuarios generales, administradores, PIN y acciones sensibles de la plataforma.
               </p>
             </section>
             <div className="grid two-columns">
               <form className="form" onSubmit={changePassword}>
-                <h3>Cambiar mi contraseña</h3>
+                <h3>Cambiar mi PIN</h3>
                 <div className="form-row">
-                  <label htmlFor="currentPassword">Contraseña actual</label>
-                  <input id="currentPassword" name="currentPassword" type="password" minLength={6} required />
+                  <label htmlFor="currentPassword">PIN actual o contraseña anterior</label>
+                  <input id="currentPassword" name="currentPassword" type="password" required />
                 </div>
                 <div className="form-row">
-                  <label htmlFor="newPassword">Nueva contraseña</label>
-                  <input id="newPassword" name="newPassword" type="password" minLength={8} required />
+                  <label htmlFor="newPassword">Nuevo PIN de 4 números</label>
+                  <input
+                    id="newPassword"
+                    inputMode="numeric"
+                    maxLength={4}
+                    name="newPassword"
+                    pattern="\d{4}"
+                    required
+                    title="El PIN debe tener exactamente 4 números"
+                    type="password"
+                  />
                 </div>
                 <button className="button primary" type="submit">
-                  Guardar nueva contraseña
+                  Guardar nuevo PIN
                 </button>
               </form>
               <section className="form admin-security-card">
                 <span className="market-kicker">Usuarios generales</span>
                 <h3>Accesos y permisos</h3>
                 <p className="muted">
-                  Crea usuarios, cambia contraseñas, activa accesos y corrige información cuando sea necesario.
+                  Crea usuarios, asigna PIN, activa accesos y corrige información cuando sea necesario.
                 </p>
                 <button
                   className="button secondary"

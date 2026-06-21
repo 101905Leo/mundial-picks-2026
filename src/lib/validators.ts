@@ -21,21 +21,29 @@ const colombianMobilePhoneSchema = z
 
 export const credentialsSchema = z.object({
   phone: colombianMobilePhoneSchema,
-  password: z.string().min(6),
+  password: z.string().refine((value) => /^\d{4}$/.test(value) || value.length >= 6, {
+    message: "Ingresa tu PIN de 4 numeros o tu contrasena anterior",
+  }),
 });
 
-export const registerSchema = credentialsSchema.extend({
+const fourDigitPinSchema = z.string().regex(/^\d{4}$/, "El PIN debe tener exactamente 4 numeros");
+
+export const registerSchema = z.object({
+  phone: colombianMobilePhoneSchema,
+  password: fourDigitPinSchema,
   name: z.string().trim().min(2).max(80),
   inviteCode: z.string().trim().max(16).optional(),
 });
 
 export const changePasswordSchema = z.object({
-  currentPassword: z.string().min(6),
-  newPassword: z.string().min(8, "La nueva contrasena debe tener minimo 8 caracteres"),
+  currentPassword: z.string().refine((value) => /^\d{4}$/.test(value) || value.length >= 6, {
+    message: "Ingresa tu PIN actual o tu contrasena anterior",
+  }),
+  newPassword: fourDigitPinSchema,
 });
 
 export const adminResetPasswordSchema = z.object({
-  newPassword: z.string().min(8, "La nueva contrasena debe tener minimo 8 caracteres"),
+  newPassword: fourDigitPinSchema,
 });
 
 export const matchSchema = z.object({

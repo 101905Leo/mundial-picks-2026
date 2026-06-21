@@ -14,7 +14,7 @@ export async function PATCH(request: NextRequest) {
   const parsed = changePasswordSchema.safeParse(body);
 
   if (!parsed.success) {
-    return Response.json({ error: "La nueva contrasena debe tener minimo 8 caracteres" }, { status: 400 });
+    return Response.json({ error: parsed.error.issues[0]?.message ?? "PIN invalido" }, { status: 400 });
   }
 
   const fullUser = await prisma.user.findUnique({
@@ -23,7 +23,7 @@ export async function PATCH(request: NextRequest) {
   });
 
   if (!fullUser || !(await verifyPassword(parsed.data.currentPassword, fullUser.passwordHash))) {
-    return Response.json({ error: "La contrasena actual no es correcta" }, { status: 401 });
+    return Response.json({ error: "El PIN actual o la contrasena anterior no es correcta" }, { status: 401 });
   }
 
   const updatedUser = await prisma.user.update({

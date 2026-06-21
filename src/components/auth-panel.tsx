@@ -260,15 +260,21 @@ export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: 
           ) : null}
         </div>
         <div className="form-row">
-          <label htmlFor="password">Contrasena</label>
+          <label htmlFor="password">{mode === "register" ? "PIN de 4 números" : "PIN o contraseña"}</label>
           <input
             autoComplete={mode === "login" ? "current-password" : "new-password"}
             id="password"
+            inputMode={mode === "register" ? "numeric" : "text"}
+            maxLength={mode === "register" ? 4 : undefined}
             name="password"
+            pattern={mode === "register" ? "\\d{4}" : undefined}
             type="password"
-            minLength={6}
             required
+            title={mode === "register" ? "El PIN debe tener exactamente 4 números" : "Ingresa tu PIN de 4 números o tu contraseña anterior"}
           />
+          {mode === "register" ? (
+            <small>Usa 4 números fáciles de recordar. No compartas este PIN.</small>
+          ) : null}
         </div>
         {mode === "register" ? (
           <div className="form-row">

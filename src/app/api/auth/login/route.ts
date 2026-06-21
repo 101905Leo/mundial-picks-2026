@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
   });
 
   if (!user || !(await verifyPassword(parsed.data.password, user.passwordHash))) {
-    return Response.json({ error: "Celular o contrasena incorrectos" }, { status: 401 });
+    return Response.json({ error: "Celular o PIN incorrectos" }, { status: 401 });
   }
 
   let joinedLeague = null;

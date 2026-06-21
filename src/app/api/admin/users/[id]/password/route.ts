@@ -11,7 +11,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const parsed = adminResetPasswordSchema.safeParse(body);
 
   if (!parsed.success) {
-    const error = parsed.error.issues[0]?.message ?? "Contrasena invalida";
+    const error = parsed.error.issues[0]?.message ?? "PIN invalido";
     return Response.json({ error }, { status: 400 });
   }
 
