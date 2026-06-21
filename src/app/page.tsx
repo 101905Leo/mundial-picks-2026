@@ -1,5 +1,5 @@
-import { MundialPicksApp } from "@/components/mundial-picks-app";
+import { PublicLandingPage } from "@/components/public-landing-page";
 
 export default function Home() {
-  return <MundialPicksApp />;
+  return <PublicLandingPage />;
 }
