@@ -462,27 +462,16 @@ export function MundialPicksApp({ initialMode = "login", initialPhone = "" }: Mu
             {user ? (
               <nav className="tabs" aria-label="Secciones principales">
                 {user.role === "ADMIN" ? (
-                  <>
-                    <button
-                      className={`tab ${activeView === "admin" ? "active" : ""}`}
-                      onClick={async () => {
-                        setActiveView("admin");
-                        window.history.pushState(null, "", "/");
-                        await loadAdminMatches();
-                      }}
-                    >
-                      Panel administrador
-                    </button>
-                    <button
-                      className={`tab super-room-entry-tab ${activeView === "rooms" ? "active" : ""}`}
-                      onClick={() => {
-                        setActiveView("rooms");
-                        setRoomMenuRequest((current) => current + 1);
-                      }}
-                    >
-                      Vista de salas
-                    </button>
-                  </>
+                  <button
+                    className={`tab ${activeView === "admin" ? "active" : ""}`}
+                    onClick={async () => {
+                      setActiveView("admin");
+                      window.history.pushState(null, "", "/");
+                      await loadAdminMatches();
+                    }}
+                  >
+                    Panel administrador
+                  </button>
                 ) : (
                   <button
                     className={`tab ${activeView === "rooms" ? "active" : ""}`}
