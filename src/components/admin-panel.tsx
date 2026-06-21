@@ -27,6 +27,7 @@ type Props = {
 
 type AdminView = "overview" | "matches" | "tools" | "users" | "rooms";
 type OwnerRoomStatusFilter = "all" | "active" | "pending" | "closed";
+type RoomParticipantFilter = "all" | "active" | "inactive" | "admins" | "members";
 
 type PinDeliveryNote = {
   name: string;
@@ -235,6 +236,8 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
   const [selectedAdminRoomId, setSelectedAdminRoomId] = useState("");
   const [selectedSettingsRoomId, setSelectedSettingsRoomId] = useState("");
   const [selectedRoomUserId, setSelectedRoomUserId] = useState("");
+  const [roomParticipantSearchTerm, setRoomParticipantSearchTerm] = useState("");
+  const [roomParticipantFilter, setRoomParticipantFilter] = useState<RoomParticipantFilter>("all");
   const [roomDashboard, setRoomDashboard] = useState<AdminRoomDashboard | null>(null);
   const [roomDashboardLoading, setRoomDashboardLoading] = useState(false);
   const [selectedPublishDate, setSelectedPublishDate] = useState("");
@@ -308,6 +311,29 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
     roomDashboard?.ranking.find((entry) => entry.id === selectedRoomUserId) ?? null;
   const selectedRoomUserPredictions =
     roomDashboard?.predictions.filter((prediction) => prediction.user.id === selectedRoomUserId) ?? [];
+  const roomParticipants = roomDashboard?.participants ?? [];
+  const normalizedRoomParticipantSearchTerm = roomParticipantSearchTerm.trim().toLowerCase();
+  const normalizedRoomParticipantSearchDigits = roomParticipantSearchTerm.replace(/\D/g, "");
+  const visibleRoomParticipants = roomParticipants.filter((participant) => {
+    const searchableText = `${participant.name} ${participant.phone}`.toLowerCase();
+    const phoneDigits = participant.phone.replace(/\D/g, "");
+    const matchesSearch =
+      !normalizedRoomParticipantSearchTerm ||
+      searchableText.includes(normalizedRoomParticipantSearchTerm) ||
+      (Boolean(normalizedRoomParticipantSearchDigits) && phoneDigits.includes(normalizedRoomParticipantSearchDigits));
+    const matchesFilter =
+      roomParticipantFilter === "all" ||
+      (roomParticipantFilter === "active" && participant.isActive) ||
+      (roomParticipantFilter === "inactive" && !participant.isActive) ||
+      (roomParticipantFilter === "admins" && participant.role === "ADMIN") ||
+      (roomParticipantFilter === "members" && participant.role === "MEMBER");
+
+    return matchesSearch && matchesFilter;
+  });
+  const selectableRoomParticipants =
+    selectedRoomParticipant && !visibleRoomParticipants.some((participant) => participant.id === selectedRoomParticipant.id)
+      ? [selectedRoomParticipant, ...visibleRoomParticipants]
+      : visibleRoomParticipants;
 
   async function loadUsers() {
     const response = await fetch("/api/admin/users");
@@ -2500,6 +2526,35 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
                     </div>
                     {roomDashboard ? (
                       <section className="admin-room-user-tools compact">
+                        <div className="room-participant-filter-panel" aria-label="Filtros de participantes de la sala">
+                          <div className="form-row">
+                            <label htmlFor="roomParticipantSearch">Buscar participante</label>
+                            <input
+                              id="roomParticipantSearch"
+                              onChange={(event) => setRoomParticipantSearchTerm(event.target.value)}
+                              placeholder="Buscar por nombre o WhatsApp"
+                              type="search"
+                              value={roomParticipantSearchTerm}
+                            />
+                          </div>
+                          <div className="form-row">
+                            <label htmlFor="roomParticipantFilter">Filtro</label>
+                            <select
+                              id="roomParticipantFilter"
+                              onChange={(event) => setRoomParticipantFilter(event.target.value as RoomParticipantFilter)}
+                              value={roomParticipantFilter}
+                            >
+                              <option value="all">Todos</option>
+                              <option value="active">Activos</option>
+                              <option value="inactive">Inactivos</option>
+                              <option value="admins">Admins de sala</option>
+                              <option value="members">Participantes</option>
+                            </select>
+                          </div>
+                          <span className="room-participant-count">
+                            Mostrando {visibleRoomParticipants.length} de {roomParticipants.length} participantes
+                          </span>
+                        </div>
                         <div className="room-control-bar participant-control">
                           <div className="room-control-field">
                             <span className="market-kicker">Participante de la sala</span>
@@ -2510,7 +2565,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
                               value={selectedRoomUserId}
                             >
                               <option value="">Selecciona participante</option>
-                              {roomDashboard.participants.map((participant) => (
+                              {selectableRoomParticipants.map((participant) => (
                                 <option key={participant.id} value={participant.id}>
                                   {participant.name} · {participant.phone} · {participant.role === "ADMIN" ? "Admin sala" : "Participante"}
                                 </option>

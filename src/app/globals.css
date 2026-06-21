@@ -7014,6 +7014,26 @@ button {
   padding: 10px;
 }
 
+.room-participant-filter-panel {
+  align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(220px, 1fr) minmax(170px, 220px) auto;
+}
+
+.room-participant-filter-panel .form-row {
+  margin: 0;
+}
+
+.room-participant-count {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 800;
+  justify-self: end;
+  padding-bottom: 9px;
+  white-space: nowrap;
+}
+
 .participant-control {
   align-items: end;
 }
@@ -8449,6 +8469,7 @@ button {
   .score-form,
   .room-selected-tools,
   .room-control-bar,
+  .room-participant-filter-panel,
   .room-selected-card,
 	  .room-action-strip,
 	  .room-command-header,
@@ -8582,6 +8603,12 @@ button {
   }
 
   .admin-room-list-count {
+    justify-self: start;
+    padding-bottom: 0;
+    white-space: normal;
+  }
+
+  .room-participant-count {
     justify-self: start;
     padding-bottom: 0;
     white-space: normal;
