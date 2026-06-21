@@ -108,7 +108,7 @@ export function PublicLandingPage() {
               value={phone}
             />
           </div>
-          <p>Luego completas tu contraseña para entrar con seguridad.</p>
+          <p>Luego completas tu PIN para entrar con seguridad.</p>
           {message ? <div className="public-landing-message">{message}</div> : null}
 
           <div className="public-landing-actions">
