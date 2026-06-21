@@ -480,7 +480,7 @@ export function MundialPicksApp({ initialMode = "login", initialPhone = "" }: Mu
                         setRoomMenuRequest((current) => current + 1);
                       }}
                     >
-                      Salas
+                      Vista de salas
                     </button>
                   </>
                 ) : (
