@@ -17,6 +17,13 @@ type MundialPicksAppProps = {
   initialPhone?: string;
 };
 
+function normalizeInitialPhone(value = "") {
+  let digits = value.replace(/\D/g, "");
+  if (digits.startsWith("0057")) digits = digits.slice(4);
+  if (digits.startsWith("57") && digits.length > 10) digits = digits.slice(2);
+  return /^3\d{9}$/.test(digits) ? digits : "";
+}
+
 export function MundialPicksApp({ initialPhone = "" }: MundialPicksAppProps) {
   const [user, setUser] = useState<User | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
@@ -183,6 +190,32 @@ export function MundialPicksApp({ initialPhone = "" }: MundialPicksAppProps) {
 
     return days;
   }, []);
+
+  const quickLoginPhone = normalizeInitialPhone(initialPhone);
+
+  if (quickLoginPhone && loading) {
+    return (
+      <main className="quick-pin-page-shell">
+        <div className="quick-pin-loading">Preparando acceso seguro...</div>
+      </main>
+    );
+  }
+
+  if (quickLoginPhone && !user) {
+    return (
+      <main className="quick-pin-page-shell">
+        <AuthPanel
+          initialMode="login"
+          initialPhone={quickLoginPhone}
+          onAuth={async (sessionUser) => {
+            setUser(sessionUser);
+            setActiveView(sessionUser.role === "ADMIN" ? "admin" : "rooms");
+            await loadData(sessionUser);
+          }}
+        />
+      </main>
+    );
+  }
 
   const isActionView = Boolean(user);
 

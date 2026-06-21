@@ -3577,6 +3577,29 @@ button {
   color: #fff;
 }
 
+.quick-pin-page-shell {
+  align-items: center;
+  background:
+    radial-gradient(circle at 85% 0%, rgba(255, 204, 92, 0.12), transparent 30%),
+    radial-gradient(circle at 8% 12%, rgba(47, 107, 255, 0.16), transparent 28%),
+    linear-gradient(180deg, #05070d 0%, #0f1524 48%, #05070d 100%);
+  display: grid;
+  min-height: 100svh;
+  padding: calc(14px + env(safe-area-inset-top)) clamp(12px, 4vw, 28px) calc(14px + env(safe-area-inset-bottom));
+}
+
+.quick-pin-page-shell .quick-pin-panel {
+  margin: 0 auto;
+  max-width: 520px;
+  width: 100%;
+}
+
+.quick-pin-loading {
+  color: var(--muted);
+  font-weight: 900;
+  text-align: center;
+}
+
 .quick-pin-panel {
   background:
     radial-gradient(circle at 82% 0%, rgba(255, 204, 92, 0.1), transparent 28%),
