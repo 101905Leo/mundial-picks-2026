@@ -26,6 +26,7 @@ type Props = {
 };
 
 type AdminView = "overview" | "matches" | "tools" | "users" | "rooms";
+type UserStatusFilter = "all" | "active" | "inactive" | "admin";
 
 type PinDeliveryNote = {
   name: string;
@@ -194,6 +195,8 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
   const [pinDeliveryNote, setPinDeliveryNote] = useState<PinDeliveryNote | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [usersLoaded, setUsersLoaded] = useState(false);
+  const [userSearchTerm, setUserSearchTerm] = useState("");
+  const [userStatusFilter, setUserStatusFilter] = useState<UserStatusFilter>("all");
   const [adminView, setAdminView] = useState<AdminView>(initialView);
   const [selectedPasswordUserId, setSelectedPasswordUserId] = useState("");
   const [adminRooms, setAdminRooms] = useState<AdminRoom[]>([]);
@@ -213,6 +216,23 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
   const publishedMatches = matches.filter((match) => match.isPublished).length;
   const resultLoadedMatches = matches.filter((match) => match.homeScore !== null && match.awayScore !== null).length;
   const activeUsers = users.filter((user) => user.isActive).length;
+  const normalizedUserSearchTerm = userSearchTerm.trim().toLowerCase();
+  const normalizedUserSearchDigits = userSearchTerm.replace(/\D/g, "");
+  const visibleUsers = users.filter((user) => {
+    const searchableText = `${user.name} ${user.phone}`.toLowerCase();
+    const phoneDigits = user.phone.replace(/\D/g, "");
+    const matchesSearch =
+      !normalizedUserSearchTerm ||
+      searchableText.includes(normalizedUserSearchTerm) ||
+      (Boolean(normalizedUserSearchDigits) && phoneDigits.includes(normalizedUserSearchDigits));
+    const matchesStatus =
+      userStatusFilter === "all" ||
+      (userStatusFilter === "active" && user.isActive) ||
+      (userStatusFilter === "inactive" && !user.isActive) ||
+      (userStatusFilter === "admin" && user.role === "ADMIN");
+
+    return matchesSearch && matchesStatus;
+  });
   const liveMatch = matches
     .filter((match) => match.isPublished && match.status === "LIVE")
     .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())[0];
@@ -2031,61 +2051,92 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
                 </button>
               </div>
               {usersLoaded ? (
-                <div className="admin-user-list">
-                  {users.map((user) => (
-                    <article className={`admin-user-card ${user.isActive ? "active" : "inactive"}`} key={user.id}>
-                      <div>
-                        <strong>{user.name}</strong>
-                        <span>WhatsApp: {user.phone}</span>
-                      </div>
-                      <div className="admin-user-stats">
-                        <span>
-                          <strong>{user.picksCount}</strong>
-                          Picks
-                        </span>
-                        <span>
-                          <strong>{user.points}</strong>
-                          Puntos
-                        </span>
-                      </div>
-                      <div className="admin-user-badges">
-                        <span>{user.isActive ? "Activo" : "Desactivado"}</span>
-                        {user.role === "ADMIN" ? <span>Admin</span> : null}
-                      </div>
-                      <div className="admin-user-actions">
-                        <button
-                          className="button secondary"
-                          disabled={user.isActive}
-                          onClick={() => updateUserStatus(user.id, true)}
-                          type="button"
-                        >
-                          Activar
-                        </button>
-                        <button
-                          className="button danger"
-                          disabled={!user.isActive}
-                          onClick={() => updateUserStatus(user.id, false)}
-                          type="button"
-                        >
-                          Desactivar
-                        </button>
-                        <button
-                          className="button secondary"
-                          onClick={() => {
-                            setSelectedPasswordUserId(user.id);
-                            setMessage(`Listo para cambiar el PIN de ${user.name}`);
-                          }}
-                          type="button"
-                        >
-                          Cambiar PIN
-                        </button>
-                        <button className="button danger" onClick={() => deleteUserById(user.id)} type="button">
-                          Eliminar
-                        </button>
-                      </div>
-                    </article>
-                  ))}
-                </div>
+                <>
+                  <div className="admin-user-controls" aria-label="Filtros de usuarios">
+                    <div className="form-row">
+                      <label htmlFor="adminUserSearch">Buscar usuario</label>
+                      <input
+                        id="adminUserSearch"
+                        onChange={(event) => setUserSearchTerm(event.target.value)}
+                        placeholder="Buscar por nombre o WhatsApp"
+                        type="search"
+                        value={userSearchTerm}
+                      />
+                    </div>
+                    <div className="form-row">
+                      <label htmlFor="adminUserStatusFilter">Estado</label>
+                      <select
+                        id="adminUserStatusFilter"
+                        onChange={(event) => setUserStatusFilter(event.target.value as UserStatusFilter)}
+                        value={userStatusFilter}
+                      >
+                        <option value="all">Todos</option>
+                        <option value="active">Activos</option>
+                        <option value="inactive">Inactivos</option>
+                        <option value="admin">Admin global</option>
+                      </select>
+                    </div>
+                    <span className="admin-user-count">
+                      Mostrando {visibleUsers.length} de {users.length} usuarios
+                    </span>
+                  </div>
+                  <div className="admin-user-list">
+                    {visibleUsers.map((user) => (
+                      <article className={`admin-user-card ${user.isActive ? "active" : "inactive"}`} key={user.id}>
+                        <div>
+                          <strong>{user.name}</strong>
+                          <span>WhatsApp: {user.phone}</span>
+                        </div>
+                        <div className="admin-user-stats">
+                          <span>
+                            <strong>{user.picksCount}</strong>
+                            Picks
+                          </span>
+                          <span>
+                            <strong>{user.points}</strong>
+                            Puntos
+                          </span>
+                        </div>
+                        <div className="admin-user-badges">
+                          <span>{user.isActive ? "Activo" : "Desactivado"}</span>
+                          {user.role === "ADMIN" ? <span>Admin</span> : null}
+                        </div>
+                        <div className="admin-user-actions">
+                          <button
+                            className="button secondary"
+                            disabled={user.isActive}
+                            onClick={() => updateUserStatus(user.id, true)}
+                            type="button"
+                          >
+                            Activar
+                          </button>
+                          <button
+                            className="button danger"
+                            disabled={!user.isActive}
+                            onClick={() => updateUserStatus(user.id, false)}
+                            type="button"
+                          >
+                            Desactivar
+                          </button>
+                          <button
+                            className="button secondary"
+                            onClick={() => {
+                              setSelectedPasswordUserId(user.id);
+                              setMessage(`Listo para cambiar el PIN de ${user.name}`);
+                            }}
+                            type="button"
+                          >
+                            Cambiar PIN
+                          </button>
+                          <button className="button danger" onClick={() => deleteUserById(user.id)} type="button">
+                            Eliminar
+                          </button>
+                        </div>
+                      </article>
+                    ))}
+                    {!visibleUsers.length ? <div className="empty">No hay usuarios con esos filtros.</div> : null}
+                  </div>
+                </>
               ) : (
                 <div className="empty">Carga los usuarios para activar pagos o desactivar accesos.</div>
               )}

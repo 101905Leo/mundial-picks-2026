@@ -6154,6 +6154,27 @@ button {
   margin: 4px 0 0;
 }
 
+.admin-user-controls {
+  align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(220px, 1fr) minmax(170px, 220px) auto;
+  margin: 12px 0;
+}
+
+.admin-user-controls .form-row {
+  margin: 0;
+}
+
+.admin-user-count {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 800;
+  justify-self: end;
+  padding-bottom: 9px;
+  white-space: nowrap;
+}
+
 .admin-user-list {
   display: grid;
   gap: 10px;
@@ -10122,6 +10143,17 @@ button {
   .admin-user-card {
     align-items: stretch;
     grid-template-columns: 1fr;
+  }
+
+  .admin-user-controls {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .admin-user-count {
+    justify-self: start;
+    padding-bottom: 0;
+    white-space: normal;
   }
 
   .publish-console-top,
