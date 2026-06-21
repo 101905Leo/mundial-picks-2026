@@ -4064,6 +4064,111 @@ button {
   text-underline-offset: 4px;
 }
 
+@media (min-width: 900px) {
+  .quick-pin-page-shell {
+    padding: clamp(36px, 6vh, 72px) clamp(48px, 7vw, 112px);
+  }
+
+  .quick-pin-page-shell .quick-pin-panel {
+    max-width: 760px;
+  }
+
+  .quick-pin-panel {
+    gap: 18px;
+    min-height: auto;
+    padding: 28px;
+  }
+
+  .quick-pin-back {
+    font-size: 1.55rem;
+    min-height: 38px;
+  }
+
+  .quick-pin-header {
+    gap: 6px;
+  }
+
+  .quick-pin-header h2 {
+    font-size: clamp(1.65rem, 2.3vw, 2.15rem);
+  }
+
+  .quick-pin-form {
+    align-items: center;
+    column-gap: 28px;
+    grid-template-areas:
+      "boxes keypad"
+      "helper keypad"
+      "promo keypad"
+      "submit link";
+    grid-template-columns: minmax(0, 1fr) 260px;
+    row-gap: 12px;
+  }
+
+  .quick-pin-boxes {
+    grid-area: boxes;
+    margin-top: 0;
+    max-width: 236px;
+  }
+
+  .quick-pin-box {
+    border-radius: 10px;
+  }
+
+  .quick-pin-box.is-filled::after {
+    height: 10px;
+    width: 10px;
+  }
+
+  .quick-pin-helper {
+    font-size: 0.92rem;
+    grid-area: helper;
+    max-width: 320px;
+  }
+
+  .quick-pin-promo {
+    grid-area: promo;
+    margin: 0;
+    max-width: none;
+    padding: 10px 12px;
+    text-align: left;
+  }
+
+  .quick-pin-keypad {
+    gap: 2px 14px;
+    grid-area: keypad;
+    grid-template-columns: repeat(3, minmax(48px, 1fr));
+    margin: 0;
+    max-width: 260px;
+  }
+
+  .quick-pin-keypad button {
+    font-size: 1.55rem;
+    height: 48px;
+    min-width: 48px;
+  }
+
+  .quick-pin-keypad-spacer {
+    min-height: 48px;
+  }
+
+  .quick-pin-keypad .quick-pin-delete {
+    font-size: 1.25rem;
+    height: 44px;
+    min-width: 44px;
+  }
+
+  .quick-pin-submit {
+    grid-area: submit;
+    min-height: 48px;
+  }
+
+  .quick-pin-link {
+    grid-area: link;
+    justify-self: center;
+    min-height: 36px;
+  }
+}
+
 @media (max-width: 520px) {
   .quick-pin-page-shell {
     padding: calc(10px + env(safe-area-inset-top)) 12px calc(10px + env(safe-area-inset-bottom));
