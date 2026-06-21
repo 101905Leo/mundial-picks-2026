@@ -6316,6 +6316,26 @@ button {
   gap: 10px;
 }
 
+.admin-room-list-controls {
+  align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(220px, 1fr) minmax(170px, 220px) auto;
+}
+
+.admin-room-list-controls .form-row {
+  margin: 0;
+}
+
+.admin-room-list-count {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 800;
+  justify-self: end;
+  padding-bottom: 9px;
+  white-space: nowrap;
+}
+
 .admin-room-list-card {
   align-items: center;
   background: rgba(5, 9, 18, 0.66);
@@ -6355,7 +6375,7 @@ button {
 .admin-room-list-meta {
   display: grid;
   gap: 8px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .admin-room-list-meta span {
@@ -8554,6 +8574,17 @@ button {
   .room-create-promo-card {
     align-items: stretch;
     grid-template-columns: 1fr;
+  }
+
+  .admin-room-list-controls {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .admin-room-list-count {
+    justify-self: start;
+    padding-bottom: 0;
+    white-space: normal;
   }
 
   .admin-room-list-meta,

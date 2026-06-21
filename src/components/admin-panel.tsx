@@ -205,11 +205,25 @@ function adminRoomPaymentLabel(room: Pick<AdminRoom, "paidAt" | "paymentStatus">
   return paymentStatus || "Sin estado de pago";
 }
 
+function matchesAdminRoomStatusFilter(room: AdminRoom, filter: OwnerRoomStatusFilter) {
+  const isActivated = isAdminRoomActivated(room);
+  const isClosed = ["CLOSED", "SUSPENDED", "EXPIRED"].includes(room.status);
+
+  return (
+    filter === "all" ||
+    (filter === "active" && room.status === "ACTIVE" && isActivated) ||
+    (filter === "pending" && !isActivated) ||
+    (filter === "closed" && isClosed)
+  );
+}
+
 export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshRequest = 0, user }: Props) {
   const [message, setMessage] = useState("");
   const [pinDeliveryNote, setPinDeliveryNote] = useState<PinDeliveryNote | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [usersLoaded, setUsersLoaded] = useState(false);
+  const [adminRoomSearchTerm, setAdminRoomSearchTerm] = useState("");
+  const [adminRoomStatusFilter, setAdminRoomStatusFilter] = useState<OwnerRoomStatusFilter>("all");
   const [ownerDirectorySearchTerm, setOwnerDirectorySearchTerm] = useState("");
   const [ownerRoomStatusFilter, setOwnerRoomStatusFilter] = useState<OwnerRoomStatusFilter>("all");
   const [adminView, setAdminView] = useState<AdminView>(initialView);
@@ -231,24 +245,29 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
   const publishedMatches = matches.filter((match) => match.isPublished).length;
   const resultLoadedMatches = matches.filter((match) => match.homeScore !== null && match.awayScore !== null).length;
   const activeUsers = users.filter((user) => user.isActive).length;
+  const normalizedAdminRoomSearchTerm = adminRoomSearchTerm.trim().toLowerCase();
+  const normalizedAdminRoomSearchDigits = adminRoomSearchTerm.replace(/\D/g, "");
+  const visibleAdminRooms = adminRooms.filter((room) => {
+    const searchableText = `${room.name} ${room.inviteCode} ${room.owner.name} ${room.owner.phone}`.toLowerCase();
+    const ownerPhoneDigits = room.owner.phone.replace(/\D/g, "");
+    const matchesSearch =
+      !normalizedAdminRoomSearchTerm ||
+      searchableText.includes(normalizedAdminRoomSearchTerm) ||
+      (Boolean(normalizedAdminRoomSearchDigits) && ownerPhoneDigits.includes(normalizedAdminRoomSearchDigits));
+
+    return matchesSearch && matchesAdminRoomStatusFilter(room, adminRoomStatusFilter);
+  });
   const normalizedOwnerSearchTerm = ownerDirectorySearchTerm.trim().toLowerCase();
   const normalizedOwnerSearchDigits = ownerDirectorySearchTerm.replace(/\D/g, "");
   const visibleOwnerRooms = adminRooms.filter((room) => {
     const searchableText = `${room.name} ${room.owner.name} ${room.owner.phone}`.toLowerCase();
     const ownerPhoneDigits = room.owner.phone.replace(/\D/g, "");
-    const isActivated = isAdminRoomActivated(room);
-    const isClosed = ["CLOSED", "SUSPENDED", "EXPIRED"].includes(room.status);
     const matchesSearch =
       !normalizedOwnerSearchTerm ||
       searchableText.includes(normalizedOwnerSearchTerm) ||
       (Boolean(normalizedOwnerSearchDigits) && ownerPhoneDigits.includes(normalizedOwnerSearchDigits));
-    const matchesStatus =
-      ownerRoomStatusFilter === "all" ||
-      (ownerRoomStatusFilter === "active" && room.status === "ACTIVE" && isActivated) ||
-      (ownerRoomStatusFilter === "pending" && !isActivated) ||
-      (ownerRoomStatusFilter === "closed" && isClosed);
 
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesAdminRoomStatusFilter(room, ownerRoomStatusFilter);
   });
   const liveMatch = matches
     .filter((match) => match.isPublished && match.status === "LIVE")
@@ -2243,9 +2262,38 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
                 </a>
               </div>
 
+              <div className="admin-room-list-controls" aria-label="Filtros de salas">
+                <div className="form-row">
+                  <label htmlFor="adminRoomSearch">Buscar sala</label>
+                  <input
+                    id="adminRoomSearch"
+                    onChange={(event) => setAdminRoomSearchTerm(event.target.value)}
+                    placeholder="Buscar por sala, código, dueño o WhatsApp"
+                    type="search"
+                    value={adminRoomSearchTerm}
+                  />
+                </div>
+                <div className="form-row">
+                  <label htmlFor="adminRoomStatusFilter">Estado</label>
+                  <select
+                    id="adminRoomStatusFilter"
+                    onChange={(event) => setAdminRoomStatusFilter(event.target.value as OwnerRoomStatusFilter)}
+                    value={adminRoomStatusFilter}
+                  >
+                    <option value="all">Todas</option>
+                    <option value="active">Activas</option>
+                    <option value="pending">Pendientes de pago</option>
+                    <option value="closed">Cerradas o pausadas</option>
+                  </select>
+                </div>
+                <span className="admin-room-list-count">
+                  Mostrando {visibleAdminRooms.length} de {adminRooms.length} salas
+                </span>
+              </div>
+
               <section className="admin-room-card-list" aria-label="Salas disponibles">
-                {adminRooms.length ? (
-                  adminRooms.map((room) => {
+                {visibleAdminRooms.length ? (
+                  visibleAdminRooms.map((room) => {
                     const isSelected = selectedRoom?.id === room.id;
                     const memberCount = room.memberships.length;
 
@@ -2255,10 +2303,13 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
                           <span className="market-kicker">{roomStatusLabel(room.status)}</span>
                           <strong>{room.name}</strong>
                           <small>Código {room.inviteCode}</small>
+                          <small>Dueño: {room.owner.name}</small>
+                          <small>WhatsApp: {room.owner.phone}</small>
                         </div>
                         <div className="admin-room-list-meta">
                           <span><small>Participantes</small><strong>{memberCount}/{room.maxParticipants}</strong></span>
                           <span><small>Plan</small><strong>{room.plan?.name ?? "Personalizado"}</strong></span>
+                          <span><small>Pago</small><strong>{adminRoomPaymentLabel(room)}</strong></span>
                           <span><small>Vence</small><strong>{room.expiresAt ? new Date(room.expiresAt).toLocaleDateString("es") : "Sin fecha"}</strong></span>
                         </div>
                         <button
@@ -2275,7 +2326,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
                   })
                 ) : (
                   <div className="empty room-empty-state">
-                    <strong>No hay salas disponibles.</strong>
+                    <strong>No hay salas con esos filtros.</strong>
                     <a className="button secondary compact-button" href="#crear-activar-salas">Crear o activar sala</a>
                   </div>
                 )}
