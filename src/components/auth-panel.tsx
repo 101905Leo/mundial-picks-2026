@@ -26,6 +26,8 @@ export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: 
   const [message, setMessage] = useState("");
   const [phone, setPhone] = useState("");
   const [quickLoginPhone, setQuickLoginPhone] = useState("");
+  const [quickPin, setQuickPin] = useState("");
+  const [usePasswordFallback, setUsePasswordFallback] = useState(false);
   const [rememberLogin, setRememberLogin] = useState(false);
 
   useEffect(() => {
@@ -37,10 +39,14 @@ export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: 
     if (phoneFromPage) {
       setPhone(phoneFromPage);
       setQuickLoginPhone(phoneFromPage);
+      setQuickPin("");
+      setUsePasswordFallback(false);
       return;
     }
 
     setQuickLoginPhone("");
+    setQuickPin("");
+    setUsePasswordFallback(false);
     const savedPhone = window.localStorage.getItem("mundial_picks_phone") ?? "";
     if (savedPhone) {
       setPhone(savedPhone);
@@ -87,55 +93,129 @@ export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: 
     onAuth(data.user, { joinedLeague: Boolean(data.joinedLeague) });
   }
 
+  async function submitQuickLogin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!usePasswordFallback && quickPin.length < 4) {
+      setMessage("Escribe los 4 números de tu PIN.");
+      return;
+    }
+
+    await submit(event);
+  }
+
+  function addPinDigit(digit: string) {
+    setMessage("");
+    setQuickPin((current) => (current.length >= 4 ? current : `${current}${digit}`));
+  }
+
+  function removePinDigit() {
+    setMessage("");
+    setQuickPin((current) => current.slice(0, -1));
+  }
+
   if (mode === "login" && quickLoginPhone) {
     return (
-      <section className="panel quick-login-panel">
-        <div className="quick-login-summary">
-          <span>WhatsApp reconocido</span>
-          <strong>+57 {formatPhone(quickLoginPhone)}</strong>
+      <section className="quick-pin-panel">
+        <button
+          className="quick-pin-back"
+          onClick={() => {
+            setQuickLoginPhone("");
+            setPhone("");
+            setQuickPin("");
+            setUsePasswordFallback(false);
+            setMessage("");
+          }}
+          type="button"
+        >
+          ‹ <span>Cambiar número</span>
+        </button>
+
+        <div className="quick-pin-header">
+          <h2>Escribe tu clave</h2>
+          <p>WhatsApp reconocido: +57 {formatPhone(quickLoginPhone)}</p>
         </div>
 
-        <form className="form quick-login-form" onSubmit={submit}>
+        <form className="quick-pin-form" onSubmit={submitQuickLogin}>
           <input name="phone" type="hidden" value={quickLoginPhone} />
-          <div className="form-row quick-password-row">
-            <label htmlFor="quick-password">PIN o contraseña</label>
-            <input
-              autoComplete="current-password"
-              id="quick-password"
-              name="password"
-              type="password"
-              required
-            />
-          </div>
+
+          {usePasswordFallback ? (
+            <div className="form-row quick-pin-password-fallback">
+              <label htmlFor="quick-password">PIN o contraseña</label>
+              <input
+                autoComplete="current-password"
+                id="quick-password"
+                name="password"
+                type="password"
+                required
+              />
+              <small>Usa tu contraseña anterior si aún no tienes PIN de 4 números.</small>
+            </div>
+          ) : (
+            <>
+              <input name="password" type="hidden" value={quickPin} />
+              <div className="quick-pin-boxes" aria-label="PIN de 4 números">
+                {[0, 1, 2, 3].map((index) => (
+                  <span
+                    aria-label={quickPin.length > index ? "Número escrito" : "Número pendiente"}
+                    className={`quick-pin-box ${quickPin.length > index ? "is-filled" : ""}`}
+                    key={index}
+                  />
+                ))}
+              </div>
+
+              <p className="quick-pin-helper">No dudamos que seas tú, pero es mejor confirmar.</p>
+
+              <aside className="quick-pin-promo" aria-label="Promoción de Mundial Picks">
+                <strong>Crea tu propia sala</strong>
+                <span>Invita a tu familia, hagan picks y sigan el ranking.</span>
+                <Link href="/planes">Crear sala</Link>
+              </aside>
+
+              <div className="quick-pin-keypad" aria-label="Teclado numérico">
+                {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((digit) => (
+                  <button key={digit} onClick={() => addPinDigit(digit)} type="button">
+                    {digit}
+                  </button>
+                ))}
+                <span className="quick-pin-keypad-spacer" aria-hidden="true" />
+                <button onClick={() => addPinDigit("0")} type="button">
+                  0
+                </button>
+                <button aria-label="Borrar" className="quick-pin-delete" onClick={removePinDigit} type="button">
+                  ×
+                </button>
+              </div>
+            </>
+          )}
+
           {message ? <div className="notice">{message}</div> : null}
-          <button className="button primary" type="submit">
+
+          <button className="button primary quick-pin-submit" type="submit">
             Entrar
           </button>
+
           <button
-            className="button ghost quick-login-change"
+            className="quick-pin-link"
             onClick={() => {
-              setQuickLoginPhone("");
-              setPhone("");
+              setMessage("Pídele al administrador de tu sala que te asigne un nuevo PIN.");
+            }}
+            type="button"
+          >
+            Olvidé mi clave
+          </button>
+
+          <button
+            className="quick-pin-link"
+            onClick={() => {
+              setUsePasswordFallback((current) => !current);
+              setQuickPin("");
               setMessage("");
             }}
             type="button"
           >
-            Cambiar número
+            {usePasswordFallback ? "Usar PIN de 4 números" : "Usar contraseña anterior"}
           </button>
         </form>
-
-        <aside className="quick-login-promo" aria-label="Promoción de Mundial Picks">
-          <span>Mundial Picks</span>
-          <h3>Crea tu propia sala</h3>
-          <p>Invita por WhatsApp, predice partidos y mira el ranking de tu grupo.</p>
-          <small>Ideal para familia, amigos y torneos internos.</small>
-          <div className="quick-login-promo-actions">
-            <Link className="button secondary" href="/planes">
-              Crear sala
-            </Link>
-            <Link href="/planes">Ver planes</Link>
-          </div>
-        </aside>
       </section>
     );
   }
