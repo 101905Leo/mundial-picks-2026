@@ -25,7 +25,7 @@ type Props = {
   user: User;
 };
 
-type AdminView = "overview" | "matches" | "tools" | "users" | "rooms" | "security";
+type AdminView = "overview" | "matches" | "tools" | "users" | "rooms";
 
 type PinDeliveryNote = {
   name: string;
@@ -374,7 +374,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
       return;
     }
 
-    if (adminView === "overview" || adminView === "security") {
+    if (adminView === "overview") {
       await loadRooms();
       await loadUsers();
       return;
@@ -1170,31 +1170,6 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
     onChanged();
   }
 
-  async function changePassword(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setMessage("");
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-
-    const response = await fetch("/api/auth/change-password", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        currentPassword: String(formData.get("currentPassword")),
-        newPassword: String(formData.get("newPassword")),
-      }),
-    });
-    const data = await response.json();
-
-    if (!response.ok) {
-      setMessage(data.error ?? "No se pudo cambiar la contrasena");
-      return;
-    }
-
-    setMessage("PIN actualizado. Usa el nuevo PIN en tu próximo ingreso.");
-    form.reset();
-  }
-
   async function publishAll(publish: boolean) {
     setMessage("");
     const confirmed = window.confirm(
@@ -1366,13 +1341,6 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
           type="button"
         >
           Herramientas
-        </button>
-        <button
-          className={`tab ${adminView === "security" ? "active" : ""}`}
-          onClick={() => setAdminView("security")}
-          type="button"
-        >
-          Seguridad
         </button>
       </div>
       <div className="grid two-columns">
@@ -2731,64 +2699,6 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
             </details>
 
           </>
-        ) : null}
-        {adminView === "security" ? (
-          <section className="admin-security-hub admin-room-section-wide">
-            <section className="form">
-              <span className="market-kicker">Seguridad</span>
-              <h3>Permisos y acceso</h3>
-              <p className="muted">
-                Esta sección queda para tu PIN, permisos y criterios de seguridad. La operación diaria de usuarios vive en la pestaña Usuarios.
-              </p>
-            </section>
-            <div className="grid two-columns">
-              <form className="form" onSubmit={changePassword}>
-                <h3>Cambiar mi PIN</h3>
-                <div className="form-row">
-                  <label htmlFor="currentPassword">PIN actual</label>
-                  <input id="currentPassword" name="currentPassword" type="password" required />
-                </div>
-                <div className="form-row">
-                  <label htmlFor="newPassword">Nuevo PIN de 4 números</label>
-                  <input
-                    id="newPassword"
-                    inputMode="numeric"
-                    maxLength={4}
-                    name="newPassword"
-                    pattern="\d{4}"
-                    required
-                    title="El PIN debe tener exactamente 4 números"
-                    type="password"
-                  />
-                </div>
-                <button className="button primary" type="submit">
-                  Guardar nuevo PIN
-                </button>
-              </form>
-              <section className="form admin-security-card">
-                <span className="market-kicker">Permisos</span>
-                <h3>Usuarios y salas</h3>
-                <p className="muted">
-                  Los usuarios se crean, activan y corrigen desde la pestaña Usuarios. Los administradores de sala se asignan desde la sala correspondiente.
-                </p>
-              </section>
-              <section className="form admin-security-card">
-                <span className="market-kicker">Administradores de sala</span>
-                <h3>Permisos por sala</h3>
-                <p className="muted">
-                  Un admin de sala solo administra su propia sala. El super admin global sigue separado y se gestiona desde el panel administrador.
-                </p>
-              </section>
-              <section className="form admin-danger-summary">
-                <span className="market-kicker">Zona sensible</span>
-                <h3>Acciones delicadas</h3>
-                <p className="muted">
-                  Eliminar usuarios, retirar participantes o borrar salas debe hacerse desde su contexto para evitar afectar información equivocada.
-                  Revisa dos veces el usuario o la sala antes de confirmar.
-                </p>
-              </section>
-            </div>
-          </section>
         ) : null}
       </div>
     </section>
