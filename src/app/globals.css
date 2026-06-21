@@ -3510,6 +3510,17 @@ button {
   margin: 0;
 }
 
+.public-landing-message {
+  background: rgba(255, 204, 92, 0.1);
+  border: 1px solid rgba(255, 204, 92, 0.22);
+  border-radius: 14px;
+  color: var(--gold-soft);
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.35;
+  padding: 10px 12px;
+}
+
 .public-landing-actions {
   display: grid;
   gap: 10px;

@@ -13,7 +13,11 @@ import { WorldCupNewsTicker } from "@/components/worldcup-news-panel";
 import type { Match, RankingEntry, User } from "@/components/types";
 import { roomPlanCatalog, salesWhatsAppUrl } from "@/lib/room-plan-catalog";
 
-export function MundialPicksApp() {
+type MundialPicksAppProps = {
+  initialPhone?: string;
+};
+
+export function MundialPicksApp({ initialPhone = "" }: MundialPicksAppProps) {
   const [user, setUser] = useState<User | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
@@ -273,6 +277,7 @@ export function MundialPicksApp() {
                   <div className="login-form-glass-panel">
                     <AuthPanel
                       initialMode={publicAuthMode}
+                      initialPhone={initialPhone}
                       onAuth={async (sessionUser, options) => {
                         setUser(sessionUser);
                         setActiveView(sessionUser.role === "ADMIN" ? "admin" : "rooms");

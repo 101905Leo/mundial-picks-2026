@@ -5,10 +5,18 @@ import type { User } from "@/components/types";
 
 type Props = {
   initialMode?: "login" | "register";
+  initialPhone?: string;
   onAuth: (user: User, options?: { joinedLeague?: boolean }) => void;
 };
 
-export function AuthPanel({ initialMode = "login", onAuth }: Props) {
+function normalizeInitialPhone(value = "") {
+  let digits = value.replace(/\D/g, "");
+  if (digits.startsWith("0057")) digits = digits.slice(4);
+  if (digits.startsWith("57") && digits.length > 10) digits = digits.slice(2);
+  return /^3\d{9}$/.test(digits) ? digits : "";
+}
+
+export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: Props) {
   const [mode, setMode] = useState<"login" | "register">(initialMode);
   const [message, setMessage] = useState("");
   const [phone, setPhone] = useState("");
@@ -19,12 +27,18 @@ export function AuthPanel({ initialMode = "login", onAuth }: Props) {
   }, [initialMode]);
 
   useEffect(() => {
+    const phoneFromPage = normalizeInitialPhone(initialPhone);
+    if (phoneFromPage) {
+      setPhone(phoneFromPage);
+      return;
+    }
+
     const savedPhone = window.localStorage.getItem("mundial_picks_phone") ?? "";
     if (savedPhone) {
       setPhone(savedPhone);
       setRememberLogin(true);
     }
-  }, []);
+  }, [initialPhone]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
