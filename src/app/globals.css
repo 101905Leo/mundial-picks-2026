@@ -3658,10 +3658,10 @@ button {
 
 .quick-pin-boxes {
   display: grid;
-  gap: clamp(10px, 3vw, 18px);
+  gap: clamp(8px, 2.4vw, 14px);
   grid-template-columns: repeat(4, minmax(0, 1fr));
   margin: 10px auto 0;
-  max-width: 360px;
+  max-width: 292px;
   width: 100%;
 }
 
@@ -3669,7 +3669,7 @@ button {
   aspect-ratio: 1;
   background: rgba(248, 250, 252, 0.9);
   border: 2px solid rgba(255, 255, 255, 0.72);
-  border-radius: 16px;
+  border-radius: 12px;
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.2);
   display: grid;
   place-items: center;
@@ -3679,8 +3679,8 @@ button {
   background: #101521;
   border-radius: 999px;
   content: "";
-  height: 16px;
-  width: 16px;
+  height: 12px;
+  width: 12px;
 }
 
 .quick-pin-helper {
@@ -3725,11 +3725,11 @@ button {
 .quick-pin-keypad {
   align-self: end;
   display: grid;
-  gap: 8px clamp(22px, 10vw, 54px);
-  grid-template-columns: repeat(3, minmax(64px, 1fr));
+  gap: 6px clamp(18px, 8vw, 42px);
+  grid-template-columns: repeat(3, minmax(56px, 1fr));
   justify-items: center;
-  margin: min(7vh, 48px) auto 0;
-  max-width: 440px;
+  margin: min(5vh, 34px) auto 0;
+  max-width: 360px;
   width: 100%;
 }
 
@@ -3740,11 +3740,11 @@ button {
   border-radius: 999px;
   color: #fff;
   display: inline-flex;
-  font-size: clamp(2.35rem, 14vw, 4rem);
+  font-size: clamp(2rem, 10.5vw, 3rem);
   font-weight: 500;
-  height: 72px;
+  height: 60px;
   justify-content: center;
-  min-width: 72px;
+  min-width: 60px;
   padding: 0;
 }
 
@@ -3753,15 +3753,15 @@ button {
 }
 
 .quick-pin-keypad-spacer {
-  min-height: 72px;
+  min-height: 60px;
 }
 
 .quick-pin-keypad .quick-pin-delete {
   background: rgba(255, 255, 255, 0.94);
   color: #101521;
-  font-size: 2rem;
-  height: 58px;
-  min-width: 58px;
+  font-size: 1.6rem;
+  height: 50px;
+  min-width: 50px;
 }
 
 .quick-pin-submit {
