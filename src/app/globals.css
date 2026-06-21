@@ -3639,14 +3639,14 @@ button {
 
 .quick-pin-header h2 {
   color: #fff;
-  font-size: clamp(2rem, 10vw, 3.15rem);
+  font-size: clamp(1.55rem, 7vw, 2.25rem);
   line-height: 1;
   margin: 0;
 }
 
 .quick-pin-header p {
   color: var(--muted);
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   font-weight: 800;
   margin: 0;
 }
@@ -3685,7 +3685,7 @@ button {
 
 .quick-pin-helper {
   color: rgba(248, 250, 252, 0.86);
-  font-size: clamp(1rem, 4.5vw, 1.28rem);
+  font-size: clamp(0.9rem, 3.6vw, 1.05rem);
   line-height: 1.35;
   margin: 0 auto;
   max-width: 340px;
@@ -3740,7 +3740,7 @@ button {
   border-radius: 999px;
   color: #fff;
   display: inline-flex;
-  font-size: clamp(2rem, 10.5vw, 3rem);
+  font-size: clamp(1.55rem, 8vw, 2.25rem);
   font-weight: 500;
   height: 60px;
   justify-content: center;
