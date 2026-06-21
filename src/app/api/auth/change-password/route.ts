@@ -23,7 +23,7 @@ export async function PATCH(request: NextRequest) {
   });
 
   if (!fullUser || !(await verifyPassword(parsed.data.currentPassword, fullUser.passwordHash))) {
-    return Response.json({ error: "El PIN actual o la contrasena anterior no es correcta" }, { status: 401 });
+    return Response.json({ error: "El PIN actual no es correcto" }, { status: 401 });
   }
 
   const updatedUser = await prisma.user.update({

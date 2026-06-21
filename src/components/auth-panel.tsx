@@ -27,7 +27,6 @@ export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: 
   const [phone, setPhone] = useState("");
   const [quickLoginPhone, setQuickLoginPhone] = useState("");
   const [quickPin, setQuickPin] = useState("");
-  const [usePasswordFallback, setUsePasswordFallback] = useState(false);
   const [rememberLogin, setRememberLogin] = useState(false);
 
   useEffect(() => {
@@ -36,23 +35,28 @@ export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: 
 
   useEffect(() => {
     const phoneFromPage = normalizeInitialPhone(initialPhone);
+    if (initialMode === "register") {
+      setPhone(phoneFromPage);
+      setQuickLoginPhone("");
+      setQuickPin("");
+      return;
+    }
+
     if (phoneFromPage) {
       setPhone(phoneFromPage);
       setQuickLoginPhone(phoneFromPage);
       setQuickPin("");
-      setUsePasswordFallback(false);
       return;
     }
 
     setQuickLoginPhone("");
     setQuickPin("");
-    setUsePasswordFallback(false);
     const savedPhone = window.localStorage.getItem("mundial_picks_phone") ?? "";
     if (savedPhone) {
       setPhone(savedPhone);
       setRememberLogin(true);
     }
-  }, [initialPhone]);
+  }, [initialMode, initialPhone]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -95,7 +99,7 @@ export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: 
 
   async function submitQuickLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!usePasswordFallback && quickPin.length < 4) {
+    if (quickPin.length < 4) {
       setMessage("Escribe los 4 números de tu PIN.");
       return;
     }
@@ -111,15 +115,6 @@ export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: 
   function removePinDigit() {
     setMessage("");
     setQuickPin((current) => current.slice(0, -1));
-  }
-
-  function openQuickRegister() {
-    if (quickLoginPhone) setPhone(quickLoginPhone);
-    setQuickLoginPhone("");
-    setQuickPin("");
-    setUsePasswordFallback(false);
-    setMessage("");
-    setMode("register");
   }
 
   if (mode === "login" && quickLoginPhone) {
@@ -142,69 +137,44 @@ export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: 
 
         <form className="quick-pin-form" onSubmit={submitQuickLogin}>
           <input name="phone" type="hidden" value={quickLoginPhone} />
-
-          {usePasswordFallback ? (
-            <div className="form-row quick-pin-password-fallback">
-              <label htmlFor="quick-password">PIN o contraseña</label>
-              <input
-                autoComplete="current-password"
-                id="quick-password"
-                name="password"
-                type="password"
-                required
+          <input name="password" type="hidden" value={quickPin} />
+          <div className="quick-pin-boxes" aria-label="PIN de 4 números">
+            {[0, 1, 2, 3].map((index) => (
+              <span
+                aria-label={quickPin.length > index ? "Número escrito" : "Número pendiente"}
+                className={`quick-pin-box ${quickPin.length > index ? "is-filled" : ""}`}
+                key={index}
               />
-              <small>Usa tu contraseña anterior si aún no tienes PIN de 4 números.</small>
-            </div>
-          ) : (
-            <>
-              <input name="password" type="hidden" value={quickPin} />
-              <div className="quick-pin-boxes" aria-label="PIN de 4 números">
-                {[0, 1, 2, 3].map((index) => (
-                  <span
-                    aria-label={quickPin.length > index ? "Número escrito" : "Número pendiente"}
-                    className={`quick-pin-box ${quickPin.length > index ? "is-filled" : ""}`}
-                    key={index}
-                  />
-                ))}
-              </div>
+            ))}
+          </div>
 
-              <p className="quick-pin-helper">No dudamos que seas tú, pero es mejor confirmar.</p>
+          <p className="quick-pin-helper">No dudamos que seas tú, pero es mejor confirmar.</p>
 
-              <aside className="quick-pin-promo" aria-label="Promoción de Mundial Picks">
-                <strong>Crea tu propia sala</strong>
-                <span>Invita a tu familia, hagan picks y sigan el ranking.</span>
-                <Link href="/planes">Crear sala</Link>
-              </aside>
+          <aside className="quick-pin-promo" aria-label="Promoción de Mundial Picks">
+            <strong>Crea tu propia sala</strong>
+            <span>Invita a tu familia, hagan picks y sigan el ranking.</span>
+            <Link href="/planes">Crear sala</Link>
+          </aside>
 
-              <div className="quick-pin-keypad" aria-label="Teclado numérico">
-                {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((digit) => (
-                  <button key={digit} onClick={() => addPinDigit(digit)} type="button">
-                    {digit}
-                  </button>
-                ))}
-                <span className="quick-pin-keypad-spacer" aria-hidden="true" />
-                <button onClick={() => addPinDigit("0")} type="button">
-                  0
-                </button>
-                <button aria-label="Borrar" className="quick-pin-delete" onClick={removePinDigit} type="button">
-                  ×
-                </button>
-              </div>
-            </>
-          )}
+          <div className="quick-pin-keypad" aria-label="Teclado numérico">
+            {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((digit) => (
+              <button key={digit} onClick={() => addPinDigit(digit)} type="button">
+                {digit}
+              </button>
+            ))}
+            <span className="quick-pin-keypad-spacer" aria-hidden="true" />
+            <button onClick={() => addPinDigit("0")} type="button">
+              0
+            </button>
+            <button aria-label="Borrar" className="quick-pin-delete" onClick={removePinDigit} type="button">
+              ×
+            </button>
+          </div>
 
           {message ? <div className="notice">{message}</div> : null}
 
           <button className="button primary quick-pin-submit" type="submit">
             Entrar
-          </button>
-
-          <button
-            className="quick-pin-register-link"
-            onClick={openQuickRegister}
-            type="button"
-          >
-            Registrarme con código de sala
           </button>
 
           <button
@@ -217,17 +187,6 @@ export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: 
             Olvidé mi clave
           </button>
 
-          <button
-            className="quick-pin-link"
-            onClick={() => {
-              setUsePasswordFallback((current) => !current);
-              setQuickPin("");
-              setMessage("");
-            }}
-            type="button"
-          >
-            {usePasswordFallback ? "Usar PIN de 4 números" : "Usar contraseña anterior"}
-          </button>
         </form>
       </section>
     );
@@ -273,7 +232,7 @@ export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: 
           ) : null}
         </div>
         <div className="form-row">
-          <label htmlFor="password">{mode === "register" ? "PIN de 4 números" : "PIN o contraseña"}</label>
+          <label htmlFor="password">{mode === "register" ? "PIN de 4 números" : "PIN"}</label>
           <input
             autoComplete={mode === "login" ? "current-password" : "new-password"}
             id="password"
@@ -283,7 +242,7 @@ export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: 
             pattern={mode === "register" ? "\\d{4}" : undefined}
             type="password"
             required
-            title={mode === "register" ? "El PIN debe tener exactamente 4 números" : "Ingresa tu PIN de 4 números o tu contraseña anterior"}
+            title={mode === "register" ? "El PIN debe tener exactamente 4 números" : "Ingresa tu PIN de 4 números"}
           />
           {mode === "register" ? (
             <small>Usa 4 números fáciles de recordar. No compartas este PIN.</small>
@@ -292,8 +251,17 @@ export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: 
         {mode === "register" ? (
           <div className="form-row">
             <label htmlFor="inviteCode">Codigo de sala</label>
-            <input id="inviteCode" name="inviteCode" maxLength={16} placeholder="Opcional: MP20ABCD" />
-            <small>Si ingresas un codigo, después entrarás automáticamente a esa sala.</small>
+            <input
+              id="inviteCode"
+              maxLength={16}
+              minLength={4}
+              name="inviteCode"
+              pattern="\\S{4,16}"
+              placeholder="MP20ABCD"
+              required
+              title="Ingresa el código de sala que recibiste"
+            />
+            <small>Necesitas el codigo de tu sala para completar el registro.</small>
           </div>
         ) : null}
         {mode === "login" ? (

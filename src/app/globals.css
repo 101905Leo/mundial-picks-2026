@@ -3388,15 +3388,17 @@ button {
 }
 
 .public-landing-page {
-  align-items: center;
+  align-items: start;
   background:
     linear-gradient(135deg, rgba(255, 204, 92, 0.13), transparent 28%),
     linear-gradient(225deg, rgba(47, 107, 255, 0.2), transparent 36%),
     linear-gradient(180deg, #070a10 0%, #101521 54%, #05070d 100%);
   color: var(--ink);
   display: grid;
+  gap: clamp(28px, 8vw, 72px);
   min-height: 100svh;
   padding: calc(24px + env(safe-area-inset-top)) clamp(18px, 5vw, 56px) calc(28px + env(safe-area-inset-bottom));
+  scroll-behavior: smooth;
 }
 
 .public-landing-hero {
@@ -3440,7 +3442,7 @@ button {
   color: var(--gold-soft);
   font-size: 0.78rem;
   font-weight: 950;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   margin: 0;
   text-transform: uppercase;
 }
@@ -3537,6 +3539,71 @@ button {
   font-size: 1.02rem;
 }
 
+.public-landing-new-user {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  width: 100%;
+}
+
+.public-landing-new-user span {
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 850;
+}
+
+.public-landing-register-action {
+  background: rgba(255, 204, 92, 0.12);
+  border: 1px solid rgba(255, 204, 92, 0.28);
+  border-radius: 16px;
+  color: var(--gold-soft);
+  font-size: 0.95rem;
+  font-weight: 950;
+  min-height: 48px;
+}
+
+.public-landing-secondary-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  width: 100%;
+}
+
+.public-landing-action-card {
+  background:
+    linear-gradient(180deg, rgba(248, 250, 252, 0.08), rgba(248, 250, 252, 0.045));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  display: grid;
+  gap: 5px;
+  min-height: 86px;
+  padding: 14px;
+  text-align: left;
+  text-decoration: none;
+}
+
+.public-landing-action-card strong {
+  color: #fff;
+  font-size: 0.96rem;
+}
+
+.public-landing-action-card span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.25;
+}
+
+.public-landing-info-link {
+  color: var(--gold-soft);
+  font-size: 0.9rem;
+  font-weight: 950;
+  text-decoration: none;
+}
+
 .public-landing-benefits {
   display: grid;
   gap: 8px;
@@ -3575,6 +3642,61 @@ button {
 
 .public-landing-links a:hover {
   color: #fff;
+}
+
+.public-landing-info-section {
+  display: grid;
+  gap: 18px;
+  margin: 0 auto;
+  max-width: 920px;
+  padding: 20px 0 8px;
+  width: 100%;
+}
+
+.public-landing-info-section h2 {
+  color: #fff;
+  font-size: clamp(1.35rem, 5vw, 2.1rem);
+  line-height: 1.1;
+  margin: 0;
+  max-width: 660px;
+}
+
+.public-landing-info-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+.public-landing-info-grid article {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+}
+
+.public-landing-info-grid strong {
+  color: var(--gold-soft);
+}
+
+.public-landing-info-grid p {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.public-landing-info-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.public-landing-info-actions .button {
+  border-radius: 16px;
+  min-height: 48px;
+  text-decoration: none;
 }
 
 .quick-pin-page-shell {
@@ -3769,16 +3891,6 @@ button {
   min-height: 56px;
 }
 
-.quick-pin-register-link {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 16px;
-  color: #fff;
-  font-size: 0.95rem;
-  font-weight: 950;
-  min-height: 48px;
-}
-
 .quick-pin-link {
   background: transparent;
   border: 0;
@@ -3788,13 +3900,6 @@ button {
   min-height: 42px;
   text-decoration: underline;
   text-underline-offset: 4px;
-}
-
-.quick-pin-password-fallback {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 18px;
-  padding: 14px;
 }
 
 .plans-header {

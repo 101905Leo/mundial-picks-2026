@@ -14,6 +14,7 @@ import type { Match, RankingEntry, User } from "@/components/types";
 import { roomPlanCatalog, salesWhatsAppUrl } from "@/lib/room-plan-catalog";
 
 type MundialPicksAppProps = {
+  initialMode?: "login" | "register";
   initialPhone?: string;
 };
 
@@ -24,14 +25,14 @@ function normalizeInitialPhone(value = "") {
   return /^3\d{9}$/.test(digits) ? digits : "";
 }
 
-export function MundialPicksApp({ initialPhone = "" }: MundialPicksAppProps) {
+export function MundialPicksApp({ initialMode = "login", initialPhone = "" }: MundialPicksAppProps) {
   const [user, setUser] = useState<User | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
   const [activeView, setActiveView] = useState<
     "picks" | "ranking" | "facts" | "rooms" | "admin"
   >("rooms");
-  const [publicAuthMode, setPublicAuthMode] = useState<"login" | "register">("login");
+  const [publicAuthMode, setPublicAuthMode] = useState<"login" | "register">(initialMode);
   const [roomMenuRequest, setRoomMenuRequest] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -192,11 +193,28 @@ export function MundialPicksApp({ initialPhone = "" }: MundialPicksAppProps) {
   }, []);
 
   const quickLoginPhone = normalizeInitialPhone(initialPhone);
+  const requestedRegister = initialMode === "register";
 
-  if (quickLoginPhone && loading) {
+  if ((quickLoginPhone || requestedRegister) && loading) {
     return (
       <main className="quick-pin-page-shell">
-        <div className="quick-pin-loading">Preparando acceso seguro...</div>
+        <div className="quick-pin-loading">{requestedRegister ? "Preparando registro..." : "Preparando acceso seguro..."}</div>
+      </main>
+    );
+  }
+
+  if (requestedRegister && !user) {
+    return (
+      <main className="quick-pin-page-shell">
+        <AuthPanel
+          initialMode="register"
+          initialPhone={quickLoginPhone}
+          onAuth={async (sessionUser) => {
+            setUser(sessionUser);
+            setActiveView(sessionUser.role === "ADMIN" ? "admin" : "rooms");
+            await loadData(sessionUser);
+          }}
+        />
       </main>
     );
   }

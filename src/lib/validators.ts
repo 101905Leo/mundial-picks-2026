@@ -22,7 +22,7 @@ const colombianMobilePhoneSchema = z
 export const credentialsSchema = z.object({
   phone: colombianMobilePhoneSchema,
   password: z.string().refine((value) => /^\d{4}$/.test(value) || value.length >= 6, {
-    message: "Ingresa tu PIN de 4 numeros o tu contrasena anterior",
+    message: "Ingresa tu PIN de 4 numeros",
   }),
 });
 
@@ -37,7 +37,7 @@ export const registerSchema = z.object({
 
 export const changePasswordSchema = z.object({
   currentPassword: z.string().refine((value) => /^\d{4}$/.test(value) || value.length >= 6, {
-    message: "Ingresa tu PIN actual o tu contrasena anterior",
+    message: "Ingresa tu PIN actual",
   }),
   newPassword: fourDigitPinSchema,
 });

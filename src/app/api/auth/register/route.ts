@@ -13,6 +13,10 @@ export async function POST(request: NextRequest) {
     return Response.json({ error }, { status: 400 });
   }
 
+  if (!inviteCode) {
+    return Response.json({ error: "Necesitas el codigo de sala para registrarte" }, { status: 400 });
+  }
+
   const existingUser = await prisma.user.findUnique({
     where: { phone: parsed.data.phone },
   });

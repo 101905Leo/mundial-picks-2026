@@ -2636,7 +2636,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
               <form className="form" onSubmit={changePassword}>
                 <h3>Cambiar mi PIN</h3>
                 <div className="form-row">
-                  <label htmlFor="currentPassword">PIN actual o contraseña anterior</label>
+                  <label htmlFor="currentPassword">PIN actual</label>
                   <input id="currentPassword" name="currentPassword" type="password" required />
                 </div>
                 <div className="form-row">

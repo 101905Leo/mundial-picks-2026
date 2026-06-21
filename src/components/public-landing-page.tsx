@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { salesWhatsAppUrl } from "@/lib/room-plan-catalog";
 
 const benefits = [
   "Sala privada",
@@ -11,6 +12,25 @@ const benefits = [
   "Chat de sala",
   "Pago Wompi/Nequi desde planes",
   "Fútbol y otros torneos",
+];
+
+const infoSteps = [
+  {
+    title: "Crea una sala",
+    text: "Elige un plan, ponle nombre a tu grupo y activa el pago desde Wompi/Nequi.",
+  },
+  {
+    title: "Invita participantes",
+    text: "Comparte el código de sala para que familia, amigos o compañeros entren con su WhatsApp.",
+  },
+  {
+    title: "Hagan picks",
+    text: "Cada participante predice marcadores, revisa partidos y conserva su acceso con PIN.",
+  },
+  {
+    title: "Sigan el ranking",
+    text: "La sala muestra puntos, posiciones y conversación del grupo en un solo lugar.",
+  },
 ];
 
 function normalizeLandingPhone(value: string) {
@@ -40,6 +60,19 @@ export function PublicLandingPage() {
     }
 
     router.push(`/mi-sala?phone=${encodeURIComponent(normalizedPhone)}`);
+  }
+
+  function continueToRegister() {
+    const normalizedPhone = normalizeLandingPhone(phone);
+
+    if (normalizedPhone && !/^3\d{9}$/.test(normalizedPhone)) {
+      setMessage("Escribe un WhatsApp colombiano de 10 dígitos. Ejemplo: 300 000 0000.");
+      return;
+    }
+
+    const params = new URLSearchParams({ mode: "register" });
+    if (normalizedPhone) params.set("phone", normalizedPhone);
+    router.push(`/mi-sala?${params.toString()}`);
   }
 
   return (
@@ -82,11 +115,30 @@ export function PublicLandingPage() {
             <button className="button primary public-landing-main-action" type="submit">
               Continuar
             </button>
-            <Link className="button secondary public-landing-secondary-action" href="/planes">
-              Crear sala
-            </Link>
           </div>
         </form>
+
+        <section className="public-landing-new-user" aria-label="Registro de participante">
+          <span>¿Es tu primera vez?</span>
+          <button className="public-landing-register-action" onClick={continueToRegister} type="button">
+            Soy nuevo, registrarme
+          </button>
+        </section>
+
+        <div className="public-landing-secondary-grid" aria-label="Acciones adicionales">
+          <Link className="public-landing-action-card" href="/planes">
+            <strong>Crear sala</strong>
+            <span>Organiza tu grupo privado</span>
+          </Link>
+          <a className="public-landing-action-card" href={salesWhatsAppUrl("Sala privada")} rel="noreferrer" target="_blank">
+            <strong>Chatea con nosotros</strong>
+            <span>Te ayudamos por WhatsApp</span>
+          </a>
+        </div>
+
+        <a className="public-landing-info-link" href="#conoce-la-app">
+          Conoce la app
+        </a>
 
         <ul className="public-landing-benefits" aria-label="Beneficios principales">
           {benefits.map((benefit) => (
@@ -95,10 +147,30 @@ export function PublicLandingPage() {
         </ul>
 
         <nav className="public-landing-links" aria-label="Accesos de Mundial Picks">
-          <Link href="/planes">¿No tienes cuenta? Crea una sala</Link>
           <Link href="/planes">Ver planes</Link>
           <Link href="/mi-sala">Entrar sin escribir número</Link>
         </nav>
+      </section>
+
+      <section className="public-landing-info-section" id="conoce-la-app" aria-labelledby="public-landing-info-title">
+        <p className="public-landing-kicker">Cómo funciona</p>
+        <h2 id="public-landing-info-title">Una sala simple para jugar predicciones en grupo</h2>
+        <div className="public-landing-info-grid">
+          {infoSteps.map((step) => (
+            <article key={step.title}>
+              <strong>{step.title}</strong>
+              <p>{step.text}</p>
+            </article>
+          ))}
+        </div>
+        <div className="public-landing-info-actions">
+          <Link className="button primary" href="/planes">
+            Ver planes
+          </Link>
+          <a className="button secondary" href={salesWhatsAppUrl("Sala privada")} rel="noreferrer" target="_blank">
+            Hablar por WhatsApp
+          </a>
+        </div>
       </section>
     </main>
   );
