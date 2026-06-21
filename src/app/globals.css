@@ -3577,6 +3577,92 @@ button {
   color: #fff;
 }
 
+.quick-login-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.quick-login-summary {
+  background:
+    linear-gradient(180deg, rgba(18, 24, 37, 0.9), rgba(5, 7, 13, 0.74));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+}
+
+.quick-login-summary span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.quick-login-summary strong {
+  color: #fff;
+  font-size: clamp(1.35rem, 6vw, 1.9rem);
+  letter-spacing: 0;
+}
+
+.quick-login-form .button {
+  min-height: 52px;
+}
+
+.quick-login-change {
+  width: 100%;
+}
+
+.quick-login-promo {
+  background:
+    linear-gradient(135deg, rgba(47, 107, 255, 0.14), rgba(255, 204, 92, 0.08)),
+    rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.quick-login-promo > span {
+  color: var(--gold-soft);
+  font-size: 0.76rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.quick-login-promo h3 {
+  color: #fff;
+  font-size: 1.12rem;
+  margin: 0;
+}
+
+.quick-login-promo p,
+.quick-login-promo small {
+  color: var(--muted);
+  line-height: 1.38;
+  margin: 0;
+}
+
+.quick-login-promo-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.quick-login-promo-actions .button {
+  min-height: 42px;
+  text-decoration: none;
+}
+
+.quick-login-promo-actions a:not(.button) {
+  color: var(--gold-soft);
+  font-weight: 900;
+  text-decoration: none;
+}
+
 .plans-header {
   align-items: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import type { User } from "@/components/types";
 
@@ -16,10 +17,15 @@ function normalizeInitialPhone(value = "") {
   return /^3\d{9}$/.test(digits) ? digits : "";
 }
 
+function formatPhone(value: string) {
+  return value.replace(/^(\d{3})(\d{3})(\d{4})$/, "$1 $2 $3");
+}
+
 export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: Props) {
   const [mode, setMode] = useState<"login" | "register">(initialMode);
   const [message, setMessage] = useState("");
   const [phone, setPhone] = useState("");
+  const [quickLoginPhone, setQuickLoginPhone] = useState("");
   const [rememberLogin, setRememberLogin] = useState(false);
 
   useEffect(() => {
@@ -30,9 +36,11 @@ export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: 
     const phoneFromPage = normalizeInitialPhone(initialPhone);
     if (phoneFromPage) {
       setPhone(phoneFromPage);
+      setQuickLoginPhone(phoneFromPage);
       return;
     }
 
+    setQuickLoginPhone("");
     const savedPhone = window.localStorage.getItem("mundial_picks_phone") ?? "";
     if (savedPhone) {
       setPhone(savedPhone);
@@ -77,6 +85,59 @@ export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: 
     }
 
     onAuth(data.user, { joinedLeague: Boolean(data.joinedLeague) });
+  }
+
+  if (mode === "login" && quickLoginPhone) {
+    return (
+      <section className="panel quick-login-panel">
+        <div className="quick-login-summary">
+          <span>WhatsApp reconocido</span>
+          <strong>+57 {formatPhone(quickLoginPhone)}</strong>
+        </div>
+
+        <form className="form quick-login-form" onSubmit={submit}>
+          <input name="phone" type="hidden" value={quickLoginPhone} />
+          <div className="form-row quick-password-row">
+            <label htmlFor="quick-password">PIN o contraseña</label>
+            <input
+              autoComplete="current-password"
+              id="quick-password"
+              name="password"
+              type="password"
+              required
+            />
+          </div>
+          {message ? <div className="notice">{message}</div> : null}
+          <button className="button primary" type="submit">
+            Entrar
+          </button>
+          <button
+            className="button ghost quick-login-change"
+            onClick={() => {
+              setQuickLoginPhone("");
+              setPhone("");
+              setMessage("");
+            }}
+            type="button"
+          >
+            Cambiar número
+          </button>
+        </form>
+
+        <aside className="quick-login-promo" aria-label="Promoción de Mundial Picks">
+          <span>Mundial Picks</span>
+          <h3>Crea tu propia sala</h3>
+          <p>Invita por WhatsApp, predice partidos y mira el ranking de tu grupo.</p>
+          <small>Ideal para familia, amigos y torneos internos.</small>
+          <div className="quick-login-promo-actions">
+            <Link className="button secondary" href="/planes">
+              Crear sala
+            </Link>
+            <Link href="/planes">Ver planes</Link>
+          </div>
+        </aside>
+      </section>
+    );
   }
 
   return (
