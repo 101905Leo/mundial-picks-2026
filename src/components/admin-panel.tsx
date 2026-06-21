@@ -21,6 +21,7 @@ type Props = {
   matches: Match[];
   onChanged: () => void;
   initialView?: AdminView;
+  refreshRequest?: number;
   user: User;
 };
 
@@ -188,7 +189,7 @@ function buildPinDeliveryMessage(name: string, phone: string, pin: string) {
   return `Hola, ${name}. Tu acceso a Mundial Picks está listo. Entra con tu WhatsApp ${phone} y tu PIN: ${pin}. No compartas este PIN.`;
 }
 
-export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: Props) {
+export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshRequest = 0, user }: Props) {
   const [message, setMessage] = useState("");
   const [pinDeliveryNote, setPinDeliveryNote] = useState<PinDeliveryNote | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -361,9 +362,35 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
     await loadRoomDashboard(roomId);
   }
 
+  async function refreshVisibleAdminData() {
+    if (adminView === "rooms") {
+      await loadRooms();
+      if (selectedRoom?.id) await loadRoomDashboard(selectedRoom.id);
+      return;
+    }
+
+    if (adminView === "users") {
+      await loadUsers();
+      return;
+    }
+
+    if (adminView === "overview" || adminView === "security") {
+      await loadRooms();
+      await loadUsers();
+      return;
+    }
+
+    await onChanged();
+  }
+
   useEffect(() => {
     loadRooms();
   }, []);
+
+  useEffect(() => {
+    if (!refreshRequest) return;
+    void refreshVisibleAdminData();
+  }, [refreshRequest]);
 
   useEffect(() => {
     if (adminView === "rooms" && !usersLoaded) {
@@ -1275,7 +1302,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
         </div>
         {adminView === "overview" ? (
           <button className="button admin-refresh-inline" onClick={updateResults} type="button">
-            ↻ Refrescar
+            Sincronizar resultados
           </button>
         ) : null}
       </div>
@@ -1405,7 +1432,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                   <ol>
                     <li>Revisa alertas globales.</li>
                     <li>Entra a la sala que vas a operar.</li>
-                    <li>Refresca datos desde Herramientas.</li>
+                    <li>Usa Sincronizar resultados solo cuando necesites traer marcadores.</li>
                     <li>Corrige solo la sala afectada.</li>
                   </ol>
                 </section>
@@ -1462,7 +1489,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                   </p>
                 </div>
                 <button className="button primary" onClick={importWorldCupCalendar} type="button">
-                  Cargar Mundial 2026
+                  Importar Mundial 2026
                 </button>
               </div>
               <div className="competition-compact-grid">
@@ -1787,14 +1814,11 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                 <span className="market-kicker">Herramientas</span>
                 <h3>Mantenimiento técnico</h3>
                 <p className="muted">
-                  Acciones globales para refrescar resultados, recalcular datos y revisar integraciones. Para cambios de una sala específica, entra primero a Salas.
+                  Acciones globales para actualizar resultados, recalcular datos y revisar integraciones. Para cambios de una sala específica, entra primero a Salas.
                 </p>
               </div>
             </div>
             <div className="admin-action-grid admin-action-grid-tools admin-tools-grid">
-              <button className="button primary admin-tool-button admin-tool-primary" onClick={updateResults} type="button">
-                Refrescar plataforma
-              </button>
               <button className="button admin-tool-button" onClick={() => recalculate()} type="button">
                 Recalcular ranking
               </button>
@@ -1802,18 +1826,18 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                 Sincronizar salas
               </button>
               <button className="button admin-tool-button" onClick={importWorldCupCalendar} type="button">
-                Cargar calendario base
+                Importar calendario base
               </button>
               <button className="button admin-tool-button" onClick={testWhatsApp} type="button">
                 Probar WhatsApp
               </button>
               <a className="button admin-tool-button" href="/api/admin/export" download>
-                Descargar Excel
+                Descargar Excel global
               </a>
             </div>
             <div className="admin-tool-note">
               <strong>Acciones separadas, misma intención:</strong>
-              <span>Actualizar resultados trae marcadores; recalcular revisa puntos; sincronizar salas copia el estado correcto a cada sala.</span>
+              <span>Sincronizar resultados trae marcadores; recalcular revisa puntos; sincronizar salas copia el estado correcto a cada sala.</span>
             </div>
           </section>
         ) : null}
@@ -2025,7 +2049,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                   <p className="muted">Consulta WhatsApp, picks guardados, puntos y estado de cada usuario.</p>
                 </div>
                 <button className="button secondary" type="button" onClick={loadUsers}>
-                  {usersLoaded ? "Actualizar" : "Cargar usuarios"}
+                  {usersLoaded ? "Actualizar usuarios" : "Cargar usuarios"}
                 </button>
               </div>
               {usersLoaded ? (
@@ -2224,7 +2248,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
 	                      </div>
 	                      <div className="admin-room-action-grid compact-actions-grid">
 	                        <button className="button primary" onClick={() => syncSelectedRoomResults(selectedRoom)} type="button">
-	                          Refrescar sala
+	                          Sincronizar resultados de sala
 	                        </button>
 	                        <button className="button secondary" onClick={() => copyRoomInvitation(selectedRoom)} type="button">
 	                          Copiar invitación
@@ -2243,7 +2267,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
 	                          Ver participantes
 	                        </button>
 	                        <a className="button secondary" href="/api/admin/export" download>
-	                          Descargar información
+	                          Descargar Excel global
 	                        </a>
 	                      </div>
 	                      <details className="admin-room-accordion nested-admin-option">
@@ -2354,7 +2378,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
 	                  </div>
 
                   <section className="admin-room-live-panel">
-                    <LeaguePanel user={user} initialLeagueId={selectedRoom.id} embedded />
+                    <LeaguePanel user={user} initialLeagueId={selectedRoom.id} embedded refreshRequest={refreshRequest} />
                   </section>
 
                   <section className="admin-room-dashboard compact admin-room-operator-tools">

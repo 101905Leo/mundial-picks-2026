@@ -34,6 +34,8 @@ export function MundialPicksApp({ initialMode = "login", initialPhone = "" }: Mu
   >("rooms");
   const [publicAuthMode, setPublicAuthMode] = useState<"login" | "register">(initialMode);
   const [roomMenuRequest, setRoomMenuRequest] = useState(0);
+  const [refreshRequest, setRefreshRequest] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
 
   async function loadSession() {
@@ -139,6 +141,21 @@ export function MundialPicksApp({ initialMode = "login", initialPhone = "" }: Mu
       setActiveView("admin");
     }
     await loadData(sessionUser);
+  }
+
+  async function refreshCurrentView() {
+    if (isRefreshing) return;
+
+    setIsRefreshing(true);
+    try {
+      const sessionUser = await loadSession();
+      await loadData(sessionUser);
+      setRefreshRequest((current) => current + 1);
+    } catch (error) {
+      console.warn("Manual refresh failed", error);
+    } finally {
+      setIsRefreshing(false);
+    }
   }
 
   async function logout() {
@@ -483,6 +500,9 @@ export function MundialPicksApp({ initialMode = "login", initialPhone = "" }: Mu
                     Salas
                   </button>
                 )}
+                <button className="tab" disabled={isRefreshing} onClick={refreshCurrentView} type="button">
+                  {isRefreshing ? "Actualizando..." : "Actualizar"}
+                </button>
               </nav>
             ) : null}
 
@@ -569,7 +589,12 @@ export function MundialPicksApp({ initialMode = "login", initialPhone = "" }: Mu
             ) : null}
 
             {user && activeView === "rooms" ? (
-              <LeaguePanel user={user} onLogout={logout} roomMenuRequest={roomMenuRequest} />
+              <LeaguePanel
+                user={user}
+                onLogout={logout}
+                refreshRequest={refreshRequest}
+                roomMenuRequest={roomMenuRequest}
+              />
             ) : null}
 
             {user && activeView === "facts" ? <FormidableFacts /> : null}
@@ -579,6 +604,7 @@ export function MundialPicksApp({ initialMode = "login", initialPhone = "" }: Mu
                 initialView="overview"
                 matches={matches}
                 onChanged={loadAdminMatches}
+                refreshRequest={refreshRequest}
                 user={user}
               />
             ) : null}

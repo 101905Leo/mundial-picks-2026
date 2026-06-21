@@ -15,6 +15,7 @@ type Props = {
   initialLeagueId?: string | null;
   embedded?: boolean;
   roomMenuRequest?: number;
+  refreshRequest?: number;
   onLogout?: () => void;
 };
 type RoomView = "home" | "picks" | "matches" | "facts" | "ranking" | "statistics" | "participants" | "chat" | "more";
@@ -85,7 +86,14 @@ function getVisualMatchStatus(match: Match, now: Date) {
   return status;
 }
 
-export function LeaguePanel({ user, initialLeagueId = null, embedded = false, roomMenuRequest = 0, onLogout }: Props) {
+export function LeaguePanel({
+  user,
+  initialLeagueId = null,
+  embedded = false,
+  roomMenuRequest = 0,
+  refreshRequest = 0,
+  onLogout,
+}: Props) {
   const [leagues, setLeagues] = useState<League[]>([]);
   const [selectedLeague, setSelectedLeague] = useState<League | null>(null);
   const [roomView, setRoomView] = useState<RoomView>("home");
@@ -237,6 +245,15 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
     }
   }
 
+  async function loadChatMessages(roomId = selectedLeague?.id ?? "") {
+    if (!roomId) return;
+
+    const response = await fetch(`/api/leagues/${roomId}/messages`);
+    if (!response.ok) return;
+    const data = await response.json();
+    setChatMessages(data.messages ?? []);
+  }
+
   useEffect(() => {
     loadLeagues();
   }, []);
@@ -269,6 +286,19 @@ export function LeaguePanel({ user, initialLeagueId = null, embedded = false, ro
   useEffect(() => {
     loadRoom();
   }, [selectedLeague?.id]);
+
+  useEffect(() => {
+    if (!refreshRequest) return;
+
+    async function refreshVisibleRoomData() {
+      await loadLeagues();
+      if (!selectedLeague) return;
+      await loadRoom();
+      await loadChatMessages(selectedLeague.id);
+    }
+
+    void refreshVisibleRoomData();
+  }, [refreshRequest]);
 
   useEffect(() => {
     let visible = true;
