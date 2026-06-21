@@ -6203,6 +6203,58 @@ button {
   grid-template-columns: minmax(180px, 1fr) minmax(170px, 0.75fr) minmax(150px, 0.55fr) minmax(190px, 0.85fr) auto;
 }
 
+.admin-users-group {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  grid-column: 1 / -1;
+  padding: 14px;
+}
+
+.admin-users-group-heading h3,
+.admin-users-details summary strong {
+  color: #fff;
+  display: block;
+  font-size: 1.05rem;
+  margin: 4px 0 2px;
+}
+
+.admin-users-group-heading p {
+  margin: 0;
+}
+
+.admin-users-group-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.admin-users-details {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-users-details summary {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.admin-users-details[open] summary {
+  margin-bottom: 12px;
+}
+
+.admin-users-advanced {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.admin-users-danger {
+  border-color: rgba(255, 84, 84, 0.32);
+}
+
 .admin-user-card strong {
   color: #fff;
   display: block;

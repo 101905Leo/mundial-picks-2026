@@ -1860,205 +1860,6 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
         ) : null}
         {adminView === "users" ? (
           <>
-            <form className="form" onSubmit={createUser}>
-              <h3>Crear usuario</h3>
-              <div className="form-row">
-                <label htmlFor="newUserName">Nombre o apodo</label>
-                <input id="newUserName" name="newUserName" minLength={2} placeholder="Nombre del participante" required />
-              </div>
-              <div className="form-row">
-                <label htmlFor="newUserPhone">WhatsApp</label>
-                <input
-                  id="newUserPhone"
-                  inputMode="tel"
-                  maxLength={18}
-                  name="newUserPhone"
-                  pattern="(\+57[ \-]?)?3[0-9 \-]{9,13}"
-                  placeholder="300 000 0000"
-                  required
-                  title="Ingresa un celular colombiano valido. Ejemplo: 300 000 0000"
-                />
-              </div>
-              <div className="form-row">
-                <label htmlFor="newUserPassword">PIN inicial de 4 números</label>
-                <input
-                  id="newUserPassword"
-                  inputMode="numeric"
-                  maxLength={4}
-                  name="newUserPassword"
-                  pattern="\d{4}"
-                  required
-                  title="El PIN debe tener exactamente 4 números"
-                  type="password"
-                />
-              </div>
-              <button className="button primary" type="submit">
-                Crear usuario desactivado
-              </button>
-            </form>
-            <form className="form" onSubmit={resetUserPassword}>
-              <h3>Asignar nuevo PIN de usuario</h3>
-              <div className="form-row">
-                <label htmlFor="passwordUserId">Usuario</label>
-                <select
-                  id="passwordUserId"
-                  name="passwordUserId"
-                  onChange={(event) => setSelectedPasswordUserId(event.target.value)}
-                  onFocus={() => !usersLoaded && loadUsers()}
-                  required
-                  value={selectedPasswordUserId}
-                >
-                  <option value="">Selecciona usuario</option>
-                  {users.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.name} - {user.phone}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-row">
-                <label htmlFor="userNewPassword">Nuevo PIN de 4 números</label>
-                <input
-                  id="userNewPassword"
-                  inputMode="numeric"
-                  maxLength={4}
-                  name="userNewPassword"
-                  pattern="\d{4}"
-                  required
-                  title="El PIN debe tener exactamente 4 números"
-                  type="password"
-                />
-              </div>
-              <button className="button primary" type="submit">
-                Guardar PIN
-              </button>
-              {!usersLoaded ? (
-                <button className="button secondary" type="button" onClick={loadUsers}>
-                  Cargar usuarios
-                </button>
-              ) : null}
-            </form>
-            <form className="form" onSubmit={editUser}>
-              <h3>Editar usuario</h3>
-              <div className="form-row">
-                <label htmlFor="editUserId">Usuario</label>
-                <select id="editUserId" name="editUserId" onFocus={() => !usersLoaded && loadUsers()} required>
-                  <option value="">Selecciona usuario</option>
-                  {users.map((user) => (
-                    <option key={user.id} value={user.id}>{user.name} - {user.phone}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-row">
-                <label htmlFor="editUserName">Nuevo nombre o apodo</label>
-                <input id="editUserName" name="editUserName" minLength={2} required />
-              </div>
-              <div className="form-row">
-                <label htmlFor="editUserPhone">Nuevo WhatsApp</label>
-                <input id="editUserPhone" inputMode="tel" name="editUserPhone" placeholder="300 000 0000" required />
-              </div>
-              <button className="button primary" type="submit">Guardar usuario</button>
-            </form>
-            <form className="form" onSubmit={saveAdminPick}>
-              <h3>Crear o editar pick de participante</h3>
-              <p className="muted">
-                Solo el super admin puede modificar picks aunque el partido ya esté cerrado.
-                Los puntos se calculan automáticamente si el partido ya tiene marcador.
-              </p>
-              <div className="form-row">
-                <label htmlFor="adminPickLeagueId">Sala</label>
-                <select
-                  id="adminPickLeagueId"
-                  name="adminPickLeagueId"
-                  onChange={(event) => {
-                    void loadAdminPickMatches(event.target.value);
-                  }}
-                  required
-                  value={adminPickLeagueId}
-                >
-                  <option value="">Selecciona sala</option>
-                  {adminRooms.map((room) => (
-                    <option key={room.id} value={room.id}>
-                      {room.name} · {room.inviteCode}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-row">
-                <label htmlFor="adminPickUserId">Usuario</label>
-                <select id="adminPickUserId" name="adminPickUserId" onFocus={() => !usersLoaded && loadUsers()} required>
-                  <option value="">Selecciona usuario</option>
-                  {users.map((user) => (
-                    <option key={user.id} value={user.id}>{user.name} - {user.phone}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-row">
-                <label htmlFor="adminPickMatchId">Partido</label>
-                <select id="adminPickMatchId" name="adminPickMatchId" disabled={!adminPickLeagueId || adminPickMatchesLoading} required>
-                  <option value="">
-                    {adminPickMatchesLoading
-                      ? "Cargando partidos de la sala..."
-                      : adminPickLeagueId
-                        ? "Selecciona partido de esta sala"
-                        : "Selecciona sala primero"}
-                  </option>
-                  {adminPickMatches.map((match) => (
-                    <option key={match.id} value={match.id}>
-                      {formatAdminMatchOption(match)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="score-form">
-                <div className="form-row">
-                  <label htmlFor="adminPickHomeScore">Local</label>
-                  <input id="adminPickHomeScore" name="adminPickHomeScore" type="number" min={0} required />
-                </div>
-                <div className="form-row">
-                  <label htmlFor="adminPickAwayScore">Visitante</label>
-                  <input id="adminPickAwayScore" name="adminPickAwayScore" type="number" min={0} required />
-                </div>
-                <div className="form-row">
-                  <span className="muted">Los puntos manuales se editan abajo, separados del pick.</span>
-                </div>
-              </div>
-              <button className="button primary" disabled={adminPickSaving} type="submit">
-                {adminPickSaving ? "Guardando..." : "Guardar pick"}
-              </button>
-            </form>
-            <form className="form" onSubmit={saveAdminPickPoints}>
-              <h3>Ajustar puntos manuales</h3>
-              <p className="muted">
-                Usa esto solo para corregir puntos de un pick existente. Estos puntos se respetan al recalcular.
-              </p>
-              <div className="form-row">
-                <label htmlFor="adminPointsUserId">Usuario</label>
-                <select id="adminPointsUserId" name="adminPointsUserId" onFocus={() => !usersLoaded && loadUsers()} required>
-                  <option value="">Selecciona usuario</option>
-                  {users.map((user) => (
-                    <option key={user.id} value={user.id}>{user.name} - {user.phone}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-row">
-                <label htmlFor="adminPointsMatchId">Partido</label>
-                <select id="adminPointsMatchId" name="adminPointsMatchId" required>
-                  <option value="">Selecciona partido</option>
-                  {matches.map((match) => (
-                    <option key={match.id} value={match.id}>
-                      {match.homeTeam} vs {match.awayTeam} · {matchStatusLabel(match.status)}
-                      {match.isPublished ? "" : " · oculto"}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-row">
-                <label htmlFor="adminManualPoints">Puntos manuales</label>
-                <input id="adminManualPoints" name="adminManualPoints" type="number" min={0} max={100} required />
-              </div>
-              <button className="button primary" type="submit">Guardar puntos</button>
-            </form>
             <section className="form users-admin-list">
               <div className="section-title">
                 <div>
@@ -2138,61 +1939,291 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
                 {!visibleOwnerRooms.length ? <div className="empty">No hay salas con esos filtros.</div> : null}
               </div>
             </section>
-            <form className="form" onSubmit={deletePick}>
-              <h3>Eliminar pick</h3>
-              <div className="form-row">
-                <label htmlFor="pickUserId">Usuario</label>
-                <select id="pickUserId" name="pickUserId" onFocus={() => !usersLoaded && loadUsers()} required>
-                  <option value="">Selecciona usuario</option>
-                  {users.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.name} - {user.phone}
-                    </option>
-                  ))}
-                </select>
+            <section className="admin-users-group" aria-labelledby="admin-access-support-title">
+              <div className="admin-users-group-heading">
+                <span className="market-kicker">Soporte de acceso</span>
+                <h3 id="admin-access-support-title">Usuarios y PIN</h3>
+                <p className="muted">Acciones globales para crear usuarios, corregir datos y entregar acceso.</p>
               </div>
-              <div className="form-row">
-                <label htmlFor="pickMatchId">Partido</label>
-                <select id="pickMatchId" name="pickMatchId" required>
-                  <option value="">Selecciona partido</option>
-                  {matches.map((match) => (
-                    <option key={match.id} value={match.id}>
-                      {match.homeTeam} vs {match.awayTeam} {match.isPublished ? "" : "(oculto)"}
-                    </option>
-                  ))}
-                </select>
+              <div className="admin-users-group-grid">
+                <form className="form" onSubmit={createUser}>
+                  <h3>Crear usuario</h3>
+                  <div className="form-row">
+                    <label htmlFor="newUserName">Nombre o apodo</label>
+                    <input id="newUserName" name="newUserName" minLength={2} placeholder="Nombre del participante" required />
+                  </div>
+                  <div className="form-row">
+                    <label htmlFor="newUserPhone">WhatsApp</label>
+                    <input
+                      id="newUserPhone"
+                      inputMode="tel"
+                      maxLength={18}
+                      name="newUserPhone"
+                      pattern="(\+57[ \-]?)?3[0-9 \-]{9,13}"
+                      placeholder="300 000 0000"
+                      required
+                      title="Ingresa un celular colombiano valido. Ejemplo: 300 000 0000"
+                    />
+                  </div>
+                  <div className="form-row">
+                    <label htmlFor="newUserPassword">PIN inicial de 4 números</label>
+                    <input
+                      id="newUserPassword"
+                      inputMode="numeric"
+                      maxLength={4}
+                      name="newUserPassword"
+                      pattern="\d{4}"
+                      required
+                      title="El PIN debe tener exactamente 4 números"
+                      type="password"
+                    />
+                  </div>
+                  <button className="button primary" type="submit">
+                    Crear usuario desactivado
+                  </button>
+                </form>
+                <form className="form" onSubmit={editUser}>
+                  <h3>Editar usuario</h3>
+                  <div className="form-row">
+                    <label htmlFor="editUserId">Usuario</label>
+                    <select id="editUserId" name="editUserId" onFocus={() => !usersLoaded && loadUsers()} required>
+                      <option value="">Selecciona usuario</option>
+                      {users.map((user) => (
+                        <option key={user.id} value={user.id}>{user.name} - {user.phone}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-row">
+                    <label htmlFor="editUserName">Nuevo nombre o apodo</label>
+                    <input id="editUserName" name="editUserName" minLength={2} required />
+                  </div>
+                  <div className="form-row">
+                    <label htmlFor="editUserPhone">Nuevo WhatsApp</label>
+                    <input id="editUserPhone" inputMode="tel" name="editUserPhone" placeholder="300 000 0000" required />
+                  </div>
+                  <button className="button primary" type="submit">Guardar usuario</button>
+                </form>
+                <form className="form" onSubmit={resetUserPassword}>
+                  <h3>Asignar nuevo PIN de usuario</h3>
+                  <div className="form-row">
+                    <label htmlFor="passwordUserId">Usuario</label>
+                    <select
+                      id="passwordUserId"
+                      name="passwordUserId"
+                      onChange={(event) => setSelectedPasswordUserId(event.target.value)}
+                      onFocus={() => !usersLoaded && loadUsers()}
+                      required
+                      value={selectedPasswordUserId}
+                    >
+                      <option value="">Selecciona usuario</option>
+                      {users.map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {user.name} - {user.phone}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-row">
+                    <label htmlFor="userNewPassword">Nuevo PIN de 4 números</label>
+                    <input
+                      id="userNewPassword"
+                      inputMode="numeric"
+                      maxLength={4}
+                      name="userNewPassword"
+                      pattern="\d{4}"
+                      required
+                      title="El PIN debe tener exactamente 4 números"
+                      type="password"
+                    />
+                  </div>
+                  <button className="button primary" type="submit">
+                    Guardar PIN
+                  </button>
+                  {!usersLoaded ? (
+                    <button className="button secondary" type="button" onClick={loadUsers}>
+                      Cargar usuarios
+                    </button>
+                  ) : null}
+                </form>
               </div>
-              <button className="button danger" type="submit">
-                Eliminar pick
-              </button>
-              {!usersLoaded ? (
-                <button className="button secondary" type="button" onClick={loadUsers}>
-                  Cargar usuarios
-                </button>
-              ) : null}
-            </form>
-            <form className="form" onSubmit={deleteUser}>
-              <h3>Eliminar usuario</h3>
-              <div className="form-row">
-                <label htmlFor="deleteUserId">Usuario</label>
-                <select id="deleteUserId" name="deleteUserId" onFocus={() => !usersLoaded && loadUsers()} required>
-                  <option value="">Selecciona usuario</option>
-                  {users.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.name} - {user.phone} - {user.role}
-                    </option>
-                  ))}
-                </select>
+            </section>
+            <section className="admin-users-group admin-users-advanced" aria-labelledby="admin-advanced-picks-title">
+              <details className="admin-users-details" open>
+                <summary>
+                  <span>
+                    <span className="market-kicker">Avanzado</span>
+                    <strong id="admin-advanced-picks-title">Picks administrativos avanzados</strong>
+                  </span>
+                  <span className="muted">Usar solo para correcciones puntuales</span>
+                </summary>
+                <div className="admin-users-group-grid">
+                  <form className="form" onSubmit={saveAdminPick}>
+                    <h3>Crear o editar pick de participante</h3>
+                    <p className="muted">
+                      Solo el super admin puede modificar picks aunque el partido ya esté cerrado.
+                      Los puntos se calculan automáticamente si el partido ya tiene marcador.
+                    </p>
+                    <div className="form-row">
+                      <label htmlFor="adminPickLeagueId">Sala</label>
+                      <select
+                        id="adminPickLeagueId"
+                        name="adminPickLeagueId"
+                        onChange={(event) => {
+                          void loadAdminPickMatches(event.target.value);
+                        }}
+                        required
+                        value={adminPickLeagueId}
+                      >
+                        <option value="">Selecciona sala</option>
+                        {adminRooms.map((room) => (
+                          <option key={room.id} value={room.id}>
+                            {room.name} · {room.inviteCode}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-row">
+                      <label htmlFor="adminPickUserId">Usuario</label>
+                      <select id="adminPickUserId" name="adminPickUserId" onFocus={() => !usersLoaded && loadUsers()} required>
+                        <option value="">Selecciona usuario</option>
+                        {users.map((user) => (
+                          <option key={user.id} value={user.id}>{user.name} - {user.phone}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-row">
+                      <label htmlFor="adminPickMatchId">Partido</label>
+                      <select id="adminPickMatchId" name="adminPickMatchId" disabled={!adminPickLeagueId || adminPickMatchesLoading} required>
+                        <option value="">
+                          {adminPickMatchesLoading
+                            ? "Cargando partidos de la sala..."
+                            : adminPickLeagueId
+                              ? "Selecciona partido de esta sala"
+                              : "Selecciona sala primero"}
+                        </option>
+                        {adminPickMatches.map((match) => (
+                          <option key={match.id} value={match.id}>
+                            {formatAdminMatchOption(match)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="score-form">
+                      <div className="form-row">
+                        <label htmlFor="adminPickHomeScore">Local</label>
+                        <input id="adminPickHomeScore" name="adminPickHomeScore" type="number" min={0} required />
+                      </div>
+                      <div className="form-row">
+                        <label htmlFor="adminPickAwayScore">Visitante</label>
+                        <input id="adminPickAwayScore" name="adminPickAwayScore" type="number" min={0} required />
+                      </div>
+                      <div className="form-row">
+                        <span className="muted">Los puntos manuales se editan abajo, separados del pick.</span>
+                      </div>
+                    </div>
+                    <button className="button primary" disabled={adminPickSaving} type="submit">
+                      {adminPickSaving ? "Guardando..." : "Guardar pick"}
+                    </button>
+                  </form>
+                  <form className="form" onSubmit={saveAdminPickPoints}>
+                    <h3>Ajustar puntos manuales</h3>
+                    <p className="muted">
+                      Usa esto solo para corregir puntos de un pick existente. Estos puntos se respetan al recalcular.
+                    </p>
+                    <div className="form-row">
+                      <label htmlFor="adminPointsUserId">Usuario</label>
+                      <select id="adminPointsUserId" name="adminPointsUserId" onFocus={() => !usersLoaded && loadUsers()} required>
+                        <option value="">Selecciona usuario</option>
+                        {users.map((user) => (
+                          <option key={user.id} value={user.id}>{user.name} - {user.phone}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-row">
+                      <label htmlFor="adminPointsMatchId">Partido</label>
+                      <select id="adminPointsMatchId" name="adminPointsMatchId" required>
+                        <option value="">Selecciona partido</option>
+                        {matches.map((match) => (
+                          <option key={match.id} value={match.id}>
+                            {match.homeTeam} vs {match.awayTeam} · {matchStatusLabel(match.status)}
+                            {match.isPublished ? "" : " · oculto"}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-row">
+                      <label htmlFor="adminManualPoints">Puntos manuales</label>
+                      <input id="adminManualPoints" name="adminManualPoints" type="number" min={0} max={100} required />
+                    </div>
+                    <button className="button primary" type="submit">Guardar puntos</button>
+                  </form>
+                </div>
+              </details>
+            </section>
+            <section className="admin-users-group admin-users-danger" aria-labelledby="admin-danger-zone-title">
+              <div className="admin-users-group-heading">
+                <span className="market-kicker">Zona peligrosa</span>
+                <h3 id="admin-danger-zone-title">Eliminaciones</h3>
+                <p className="muted">Acciones irreversibles o delicadas. Las confirmaciones existentes se mantienen.</p>
               </div>
-              <button className="button danger" type="submit">
-                Eliminar usuario
-              </button>
-              {!usersLoaded ? (
-                <button className="button secondary" type="button" onClick={loadUsers}>
-                  Cargar usuarios
-                </button>
-              ) : null}
-            </form>
+              <div className="admin-users-group-grid">
+                <form className="form" onSubmit={deletePick}>
+                  <h3>Eliminar pick</h3>
+                  <div className="form-row">
+                    <label htmlFor="pickUserId">Usuario</label>
+                    <select id="pickUserId" name="pickUserId" onFocus={() => !usersLoaded && loadUsers()} required>
+                      <option value="">Selecciona usuario</option>
+                      {users.map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {user.name} - {user.phone}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-row">
+                    <label htmlFor="pickMatchId">Partido</label>
+                    <select id="pickMatchId" name="pickMatchId" required>
+                      <option value="">Selecciona partido</option>
+                      {matches.map((match) => (
+                        <option key={match.id} value={match.id}>
+                          {match.homeTeam} vs {match.awayTeam} {match.isPublished ? "" : "(oculto)"}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <button className="button danger" type="submit">
+                    Eliminar pick
+                  </button>
+                  {!usersLoaded ? (
+                    <button className="button secondary" type="button" onClick={loadUsers}>
+                      Cargar usuarios
+                    </button>
+                  ) : null}
+                </form>
+                <form className="form" onSubmit={deleteUser}>
+                  <h3>Eliminar usuario</h3>
+                  <div className="form-row">
+                    <label htmlFor="deleteUserId">Usuario</label>
+                    <select id="deleteUserId" name="deleteUserId" onFocus={() => !usersLoaded && loadUsers()} required>
+                      <option value="">Selecciona usuario</option>
+                      {users.map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {user.name} - {user.phone} - {user.role}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <button className="button danger" type="submit">
+                    Eliminar usuario
+                  </button>
+                  {!usersLoaded ? (
+                    <button className="button secondary" type="button" onClick={loadUsers}>
+                      Cargar usuarios
+                    </button>
+                  ) : null}
+                </form>
+              </div>
+            </section>
           </>
         ) : null}
         {adminView === "rooms" ? (
