@@ -2738,7 +2738,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
               <span className="market-kicker">Seguridad</span>
               <h3>Permisos y acceso</h3>
               <p className="muted">
-                Aquí se agrupan usuarios generales, administradores, PIN y acciones sensibles de la plataforma.
+                Esta sección queda para tu PIN, permisos y criterios de seguridad. La operación diaria de usuarios vive en la pestaña Usuarios.
               </p>
             </section>
             <div className="grid two-columns">
@@ -2766,48 +2766,26 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
                 </button>
               </form>
               <section className="form admin-security-card">
-                <span className="market-kicker">Usuarios generales</span>
-                <h3>Accesos y permisos</h3>
+                <span className="market-kicker">Permisos</span>
+                <h3>Usuarios y salas</h3>
                 <p className="muted">
-                  Crea usuarios, asigna PIN, activa accesos y corrige información cuando sea necesario.
+                  Los usuarios se crean, activan y corrigen desde la pestaña Usuarios. Los administradores de sala se asignan desde la sala correspondiente.
                 </p>
-                <button
-                  className="button secondary"
-                  onClick={async () => {
-                    setAdminView("users");
-                    await loadUsers();
-                  }}
-                  type="button"
-                >
-                  Abrir usuarios
-                </button>
               </section>
               <section className="form admin-security-card">
                 <span className="market-kicker">Administradores de sala</span>
                 <h3>Permisos por sala</h3>
                 <p className="muted">
-                  Los administradores de sala se asignan desde la sala seleccionada para no mezclar participantes de distintas salas.
+                  Un admin de sala solo administra su propia sala. El super admin global sigue separado y se gestiona desde el panel administrador.
                 </p>
-                <button
-                  className="button secondary"
-                  onClick={async () => {
-                    setAdminView("rooms");
-                    await loadRooms();
-                  }}
-                  type="button"
-                >
-                  Ir a salas
-                </button>
               </section>
               <section className="form admin-danger-summary">
                 <span className="market-kicker">Zona sensible</span>
                 <h3>Acciones delicadas</h3>
                 <p className="muted">
                   Eliminar usuarios, retirar participantes o borrar salas debe hacerse desde su contexto para evitar afectar información equivocada.
+                  Revisa dos veces el usuario o la sala antes de confirmar.
                 </p>
-                <button className="button danger subtle-danger" onClick={() => setAdminView("users")} type="button">
-                  Revisar acciones sensibles
-                </button>
               </section>
             </div>
           </section>
