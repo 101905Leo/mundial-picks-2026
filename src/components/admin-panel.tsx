@@ -26,7 +26,7 @@ type Props = {
 };
 
 type AdminView = "overview" | "matches" | "tools" | "users" | "rooms";
-type UserStatusFilter = "all" | "active" | "inactive" | "admin";
+type OwnerRoomStatusFilter = "all" | "active" | "pending" | "closed";
 
 type PinDeliveryNote = {
   name: string;
@@ -190,13 +190,28 @@ function buildPinDeliveryMessage(name: string, phone: string, pin: string) {
   return `Hola, ${name}. Tu acceso a Mundial Picks está listo. Entra con tu WhatsApp ${phone} y tu PIN: ${pin}. No compartas este PIN.`;
 }
 
+function isAdminRoomActivated(room: Pick<AdminRoom, "paidAt" | "paymentStatus">) {
+  const paymentStatus = room.paymentStatus.toUpperCase();
+  return Boolean(room.paidAt) || ["APPROVED", "TRIAL", "MANUAL"].includes(paymentStatus);
+}
+
+function adminRoomPaymentLabel(room: Pick<AdminRoom, "paidAt" | "paymentStatus">) {
+  const paymentStatus = room.paymentStatus.toUpperCase();
+
+  if (paymentStatus === "TRIAL") return "Prueba";
+  if (paymentStatus === "MANUAL") return "Manual";
+  if (room.paidAt || paymentStatus === "APPROVED") return "Pago aprobado";
+  if (paymentStatus === "PENDING") return "Pendiente de pago";
+  return paymentStatus || "Sin estado de pago";
+}
+
 export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshRequest = 0, user }: Props) {
   const [message, setMessage] = useState("");
   const [pinDeliveryNote, setPinDeliveryNote] = useState<PinDeliveryNote | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [usersLoaded, setUsersLoaded] = useState(false);
-  const [userSearchTerm, setUserSearchTerm] = useState("");
-  const [userStatusFilter, setUserStatusFilter] = useState<UserStatusFilter>("all");
+  const [ownerDirectorySearchTerm, setOwnerDirectorySearchTerm] = useState("");
+  const [ownerRoomStatusFilter, setOwnerRoomStatusFilter] = useState<OwnerRoomStatusFilter>("all");
   const [adminView, setAdminView] = useState<AdminView>(initialView);
   const [selectedPasswordUserId, setSelectedPasswordUserId] = useState("");
   const [adminRooms, setAdminRooms] = useState<AdminRoom[]>([]);
@@ -216,20 +231,22 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
   const publishedMatches = matches.filter((match) => match.isPublished).length;
   const resultLoadedMatches = matches.filter((match) => match.homeScore !== null && match.awayScore !== null).length;
   const activeUsers = users.filter((user) => user.isActive).length;
-  const normalizedUserSearchTerm = userSearchTerm.trim().toLowerCase();
-  const normalizedUserSearchDigits = userSearchTerm.replace(/\D/g, "");
-  const visibleUsers = users.filter((user) => {
-    const searchableText = `${user.name} ${user.phone}`.toLowerCase();
-    const phoneDigits = user.phone.replace(/\D/g, "");
+  const normalizedOwnerSearchTerm = ownerDirectorySearchTerm.trim().toLowerCase();
+  const normalizedOwnerSearchDigits = ownerDirectorySearchTerm.replace(/\D/g, "");
+  const visibleOwnerRooms = adminRooms.filter((room) => {
+    const searchableText = `${room.name} ${room.owner.name} ${room.owner.phone}`.toLowerCase();
+    const ownerPhoneDigits = room.owner.phone.replace(/\D/g, "");
+    const isActivated = isAdminRoomActivated(room);
+    const isClosed = ["CLOSED", "SUSPENDED", "EXPIRED"].includes(room.status);
     const matchesSearch =
-      !normalizedUserSearchTerm ||
-      searchableText.includes(normalizedUserSearchTerm) ||
-      (Boolean(normalizedUserSearchDigits) && phoneDigits.includes(normalizedUserSearchDigits));
+      !normalizedOwnerSearchTerm ||
+      searchableText.includes(normalizedOwnerSearchTerm) ||
+      (Boolean(normalizedOwnerSearchDigits) && ownerPhoneDigits.includes(normalizedOwnerSearchDigits));
     const matchesStatus =
-      userStatusFilter === "all" ||
-      (userStatusFilter === "active" && user.isActive) ||
-      (userStatusFilter === "inactive" && !user.isActive) ||
-      (userStatusFilter === "admin" && user.role === "ADMIN");
+      ownerRoomStatusFilter === "all" ||
+      (ownerRoomStatusFilter === "active" && room.status === "ACTIVE" && isActivated) ||
+      (ownerRoomStatusFilter === "pending" && !isActivated) ||
+      (ownerRoomStatusFilter === "closed" && isClosed);
 
     return matchesSearch && matchesStatus;
   });
@@ -390,7 +407,8 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
     }
 
     if (adminView === "users") {
-      await loadUsers();
+      await loadRooms();
+      if (usersLoaded) await loadUsers();
       return;
     }
 
@@ -1342,7 +1360,8 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
           className={`tab ${adminView === "users" ? "active" : ""}`}
           onClick={async () => {
             setAdminView("users");
-            await loadUsers();
+            await loadRooms();
+            if (usersLoaded) await loadUsers();
           }}
           type="button"
         >
@@ -2043,103 +2062,81 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
             <section className="form users-admin-list">
               <div className="section-title">
                 <div>
-                  <h3>Base de usuarios</h3>
-                  <p className="muted">Consulta WhatsApp, picks guardados, puntos y estado de cada usuario.</p>
+                  <h3>Directorio de dueños de sala</h3>
+                  <p className="muted">Ubica al responsable de cada sala y entra a administrarla sin duplicar participantes.</p>
                 </div>
-                <button className="button secondary" type="button" onClick={loadUsers}>
-                  {usersLoaded ? "Actualizar usuarios" : "Cargar usuarios"}
+                <button className="button secondary" type="button" onClick={loadRooms}>
+                  Actualizar directorio
                 </button>
               </div>
-              {usersLoaded ? (
-                <>
-                  <div className="admin-user-controls" aria-label="Filtros de usuarios">
-                    <div className="form-row">
-                      <label htmlFor="adminUserSearch">Buscar usuario</label>
-                      <input
-                        id="adminUserSearch"
-                        onChange={(event) => setUserSearchTerm(event.target.value)}
-                        placeholder="Buscar por nombre o WhatsApp"
-                        type="search"
-                        value={userSearchTerm}
-                      />
-                    </div>
-                    <div className="form-row">
-                      <label htmlFor="adminUserStatusFilter">Estado</label>
-                      <select
-                        id="adminUserStatusFilter"
-                        onChange={(event) => setUserStatusFilter(event.target.value as UserStatusFilter)}
-                        value={userStatusFilter}
-                      >
-                        <option value="all">Todos</option>
-                        <option value="active">Activos</option>
-                        <option value="inactive">Inactivos</option>
-                        <option value="admin">Admin global</option>
-                      </select>
-                    </div>
-                    <span className="admin-user-count">
-                      Mostrando {visibleUsers.length} de {users.length} usuarios
-                    </span>
-                  </div>
-                  <div className="admin-user-list">
-                    {visibleUsers.map((user) => (
-                      <article className={`admin-user-card ${user.isActive ? "active" : "inactive"}`} key={user.id}>
-                        <div>
-                          <strong>{user.name}</strong>
-                          <span>WhatsApp: {user.phone}</span>
-                        </div>
-                        <div className="admin-user-stats">
-                          <span>
-                            <strong>{user.picksCount}</strong>
-                            Picks
-                          </span>
-                          <span>
-                            <strong>{user.points}</strong>
-                            Puntos
-                          </span>
-                        </div>
-                        <div className="admin-user-badges">
-                          <span>{user.isActive ? "Activo" : "Desactivado"}</span>
-                          {user.role === "ADMIN" ? <span>Admin</span> : null}
-                        </div>
-                        <div className="admin-user-actions">
-                          <button
-                            className="button secondary"
-                            disabled={user.isActive}
-                            onClick={() => updateUserStatus(user.id, true)}
-                            type="button"
-                          >
-                            Activar
-                          </button>
-                          <button
-                            className="button danger"
-                            disabled={!user.isActive}
-                            onClick={() => updateUserStatus(user.id, false)}
-                            type="button"
-                          >
-                            Desactivar
-                          </button>
-                          <button
-                            className="button secondary"
-                            onClick={() => {
-                              setSelectedPasswordUserId(user.id);
-                              setMessage(`Listo para cambiar el PIN de ${user.name}`);
-                            }}
-                            type="button"
-                          >
-                            Cambiar PIN
-                          </button>
-                          <button className="button danger" onClick={() => deleteUserById(user.id)} type="button">
-                            Eliminar
-                          </button>
-                        </div>
-                      </article>
-                    ))}
-                    {!visibleUsers.length ? <div className="empty">No hay usuarios con esos filtros.</div> : null}
-                  </div>
-                </>
-              ) : (
-                <div className="empty">Carga los usuarios para activar pagos o desactivar accesos.</div>
-              )}
+              <div className="admin-owner-controls" aria-label="Filtros de dueños de sala">
+                <div className="form-row">
+                  <label htmlFor="adminOwnerSearch">Buscar sala o dueño</label>
+                  <input
+                    id="adminOwnerSearch"
+                    onChange={(event) => setOwnerDirectorySearchTerm(event.target.value)}
+                    placeholder="Buscar por sala, dueño o WhatsApp"
+                    type="search"
+                    value={ownerDirectorySearchTerm}
+                  />
+                </div>
+                <div className="form-row">
+                  <label htmlFor="adminOwnerRoomStatusFilter">Estado de sala</label>
+                  <select
+                    id="adminOwnerRoomStatusFilter"
+                    onChange={(event) => setOwnerRoomStatusFilter(event.target.value as OwnerRoomStatusFilter)}
+                    value={ownerRoomStatusFilter}
+                  >
+                    <option value="all">Todas</option>
+                    <option value="active">Activas</option>
+                    <option value="pending">Pendientes de pago</option>
+                    <option value="closed">Cerradas o pausadas</option>
+                  </select>
+                </div>
+                <span className="admin-owner-count">
+                  Mostrando {visibleOwnerRooms.length} de {adminRooms.length} salas
+                </span>
+              </div>
+              <div className="admin-user-list admin-owner-directory-list">
+                {visibleOwnerRooms.map((room) => {
+                  const memberCount = room.memberships.filter((membership) => membership.user.role !== "ADMIN").length;
+                  const isActivated = isAdminRoomActivated(room);
+
+                  return (
+                    <article className={`admin-user-card admin-owner-room-card ${isActivated ? "active" : "inactive"}`} key={room.id}>
+                      <div>
+                        <strong>{room.name}</strong>
+                        <span>Código: {room.inviteCode}</span>
+                      </div>
+                      <div>
+                        <strong>{room.owner.name}</strong>
+                        <span>WhatsApp: {room.owner.phone}</span>
+                      </div>
+                      <div className="admin-user-stats">
+                        <span>
+                          <strong>{memberCount}</strong>
+                          Participantes
+                        </span>
+                        <span>
+                          <strong>{room.maxParticipants}</strong>
+                          Cupo
+                        </span>
+                      </div>
+                      <div className="admin-user-badges">
+                        <span>{roomStatusLabel(room.status)}</span>
+                        <span>{adminRoomPaymentLabel(room)}</span>
+                        {room.plan ? <span>{room.plan.name}</span> : null}
+                      </div>
+                      <div className="admin-user-actions">
+                        <button className="button primary" onClick={() => void selectAdminRoom(room.id)} type="button">
+                          Administrar sala
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
+                {!visibleOwnerRooms.length ? <div className="empty">No hay salas con esos filtros.</div> : null}
+              </div>
             </section>
             <form className="form" onSubmit={deletePick}>
               <h3>Eliminar pick</h3>
