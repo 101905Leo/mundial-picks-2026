@@ -3539,6 +3539,10 @@ button {
   font-size: 1.02rem;
 }
 
+.public-landing-pin-access {
+  padding: 0;
+}
+
 .public-landing-new-user {
   align-items: center;
   background: rgba(255, 255, 255, 0.055);
@@ -3752,6 +3756,76 @@ button {
     align-self: center;
     grid-area: access;
     padding: 24px;
+  }
+
+  .public-landing-pin-access {
+    overflow: hidden;
+    padding: 0;
+  }
+
+  .public-landing-pin-access .quick-pin-panel {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    gap: 14px;
+    min-height: auto;
+    padding: 22px;
+  }
+
+  .public-landing-pin-access .quick-pin-back {
+    font-size: 1.3rem;
+    min-height: 34px;
+  }
+
+  .public-landing-pin-access .quick-pin-header h2 {
+    font-size: clamp(1.4rem, 2vw, 1.85rem);
+  }
+
+  .public-landing-pin-access .quick-pin-form {
+    gap: 10px;
+  }
+
+  .public-landing-pin-access .quick-pin-boxes {
+    max-width: 220px;
+  }
+
+  .public-landing-pin-access .quick-pin-helper {
+    font-size: 0.86rem;
+  }
+
+  .public-landing-pin-access .quick-pin-promo {
+    padding: 9px 11px;
+  }
+
+  .public-landing-pin-access .quick-pin-keypad {
+    gap: 0 12px;
+    margin-top: 0;
+    max-width: 250px;
+  }
+
+  .public-landing-pin-access .quick-pin-keypad button {
+    font-size: 1.45rem;
+    height: 46px;
+    min-width: 46px;
+  }
+
+  .public-landing-pin-access .quick-pin-keypad-spacer {
+    min-height: 46px;
+  }
+
+  .public-landing-pin-access .quick-pin-keypad .quick-pin-delete {
+    font-size: 1.2rem;
+    height: 42px;
+    min-width: 42px;
+  }
+
+  .public-landing-pin-access .quick-pin-submit {
+    min-height: 46px;
+  }
+
+  .public-landing-pin-access .quick-pin-link {
+    min-height: 34px;
   }
 
   .public-landing-new-user {

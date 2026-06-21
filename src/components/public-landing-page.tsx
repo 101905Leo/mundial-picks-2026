@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { AuthPanel } from "@/components/auth-panel";
 import { salesWhatsAppUrl } from "@/lib/room-plan-catalog";
 
 const benefits = [
@@ -44,6 +45,7 @@ export function PublicLandingPage() {
   const router = useRouter();
   const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
+  const [desktopQuickPhone, setDesktopQuickPhone] = useState("");
 
   function continueToLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -56,6 +58,12 @@ export function PublicLandingPage() {
 
     if (!/^3\d{9}$/.test(normalizedPhone)) {
       setMessage("Escribe un WhatsApp colombiano de 10 dígitos. Ejemplo: 300 000 0000.");
+      return;
+    }
+
+    if (window.matchMedia("(min-width: 960px)").matches) {
+      setDesktopQuickPhone(normalizedPhone);
+      setMessage("");
       return;
     }
 
@@ -88,35 +96,49 @@ export function PublicLandingPage() {
           <h1 id="public-landing-title">Predice partidos, compite con tu grupo y sigue el ranking en vivo</h1>
         </div>
 
-        <form className="public-landing-access" aria-label="Acceso rápido" onSubmit={continueToLogin}>
-          <label className="public-landing-phone-label" htmlFor="public-landing-phone">
-            WhatsApp
-          </label>
-          <div className="public-landing-phone-field">
-            <span>+57</span>
-            <input
-              autoComplete="tel-national"
-              id="public-landing-phone"
-              inputMode="tel"
-              maxLength={18}
-              onChange={(event) => {
-                setPhone(event.target.value);
-                setMessage("");
+        {desktopQuickPhone ? (
+          <section className="public-landing-access public-landing-pin-access" aria-label="Acceso con PIN">
+            <AuthPanel
+              initialMode="login"
+              initialPhone={desktopQuickPhone}
+              key={desktopQuickPhone}
+              onAuth={() => {
+                router.push("/mi-sala");
               }}
-              placeholder="300 000 0000"
-              type="tel"
-              value={phone}
             />
-          </div>
-          <p>Luego completas tu PIN para entrar con seguridad.</p>
-          {message ? <div className="public-landing-message">{message}</div> : null}
+          </section>
+        ) : (
+          <form className="public-landing-access" aria-label="Acceso rápido" onSubmit={continueToLogin}>
+            <label className="public-landing-phone-label" htmlFor="public-landing-phone">
+              WhatsApp
+            </label>
+            <div className="public-landing-phone-field">
+              <span>+57</span>
+              <input
+                autoComplete="tel-national"
+                id="public-landing-phone"
+                inputMode="tel"
+                maxLength={18}
+                onChange={(event) => {
+                  setPhone(event.target.value);
+                  setMessage("");
+                  setDesktopQuickPhone("");
+                }}
+                placeholder="300 000 0000"
+                type="tel"
+                value={phone}
+              />
+            </div>
+            <p>Luego completas tu PIN para entrar con seguridad.</p>
+            {message ? <div className="public-landing-message">{message}</div> : null}
 
-          <div className="public-landing-actions">
-            <button className="button primary public-landing-main-action" type="submit">
-              Continuar
-            </button>
-          </div>
-        </form>
+            <div className="public-landing-actions">
+              <button className="button primary public-landing-main-action" type="submit">
+                Continuar
+              </button>
+            </div>
+          </form>
+        )}
 
         <section className="public-landing-new-user" aria-label="Registro de participante">
           <span>¿Es tu primera vez?</span>
