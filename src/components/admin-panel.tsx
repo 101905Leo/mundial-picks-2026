@@ -2071,11 +2071,11 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                           className="button secondary"
                           onClick={() => {
                             setSelectedPasswordUserId(user.id);
-                            setMessage(`Listo para cambiar la contrasena de ${user.name}`);
+                            setMessage(`Listo para cambiar el PIN de ${user.name}`);
                           }}
                           type="button"
                         >
-                          Cambiar clave
+                          Cambiar PIN
                         </button>
                         <button className="button danger" onClick={() => deleteUserById(user.id)} type="button">
                           Eliminar
@@ -2406,166 +2406,184 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
                             </div>
                             <details className="admin-room-accordion">
                               <summary>Acciones del participante seleccionado</summary>
-                              <div className="admin-room-user-forms">
-                                <form className="room-user-mini-form" onSubmit={editUser}>
-                                  <input name="editUserId" type="hidden" value={selectedRoomParticipant.id} />
-                                  <h4>Editar datos</h4>
-                                  <div className="inline-form">
-                                    <div className="form-row">
-                                      <label htmlFor="roomUserEditName">Nombre o apodo</label>
-                                      <input
-                                        id="roomUserEditName"
-                                        key={`${selectedRoomParticipant.id}-name`}
-                                        name="editUserName"
-                                        defaultValue={selectedRoomParticipant.name}
-                                        minLength={2}
-                                        required
-                                      />
-                                    </div>
-                                    <div className="form-row">
-                                      <label htmlFor="roomUserEditPhone">WhatsApp</label>
-                                      <input
-                                        id="roomUserEditPhone"
-                                        key={`${selectedRoomParticipant.id}-phone`}
-                                        name="editUserPhone"
-                                        defaultValue={selectedRoomParticipant.phone}
-                                        inputMode="tel"
-                                        required
-                                      />
-                                    </div>
+                              <div className="admin-room-user-groups">
+                                <section className="admin-room-user-action-group is-global">
+                                  <div className="admin-room-user-action-heading">
+                                    <span className="market-kicker">Acciones globales del usuario</span>
+                                    <p>Estos cambios afectan el acceso del usuario completo, no solo esta sala.</p>
                                   </div>
-                                  <button className="button primary" type="submit">Guardar datos</button>
-                                </form>
+                                  <div className="admin-room-user-forms">
+                                    <form className="room-user-mini-form" onSubmit={editUser}>
+                                      <input name="editUserId" type="hidden" value={selectedRoomParticipant.id} />
+                                      <h4>Editar datos globales</h4>
+                                      <div className="inline-form">
+                                        <div className="form-row">
+                                          <label htmlFor="roomUserEditName">Nombre o apodo</label>
+                                          <input
+                                            id="roomUserEditName"
+                                            key={`${selectedRoomParticipant.id}-name`}
+                                            name="editUserName"
+                                            defaultValue={selectedRoomParticipant.name}
+                                            minLength={2}
+                                            required
+                                          />
+                                        </div>
+                                        <div className="form-row">
+                                          <label htmlFor="roomUserEditPhone">WhatsApp</label>
+                                          <input
+                                            id="roomUserEditPhone"
+                                            key={`${selectedRoomParticipant.id}-phone`}
+                                            name="editUserPhone"
+                                            defaultValue={selectedRoomParticipant.phone}
+                                            inputMode="tel"
+                                            required
+                                          />
+                                        </div>
+                                      </div>
+                                      <button className="button primary" type="submit">Guardar datos</button>
+                                    </form>
 
-                                <form className="room-user-mini-form" onSubmit={resetUserPassword}>
-                                  <input name="passwordUserId" type="hidden" value={selectedRoomParticipant.id} />
-                                  <h4>Asignar nuevo PIN</h4>
-                                  <div className="form-row">
-                                    <label htmlFor="roomUserNewPassword">Nuevo PIN de 4 números</label>
-                                    <input
-                                      id="roomUserNewPassword"
-                                      inputMode="numeric"
-                                      maxLength={4}
-                                      name="userNewPassword"
-                                      pattern="\d{4}"
-                                      required
-                                      title="El PIN debe tener exactamente 4 números"
-                                      type="password"
-                                    />
+                                    <form className="room-user-mini-form" onSubmit={resetUserPassword}>
+                                      <input name="passwordUserId" type="hidden" value={selectedRoomParticipant.id} />
+                                      <h4>Asignar nuevo PIN</h4>
+                                      <div className="form-row">
+                                        <label htmlFor="roomUserNewPassword">Nuevo PIN de 4 números</label>
+                                        <input
+                                          id="roomUserNewPassword"
+                                          inputMode="numeric"
+                                          maxLength={4}
+                                          name="userNewPassword"
+                                          pattern="\d{4}"
+                                          required
+                                          title="El PIN debe tener exactamente 4 números"
+                                          type="password"
+                                        />
+                                      </div>
+                                      <button className="button primary" type="submit">Guardar PIN</button>
+                                    </form>
                                   </div>
-                                  <button className="button primary" type="submit">Guardar PIN</button>
-                                </form>
+                                  <div className="admin-user-actions admin-user-actions-start">
+                                    <button
+                                      className="button secondary"
+                                      disabled={selectedRoomParticipant.isActive}
+                                      onClick={() => updateSelectedRoomParticipantStatus(true)}
+                                      type="button"
+                                    >
+                                      Activar usuario global
+                                    </button>
+                                    <button
+                                      className="button danger"
+                                      disabled={!selectedRoomParticipant.isActive}
+                                      onClick={() => updateSelectedRoomParticipantStatus(false)}
+                                      type="button"
+                                    >
+                                      Desactivar usuario global
+                                    </button>
+                                  </div>
+                                </section>
 
-                                <form className="room-user-mini-form" onSubmit={saveAdminPick}>
-                                  <input name="adminPickUserId" type="hidden" value={selectedRoomParticipant.id} />
-                                  <input name="adminPickLeagueId" type="hidden" value={selectedRoom.id} />
-                                  <h4>Crear o editar pick en esta sala</h4>
-                                  <div className="form-row">
-                                    <label htmlFor="roomUserPickMatch">Partido</label>
-                                    <select id="roomUserPickMatch" name="adminPickMatchId" required>
-                                      <option value="">Selecciona partido</option>
-                                      {roomDashboard.matches.map((match) => (
-                                        <option key={match.id} value={match.id}>
-                                          {formatAdminMatchOption(match)}
-                                        </option>
-                                      ))}
-                                    </select>
+                                <section className="admin-room-user-action-group is-room">
+                                  <div className="admin-room-user-action-heading">
+                                    <span className="market-kicker">Acciones dentro de esta sala</span>
+                                    <p>Estos cambios aplican al rol, participación y picks de la sala seleccionada.</p>
                                   </div>
-                                  <div className="score-form">
-                                    <div className="form-row">
-                                      <label htmlFor="roomUserPickHome">Local</label>
-                                      <input id="roomUserPickHome" name="adminPickHomeScore" type="number" min={0} required />
-                                    </div>
-                                    <div className="form-row">
-                                      <label htmlFor="roomUserPickAway">Visitante</label>
-                                      <input id="roomUserPickAway" name="adminPickAwayScore" type="number" min={0} required />
-                                    </div>
+                                  <div className="admin-user-actions admin-user-actions-start">
+                                    <button
+                                      className="button secondary"
+                                      disabled={selectedRoomParticipant.role === "ADMIN"}
+                                      onClick={() => updateSelectedRoomParticipantRole("ADMIN")}
+                                      type="button"
+                                    >
+                                      Hacer admin de sala
+                                    </button>
+                                    <button
+                                      className="button secondary"
+                                      disabled={selectedRoomParticipant.role === "MEMBER"}
+                                      onClick={() => updateSelectedRoomParticipantRole("MEMBER")}
+                                      type="button"
+                                    >
+                                      Dejar participante
+                                    </button>
+                                    <button className="button danger" onClick={removeSelectedRoomParticipant} type="button">
+                                      Retirar de sala
+                                    </button>
                                   </div>
-                                  <button className="button primary" disabled={adminPickSaving} type="submit">
-                                    {adminPickSaving ? "Guardando..." : "Guardar pick en sala"}
-                                  </button>
-                                </form>
+                                  <div className="admin-room-user-forms">
+                                    <form className="room-user-mini-form" onSubmit={saveAdminPick}>
+                                      <input name="adminPickUserId" type="hidden" value={selectedRoomParticipant.id} />
+                                      <input name="adminPickLeagueId" type="hidden" value={selectedRoom.id} />
+                                      <h4>Crear o editar pick en esta sala</h4>
+                                      <div className="form-row">
+                                        <label htmlFor="roomUserPickMatch">Partido</label>
+                                        <select id="roomUserPickMatch" name="adminPickMatchId" required>
+                                          <option value="">Selecciona partido</option>
+                                          {roomDashboard.matches.map((match) => (
+                                            <option key={match.id} value={match.id}>
+                                              {formatAdminMatchOption(match)}
+                                            </option>
+                                          ))}
+                                        </select>
+                                      </div>
+                                      <div className="score-form">
+                                        <div className="form-row">
+                                          <label htmlFor="roomUserPickHome">Local</label>
+                                          <input id="roomUserPickHome" name="adminPickHomeScore" type="number" min={0} required />
+                                        </div>
+                                        <div className="form-row">
+                                          <label htmlFor="roomUserPickAway">Visitante</label>
+                                          <input id="roomUserPickAway" name="adminPickAwayScore" type="number" min={0} required />
+                                        </div>
+                                      </div>
+                                      <button className="button primary" disabled={adminPickSaving} type="submit">
+                                        {adminPickSaving ? "Guardando..." : "Guardar pick en sala"}
+                                      </button>
+                                    </form>
 
-                                <form className="room-user-mini-form" onSubmit={saveAdminPickPoints}>
-                                  <input name="adminPointsUserId" type="hidden" value={selectedRoomParticipant.id} />
-                                  <input name="adminPointsLeagueId" type="hidden" value={selectedRoom.id} />
-                                  <h4>Ajustar puntos de un pick</h4>
-                                  <div className="inline-form">
-                                    <div className="form-row">
-                                      <label htmlFor="roomUserPointsMatch">Partido</label>
-                                      <select id="roomUserPointsMatch" name="adminPointsMatchId" required>
-                                        <option value="">Selecciona pick</option>
-                                        {selectedRoomUserPredictions.map((prediction) => (
-                                          <option key={prediction.id} value={prediction.match.id}>
-                                            {prediction.match.homeTeam} vs {prediction.match.awayTeam} · actual {prediction.points} pts
-                                          </option>
-                                        ))}
-                                      </select>
-                                    </div>
-                                    <div className="form-row">
-                                      <label htmlFor="roomUserManualPoints">Puntos</label>
-                                      <input id="roomUserManualPoints" name="adminManualPoints" type="number" min={0} max={100} required />
-                                    </div>
-                                  </div>
-                                  <button className="button primary" type="submit">Guardar puntos</button>
-                                </form>
+                                    <form className="room-user-mini-form" onSubmit={saveAdminPickPoints}>
+                                      <input name="adminPointsUserId" type="hidden" value={selectedRoomParticipant.id} />
+                                      <input name="adminPointsLeagueId" type="hidden" value={selectedRoom.id} />
+                                      <h4>Ajustar puntos de esta sala</h4>
+                                      <div className="inline-form">
+                                        <div className="form-row">
+                                          <label htmlFor="roomUserPointsMatch">Partido</label>
+                                          <select id="roomUserPointsMatch" name="adminPointsMatchId" required>
+                                            <option value="">Selecciona pick</option>
+                                            {selectedRoomUserPredictions.map((prediction) => (
+                                              <option key={prediction.id} value={prediction.match.id}>
+                                                {prediction.match.homeTeam} vs {prediction.match.awayTeam} · actual {prediction.points} pts
+                                              </option>
+                                            ))}
+                                          </select>
+                                        </div>
+                                        <div className="form-row">
+                                          <label htmlFor="roomUserManualPoints">Puntos</label>
+                                          <input id="roomUserManualPoints" name="adminManualPoints" type="number" min={0} max={100} required />
+                                        </div>
+                                      </div>
+                                      <button className="button primary" type="submit">Guardar puntos</button>
+                                    </form>
 
-                                <form className="room-user-mini-form" onSubmit={deletePick}>
-                                  <input name="pickUserId" type="hidden" value={selectedRoomParticipant.id} />
-                                  <input name="pickLeagueId" type="hidden" value={selectedRoom.id} />
-                                  <h4>Eliminar pick de esta sala</h4>
-                                  <div className="form-row">
-                                    <label htmlFor="roomUserDeletePick">Pick</label>
-                                    <select id="roomUserDeletePick" name="pickMatchId" required>
-                                      <option value="">Selecciona pick</option>
-                                      {selectedRoomUserPredictions.map((prediction) => (
-                                        <option key={prediction.id} value={prediction.match.id}>
-                                          {prediction.match.homeTeam} vs {prediction.match.awayTeam} · {prediction.homeScore}-{prediction.awayScore}
-                                        </option>
-                                      ))}
-                                    </select>
+                                    <form className="room-user-mini-form" onSubmit={deletePick}>
+                                      <input name="pickUserId" type="hidden" value={selectedRoomParticipant.id} />
+                                      <input name="pickLeagueId" type="hidden" value={selectedRoom.id} />
+                                      <h4>Eliminar pick de esta sala</h4>
+                                      <div className="form-row">
+                                        <label htmlFor="roomUserDeletePick">Pick</label>
+                                        <select id="roomUserDeletePick" name="pickMatchId" required>
+                                          <option value="">Selecciona pick</option>
+                                          {selectedRoomUserPredictions.map((prediction) => (
+                                            <option key={prediction.id} value={prediction.match.id}>
+                                              {prediction.match.homeTeam} vs {prediction.match.awayTeam} · {prediction.homeScore}-{prediction.awayScore}
+                                            </option>
+                                          ))}
+                                        </select>
+                                      </div>
+                                      <button className="button danger" type="submit">Eliminar pick</button>
+                                    </form>
                                   </div>
-                                  <button className="button danger" type="submit">Eliminar pick</button>
-                                </form>
+                                </section>
                               </div>
                             </details>
-                            <div className="admin-user-actions">
-                              <button
-                                className="button secondary"
-                                disabled={selectedRoomParticipant.isActive}
-                                onClick={() => updateSelectedRoomParticipantStatus(true)}
-                                type="button"
-                              >
-                                Activar usuario
-                              </button>
-                              <button
-                                className="button danger"
-                                disabled={!selectedRoomParticipant.isActive}
-                                onClick={() => updateSelectedRoomParticipantStatus(false)}
-                                type="button"
-                              >
-                                Desactivar usuario
-                              </button>
-                              <button
-                                className="button secondary"
-                                disabled={selectedRoomParticipant.role === "ADMIN"}
-                                onClick={() => updateSelectedRoomParticipantRole("ADMIN")}
-                                type="button"
-                              >
-                                Hacer admin de sala
-                              </button>
-                              <button
-                                className="button secondary"
-                                disabled={selectedRoomParticipant.role === "MEMBER"}
-                                onClick={() => updateSelectedRoomParticipantRole("MEMBER")}
-                                type="button"
-                              >
-                                Dejar participante
-                              </button>
-                              <button className="button danger" onClick={removeSelectedRoomParticipant} type="button">
-                                Retirar de sala
-                              </button>
-                            </div>
                             <div className="admin-room-section">
                               <h3>Picks de este usuario en la sala</h3>
                               <div className="admin-room-list compact">

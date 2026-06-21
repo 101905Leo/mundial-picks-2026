@@ -7668,6 +7668,40 @@ button {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.admin-room-user-groups {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-room-user-action-group {
+  background: rgba(5, 9, 18, 0.54);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+
+.admin-room-user-action-group.is-global {
+  border-color: rgba(244, 189, 79, 0.18);
+}
+
+.admin-room-user-action-group.is-room {
+  border-color: rgba(93, 220, 255, 0.16);
+}
+
+.admin-room-user-action-heading {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-room-user-action-heading p {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 750;
+  margin: 0;
+}
+
 .room-user-mini-form {
   background: rgba(12, 17, 28, 0.78);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -7873,6 +7907,10 @@ button {
   flex-wrap: wrap;
   gap: 8px;
   justify-content: flex-end;
+}
+
+.admin-user-actions-start {
+  justify-content: flex-start;
 }
 
 .admin-user-actions .button:disabled {
