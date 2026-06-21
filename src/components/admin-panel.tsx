@@ -2048,7 +2048,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
               </div>
             </section>
             <section className="admin-users-group admin-users-advanced" aria-labelledby="admin-advanced-picks-title">
-              <details className="admin-users-details" open>
+              <details className="admin-users-details">
                 <summary>
                   <span>
                     <span className="market-kicker">Avanzado</span>
@@ -2161,68 +2161,72 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
               </details>
             </section>
             <section className="admin-users-group admin-users-danger" aria-labelledby="admin-danger-zone-title">
-              <div className="admin-users-group-heading">
-                <span className="market-kicker">Zona peligrosa</span>
-                <h3 id="admin-danger-zone-title">Eliminaciones</h3>
-                <p className="muted">Acciones irreversibles o delicadas. Las confirmaciones existentes se mantienen.</p>
-              </div>
-              <div className="admin-users-group-grid">
-                <form className="form" onSubmit={deletePick}>
-                  <h3>Eliminar pick</h3>
-                  <div className="form-row">
-                    <label htmlFor="pickUserId">Usuario</label>
-                    <select id="pickUserId" name="pickUserId" onFocus={() => !usersLoaded && loadUsers()} required>
-                      <option value="">Selecciona usuario</option>
-                      {users.map((user) => (
-                        <option key={user.id} value={user.id}>
-                          {user.name} - {user.phone}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="form-row">
-                    <label htmlFor="pickMatchId">Partido</label>
-                    <select id="pickMatchId" name="pickMatchId" required>
-                      <option value="">Selecciona partido</option>
-                      {matches.map((match) => (
-                        <option key={match.id} value={match.id}>
-                          {match.homeTeam} vs {match.awayTeam} {match.isPublished ? "" : "(oculto)"}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <button className="button danger" type="submit">
-                    Eliminar pick
-                  </button>
-                  {!usersLoaded ? (
-                    <button className="button secondary" type="button" onClick={loadUsers}>
-                      Cargar usuarios
+              <details className="admin-users-details">
+                <summary>
+                  <span>
+                    <span className="market-kicker">Zona peligrosa</span>
+                    <strong id="admin-danger-zone-title">Eliminaciones</strong>
+                  </span>
+                  <span className="muted">Acciones irreversibles o delicadas</span>
+                </summary>
+                <div className="admin-users-group-grid">
+                  <form className="form" onSubmit={deletePick}>
+                    <h3>Eliminar pick</h3>
+                    <div className="form-row">
+                      <label htmlFor="pickUserId">Usuario</label>
+                      <select id="pickUserId" name="pickUserId" onFocus={() => !usersLoaded && loadUsers()} required>
+                        <option value="">Selecciona usuario</option>
+                        {users.map((user) => (
+                          <option key={user.id} value={user.id}>
+                            {user.name} - {user.phone}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-row">
+                      <label htmlFor="pickMatchId">Partido</label>
+                      <select id="pickMatchId" name="pickMatchId" required>
+                        <option value="">Selecciona partido</option>
+                        {matches.map((match) => (
+                          <option key={match.id} value={match.id}>
+                            {match.homeTeam} vs {match.awayTeam} {match.isPublished ? "" : "(oculto)"}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <button className="button danger" type="submit">
+                      Eliminar pick
                     </button>
-                  ) : null}
-                </form>
-                <form className="form" onSubmit={deleteUser}>
-                  <h3>Eliminar usuario</h3>
-                  <div className="form-row">
-                    <label htmlFor="deleteUserId">Usuario</label>
-                    <select id="deleteUserId" name="deleteUserId" onFocus={() => !usersLoaded && loadUsers()} required>
-                      <option value="">Selecciona usuario</option>
-                      {users.map((user) => (
-                        <option key={user.id} value={user.id}>
-                          {user.name} - {user.phone} - {user.role}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <button className="button danger" type="submit">
-                    Eliminar usuario
-                  </button>
-                  {!usersLoaded ? (
-                    <button className="button secondary" type="button" onClick={loadUsers}>
-                      Cargar usuarios
+                    {!usersLoaded ? (
+                      <button className="button secondary" type="button" onClick={loadUsers}>
+                        Cargar usuarios
+                      </button>
+                    ) : null}
+                  </form>
+                  <form className="form" onSubmit={deleteUser}>
+                    <h3>Eliminar usuario</h3>
+                    <div className="form-row">
+                      <label htmlFor="deleteUserId">Usuario</label>
+                      <select id="deleteUserId" name="deleteUserId" onFocus={() => !usersLoaded && loadUsers()} required>
+                        <option value="">Selecciona usuario</option>
+                        {users.map((user) => (
+                          <option key={user.id} value={user.id}>
+                            {user.name} - {user.phone} - {user.role}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <button className="button danger" type="submit">
+                      Eliminar usuario
                     </button>
-                  ) : null}
-                </form>
-              </div>
+                    {!usersLoaded ? (
+                      <button className="button secondary" type="button" onClick={loadUsers}>
+                        Cargar usuarios
+                      </button>
+                    ) : null}
+                  </form>
+                </div>
+              </details>
             </section>
           </>
         ) : null}
