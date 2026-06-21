@@ -33,6 +33,7 @@ export const registerSchema = z.object({
   password: fourDigitPinSchema,
   name: z.string().trim().min(2).max(80),
   inviteCode: z.string().trim().max(16).optional(),
+  registrationPurpose: z.literal("CREATE_ROOM").optional(),
 });
 
 export const changePasswordSchema = z.object({

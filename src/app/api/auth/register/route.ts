@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     return Response.json({ error }, { status: 400 });
   }
 
-  if (!inviteCode) {
+  if (!inviteCode && parsed.data.registrationPurpose !== "CREATE_ROOM") {
     return Response.json({ error: "Necesitas el codigo de sala para registrarte" }, { status: 400 });
   }
 

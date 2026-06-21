@@ -4,6 +4,18 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { roomPlanCatalog, salesWhatsAppUrl, type RoomPlanCatalogItem } from "@/lib/room-plan-catalog";
 
+type CreatorSignupForm = {
+  name: string;
+  phone: string;
+  pin: string;
+};
+
+const emptyCreatorSignupForm: CreatorSignupForm = {
+  name: "",
+  phone: "",
+  pin: "",
+};
+
 function formatPrice(priceCop: number | null) {
   if (priceCop === null) return "Cotización";
   return new Intl.NumberFormat("es-CO", {
@@ -15,8 +27,24 @@ function formatPrice(priceCop: number | null) {
 
 export function PlansPage() {
   const [roomNames, setRoomNames] = useState<Record<string, string>>({});
+  const [creatorForms, setCreatorForms] = useState<Record<string, CreatorSignupForm>>({});
+  const [signupPlanSlug, setSignupPlanSlug] = useState<string | null>(null);
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+
+  function creatorForm(planSlug: string) {
+    return creatorForms[planSlug] ?? emptyCreatorSignupForm;
+  }
+
+  function updateCreatorForm(planSlug: string, field: keyof CreatorSignupForm, value: string) {
+    setCreatorForms((current) => ({
+      ...current,
+      [planSlug]: {
+        ...(current[planSlug] ?? emptyCreatorSignupForm),
+        [field]: value,
+      },
+    }));
+  }
 
   async function startRoomCheckout(event: FormEvent<HTMLFormElement>, plan: RoomPlanCatalogItem) {
     event.preventDefault();
@@ -32,8 +60,51 @@ export function PlansPage() {
     setMessage("Creando sala y preparando pago...");
 
     try {
+      if (signupPlanSlug === plan.slug) {
+        const signup = creatorForm(plan.slug);
+        const name = signup.name.trim();
+        const phone = signup.phone.trim();
+        const pin = signup.pin.trim();
+
+        if (name.length < 2) {
+          setMessage("Escribe tu nombre para crear la sala.");
+          return;
+        }
+
+        if (!phone) {
+          setMessage("Escribe tu WhatsApp para crear la sala.");
+          return;
+        }
+
+        if (!/^\d{4}$/.test(pin)) {
+          setMessage("El PIN debe tener exactamente 4 números.");
+          return;
+        }
+
+        const registerResponse = await fetch("/api/auth/register", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            phone,
+            password: pin,
+            registrationPurpose: "CREATE_ROOM",
+          }),
+        });
+        const registerData = await registerResponse.json().catch(() => ({}));
+
+        if (!registerResponse.ok) {
+          setMessage(registerData.error ?? "No se pudo registrar el creador de la sala.");
+          return;
+        }
+
+        setSignupPlanSlug(null);
+      }
+
       const response = await fetch("/api/leagues", {
         method: "POST",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: roomName,
@@ -43,7 +114,8 @@ export function PlansPage() {
       const data = await response.json().catch(() => ({}));
 
       if (response.status === 401) {
-        setMessage("Inicia sesión o regístrate antes de crear y pagar una sala.");
+        setSignupPlanSlug(plan.slug);
+        setMessage("Crea tu acceso aquí mismo para continuar con el pago de la sala.");
         return;
       }
 
@@ -102,6 +174,54 @@ export function PlansPage() {
             </ul>
             {plan.participantLimit ? (
               <form className="form" onSubmit={(event) => startRoomCheckout(event, plan)}>
+                {signupPlanSlug === plan.slug ? (
+                  <>
+                    <div className="notice">
+                      Crea tu acceso de administrador. Luego se abrirá Wompi/Nequi para activar la sala.
+                    </div>
+                    <div className="form-row">
+                      <label htmlFor={`creator-name-${plan.slug}`}>Tu nombre</label>
+                      <input
+                        id={`creator-name-${plan.slug}`}
+                        maxLength={80}
+                        minLength={2}
+                        onChange={(event) => updateCreatorForm(plan.slug, "name", event.target.value)}
+                        required
+                        value={creatorForm(plan.slug).name}
+                      />
+                    </div>
+                    <div className="form-row">
+                      <label htmlFor={`creator-phone-${plan.slug}`}>WhatsApp</label>
+                      <input
+                        autoComplete="tel-national"
+                        id={`creator-phone-${plan.slug}`}
+                        inputMode="tel"
+                        maxLength={18}
+                        onChange={(event) => updateCreatorForm(plan.slug, "phone", event.target.value)}
+                        placeholder="300 000 0000"
+                        required
+                        type="tel"
+                        value={creatorForm(plan.slug).phone}
+                      />
+                    </div>
+                    <div className="form-row">
+                      <label htmlFor={`creator-pin-${plan.slug}`}>PIN de 4 números</label>
+                      <input
+                        autoComplete="new-password"
+                        id={`creator-pin-${plan.slug}`}
+                        inputMode="numeric"
+                        maxLength={4}
+                        onChange={(event) =>
+                          updateCreatorForm(plan.slug, "pin", event.target.value.replace(/\D/g, "").slice(0, 4))
+                        }
+                        pattern="\d{4}"
+                        required
+                        type="password"
+                        value={creatorForm(plan.slug).pin}
+                      />
+                    </div>
+                  </>
+                ) : null}
                 <div className="form-row">
                   <label htmlFor={`room-name-${plan.slug}`}>Nombre de la sala</label>
                   <input
@@ -116,7 +236,11 @@ export function PlansPage() {
                   />
                 </div>
                 <button className="button primary" disabled={pendingPlan !== null} type="submit">
-                  {pendingPlan === plan.slug ? "Abriendo Wompi..." : "Crear y pagar con Wompi/Nequi"}
+                  {pendingPlan === plan.slug
+                    ? "Abriendo Wompi..."
+                    : signupPlanSlug === plan.slug
+                      ? "Registrarme y pagar con Wompi/Nequi"
+                      : "Crear y pagar con Wompi/Nequi"}
                 </button>
                 <a className="button secondary" href={salesWhatsAppUrl(plan.name)} rel="noreferrer" target="_blank">
                   Ayuda por WhatsApp
