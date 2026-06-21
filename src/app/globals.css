@@ -7792,6 +7792,39 @@ button {
   padding: 12px;
 }
 
+.admin-pin-delivery-card {
+  background:
+    linear-gradient(180deg, rgba(244, 189, 79, 0.12), rgba(23, 30, 45, 0.78));
+  border: 1px solid rgba(244, 189, 79, 0.26);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.admin-pin-delivery-heading {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-pin-delivery-heading strong {
+  color: #fff;
+  font-size: 1.05rem;
+}
+
+.admin-pin-delivery-heading span:last-child,
+.admin-pin-delivery-card p {
+  color: var(--muted);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.admin-pin-delivery-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .empty {
   background: rgba(23, 30, 45, 0.72);
   border: 1px dashed rgba(244, 189, 79, 0.24);

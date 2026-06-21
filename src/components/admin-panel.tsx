@@ -26,6 +26,13 @@ type Props = {
 
 type AdminView = "overview" | "matches" | "tools" | "users" | "rooms" | "security";
 
+type PinDeliveryNote = {
+  name: string;
+  phone: string;
+  pin: string;
+  message: string;
+};
+
 type AdminRoom = {
   id: string;
   name: string;
@@ -177,8 +184,13 @@ function formatAdminMatchOption(
   return `${match.homeTeam} vs ${match.awayTeam} — ${bogotaDateTimeLabel(match.startsAt)} — ${match.status}${hiddenLabel} — ${shortId}`;
 }
 
+function buildPinDeliveryMessage(name: string, phone: string, pin: string) {
+  return `Hola, ${name}. Tu acceso a Mundial Picks está listo. Entra con tu WhatsApp ${phone} y tu PIN: ${pin}. No compartas este PIN.`;
+}
+
 export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: Props) {
   const [message, setMessage] = useState("");
+  const [pinDeliveryNote, setPinDeliveryNote] = useState<PinDeliveryNote | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [usersLoaded, setUsersLoaded] = useState(false);
   const [adminView, setAdminView] = useState<AdminView>(initialView);
@@ -600,6 +612,17 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
     setMessage(`Invitación copiada para ${room.name}`);
   }
 
+  async function copyPinDeliveryMessage() {
+    if (!pinDeliveryNote) return;
+
+    try {
+      await navigator.clipboard.writeText(pinDeliveryNote.message);
+      setMessage(`Mensaje de PIN copiado para ${pinDeliveryNote.name}`);
+    } catch {
+      setMessage("No se pudo copiar el mensaje. Selecciona el texto y cópialo manualmente.");
+    }
+  }
+
   async function createMatch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
@@ -895,8 +918,10 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
   async function createUser(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
+    setPinDeliveryNote(null);
     const form = event.currentTarget;
     const formData = new FormData(form);
+    const initialPin = String(formData.get("newUserPassword") ?? "");
 
     const response = await fetch("/api/admin/users", {
       method: "POST",
@@ -915,6 +940,12 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
     }
 
     setMessage(`${data.user.name} fue creado desactivado con PIN inicial. Entrega ese PIN de forma segura.`);
+    setPinDeliveryNote({
+      name: data.user.name,
+      phone: data.user.phone,
+      pin: initialPin,
+      message: buildPinDeliveryMessage(data.user.name, data.user.phone, initialPin),
+    });
     form.reset();
     await loadUsers();
   }
@@ -922,10 +953,12 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
   async function resetUserPassword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
+    setPinDeliveryNote(null);
     const form = event.currentTarget;
     const formData = new FormData(form);
     const userId = String(formData.get("passwordUserId"));
     const user = users.find((item) => item.id === userId);
+    const newPin = String(formData.get("userNewPassword") ?? "");
 
     if (!user) {
       setMessage("Selecciona un usuario");
@@ -947,6 +980,12 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
     }
 
     setMessage(`PIN actualizado para ${data.user.name}. Entrega ese PIN al participante de forma segura.`);
+    setPinDeliveryNote({
+      name: data.user.name,
+      phone: data.user.phone,
+      pin: newPin,
+      message: buildPinDeliveryMessage(data.user.name, data.user.phone, newPin),
+    });
     form.reset();
     setSelectedPasswordUserId("");
     if (selectedRoom?.id) await loadRoomDashboard(selectedRoom.id);
@@ -1241,6 +1280,24 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", user }: 
         ) : null}
       </div>
       {message ? <div className="notice">{message}</div> : null}
+      {pinDeliveryNote ? (
+        <section className="admin-pin-delivery-card" aria-label="Mensaje de PIN listo para copiar">
+          <div className="admin-pin-delivery-heading">
+            <span className="market-kicker">PIN listo para entregar</span>
+            <strong>{pinDeliveryNote.name}</strong>
+            <span>WhatsApp {pinDeliveryNote.phone} · PIN {pinDeliveryNote.pin}</span>
+          </div>
+          <p>{pinDeliveryNote.message}</p>
+          <div className="admin-pin-delivery-actions">
+            <button className="button primary" onClick={copyPinDeliveryMessage} type="button">
+              Copiar mensaje
+            </button>
+            <button className="button secondary" onClick={() => setPinDeliveryNote(null)} type="button">
+              Ocultar
+            </button>
+          </div>
+        </section>
+      ) : null}
       <div className="admin-nav" aria-label="Secciones del administrador">
         <button
           className={`tab ${adminView === "overview" ? "active" : ""}`}
