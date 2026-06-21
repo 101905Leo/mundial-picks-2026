@@ -235,6 +235,45 @@ export function MundialPicksApp({ initialMode = "login", initialPhone = "" }: Mu
     );
   }
 
+  if (!user && !loading) {
+    return (
+      <main className="mi-sala-public-entry">
+        <section className="mi-sala-entry-panel" aria-labelledby="mi-sala-entry-title">
+          <div className="mi-sala-entry-copy">
+            <img className="mi-sala-entry-logo" src="/logo-copa-mundial-2026.png" alt="" />
+            <span className="market-kicker">Acceso seguro</span>
+            <h1 id="mi-sala-entry-title">Entra a Mundial Picks</h1>
+            <p>
+              Escribe tu WhatsApp y PIN para entrar a tu sala. Si todavía no tienes cuenta,
+              regístrate con el código que te compartió el administrador.
+            </p>
+          </div>
+          <AuthPanel
+            initialMode={publicAuthMode}
+            initialPhone=""
+            key={publicAuthMode}
+            onAuth={async (sessionUser) => {
+              setUser(sessionUser);
+              setActiveView(sessionUser.role === "ADMIN" ? "admin" : "rooms");
+              await loadData(sessionUser);
+            }}
+          />
+          <div className="mi-sala-entry-actions" aria-label="Accesos rápidos">
+            <button className="button primary" onClick={() => setPublicAuthMode("login")} type="button">
+              Entrar con WhatsApp
+            </button>
+            <button className="button secondary" onClick={() => setPublicAuthMode("register")} type="button">
+              Registrarme
+            </button>
+            <a className="button secondary" href="/planes">
+              Crear sala
+            </a>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   const isActionView = Boolean(user);
 
   return (
