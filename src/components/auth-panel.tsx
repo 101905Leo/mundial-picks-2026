@@ -113,6 +113,15 @@ export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: 
     setQuickPin((current) => current.slice(0, -1));
   }
 
+  function openQuickRegister() {
+    if (quickLoginPhone) setPhone(quickLoginPhone);
+    setQuickLoginPhone("");
+    setQuickPin("");
+    setUsePasswordFallback(false);
+    setMessage("");
+    setMode("register");
+  }
+
   if (mode === "login" && quickLoginPhone) {
     return (
       <section className="quick-pin-panel">
@@ -192,12 +201,7 @@ export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: 
 
           <button
             className="quick-pin-register-link"
-            onClick={() => {
-              setMode("register");
-              setQuickPin("");
-              setUsePasswordFallback(false);
-              setMessage("");
-            }}
+            onClick={openQuickRegister}
             type="button"
           >
             Registrarme con código de sala
