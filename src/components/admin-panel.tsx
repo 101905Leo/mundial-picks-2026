@@ -1344,6 +1344,16 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
           Salas
         </button>
         <button
+          className={`tab ${adminView === "users" ? "active" : ""}`}
+          onClick={async () => {
+            setAdminView("users");
+            await loadUsers();
+          }}
+          type="button"
+        >
+          Usuarios
+        </button>
+        <button
           className={`tab ${adminView === "matches" ? "active" : ""}`}
           onClick={() => setAdminView("matches")}
           type="button"
