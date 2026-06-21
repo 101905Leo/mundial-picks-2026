@@ -3769,6 +3769,16 @@ button {
   min-height: 56px;
 }
 
+.quick-pin-register-link {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 16px;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 950;
+  min-height: 48px;
+}
+
 .quick-pin-link {
   background: transparent;
   border: 0;

@@ -119,11 +119,7 @@ export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: 
         <button
           className="quick-pin-back"
           onClick={() => {
-            setQuickLoginPhone("");
-            setPhone("");
-            setQuickPin("");
-            setUsePasswordFallback(false);
-            setMessage("");
+            window.location.href = "/";
           }}
           type="button"
         >
@@ -192,6 +188,19 @@ export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: 
 
           <button className="button primary quick-pin-submit" type="submit">
             Entrar
+          </button>
+
+          <button
+            className="quick-pin-register-link"
+            onClick={() => {
+              setMode("register");
+              setQuickPin("");
+              setUsePasswordFallback(false);
+              setMessage("");
+            }}
+            type="button"
+          >
+            Registrarme con código de sala
           </button>
 
           <button
