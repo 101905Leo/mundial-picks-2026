@@ -337,6 +337,35 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
     selectedRoomParticipant && !visibleRoomParticipants.some((participant) => participant.id === selectedRoomParticipant.id)
       ? [selectedRoomParticipant, ...visibleRoomParticipants]
       : visibleRoomParticipants;
+  const roomPublishedMatchIds = new Set((roomDashboard?.matches ?? []).map((match) => match.id));
+  const roomExpectedPickCount = roomPublishedMatchIds.size;
+  const pickProgressParticipants = roomParticipants.filter((participant) => participant.isActive !== false);
+  const pickProgressRows = pickProgressParticipants.map((participant) => {
+    const completedMatchIds = new Set(
+      (roomDashboard?.predictions ?? [])
+        .filter((prediction) => prediction.user.id === participant.id && roomPublishedMatchIds.has(prediction.match.id))
+        .map((prediction) => prediction.match.id),
+    );
+    const completed = completedMatchIds.size;
+    const pending = Math.max(0, roomExpectedPickCount - completed);
+    const status =
+      roomExpectedPickCount === 0
+        ? "Sin partidos"
+        : completed === 0
+          ? "Sin empezar"
+          : pending === 0
+            ? "Completo"
+            : "Pendiente";
+
+    return { participant, completed, pending, status };
+  });
+  const pickProgressComplete = pickProgressRows.filter((row) => row.status === "Completo").length;
+  const pickProgressPending = pickProgressRows.filter((row) => row.status === "Pendiente").length;
+  const pickProgressNotStarted = pickProgressRows.filter((row) => row.status === "Sin empezar").length;
+  const pickProgressSummary =
+    roomExpectedPickCount === 0
+      ? "0 partidos publicados"
+      : `${pickProgressComplete} completos · ${pickProgressPending} pendientes · ${pickProgressNotStarted} sin empezar`;
 
   async function loadUsers() {
     const response = await fetch("/api/admin/users");
@@ -2602,6 +2631,33 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
                             Mostrando {visibleRoomParticipants.length} de {roomParticipants.length} participantes
                           </span>
                         </div>
+                        <details className="admin-room-accordion pick-progress-panel">
+                          <summary>Progreso de picks por participante · {pickProgressSummary}</summary>
+                          <p className="muted">
+                            Solo lectura. Cuenta picks sobre {roomExpectedPickCount} partido(s) publicado(s) de esta sala y excluye participantes inactivos.
+                          </p>
+                          <div className="admin-room-list compact pick-progress-list">
+                            <article className="pick-progress-row pick-progress-heading">
+                              <span>Participante</span>
+                              <span>Picks hechos</span>
+                              <span>Pendientes</span>
+                              <span>Estado</span>
+                            </article>
+                            {pickProgressRows.map((row) => (
+                              <article className="pick-progress-row" key={row.participant.id}>
+                                <strong>{row.participant.name}</strong>
+                                <span>{row.completed} / {roomExpectedPickCount}</span>
+                                <span>{row.pending}</span>
+                                <span>{row.status}</span>
+                              </article>
+                            ))}
+                            {!pickProgressRows.length ? (
+                              <article>
+                                <strong>No hay participantes activos para revisar.</strong>
+                              </article>
+                            ) : null}
+                          </div>
+                        </details>
                         <div className="room-control-bar participant-control">
                           <div className="room-control-field">
                             <span className="market-kicker">Participante de la sala</span>

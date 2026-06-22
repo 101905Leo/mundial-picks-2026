@@ -7917,6 +7917,28 @@ button {
   max-height: 420px;
 }
 
+.pick-progress-row {
+  align-items: center;
+  grid-template-columns: minmax(180px, 1.4fr) minmax(90px, 0.6fr) minmax(86px, 0.5fr) minmax(100px, 0.6fr);
+}
+
+.pick-progress-heading {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+@media (max-width: 720px) {
+  .pick-progress-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .pick-progress-heading {
+    display: none;
+  }
+}
+
 .admin-room-list p {
   color: #fff;
   margin: 8px 0 0;
