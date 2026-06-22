@@ -6,6 +6,11 @@ type Score = {
 export type PredictionOutcome = "EXACT" | "GOAL_DIFFERENCE" | "WINNER" | "PARTICIPATION";
 export type ScoringStatus = "SCHEDULED" | "LIVE" | "FINISHED";
 
+export type PredictionPointExplanation = {
+  points: number;
+  reason: string;
+};
+
 type MatchForScoringStatus = {
   status: ScoringStatus;
   startsAt?: Date | string;
@@ -21,6 +26,25 @@ function winner(score: Score) {
 
 function goalDifference(score: Score) {
   return score.homeScore - score.awayScore;
+}
+
+function predictionPointConditions(prediction: Score, result: Score) {
+  const exactScore = prediction.homeScore === result.homeScore && prediction.awayScore === result.awayScore;
+  const winnerCorrect = winner(prediction) === winner(result);
+  const goalDifferenceCorrect = goalDifference(prediction) === goalDifference(result);
+  const applicablePoints = [1];
+
+  if (exactScore) applicablePoints.push(5);
+  if (winnerCorrect) applicablePoints.push(3);
+  if (goalDifferenceCorrect) applicablePoints.push(2);
+
+  return {
+    exactScore,
+    winnerCorrect,
+    goalDifferenceCorrect,
+    resultWinner: winner(result),
+    points: Math.max(...applicablePoints),
+  };
 }
 
 export function getPredictionOutcome(prediction: Score, result: Score): PredictionOutcome {
@@ -40,21 +64,45 @@ export function getPredictionOutcome(prediction: Score, result: Score): Predicti
 }
 
 export function calculatePredictionPoints(prediction: Score, result: Score) {
-  const applicablePoints = [1];
+  return predictionPointConditions(prediction, result).points;
+}
 
-  if (prediction.homeScore === result.homeScore && prediction.awayScore === result.awayScore) {
-    applicablePoints.push(5);
+export function explainPredictionPoints(
+  prediction: Score | null | undefined,
+  result: Score | null | undefined,
+): PredictionPointExplanation {
+  if (!prediction) {
+    return { points: 0, reason: "Sin pronóstico" };
   }
 
-  if (winner(prediction) === winner(result)) {
-    applicablePoints.push(3);
+  if (!result) {
+    return { points: 0, reason: "Partido sin resultado" };
   }
 
-  if (goalDifference(prediction) === goalDifference(result)) {
-    applicablePoints.push(2);
+  const breakdown = predictionPointConditions(prediction, result);
+
+  if (breakdown.exactScore) {
+    return { points: breakdown.points, reason: "Marcador exacto" };
   }
 
-  return Math.max(...applicablePoints);
+  if (breakdown.winnerCorrect && breakdown.goalDifferenceCorrect) {
+    const resultLabel = breakdown.resultWinner === "DRAW" ? "empate" : "ganador";
+    return {
+      points: breakdown.points,
+      reason: `Acertaste ${resultLabel} y diferencia; se aplicó el mejor puntaje disponible.`,
+    };
+  }
+
+  if (breakdown.winnerCorrect) {
+    const resultLabel = breakdown.resultWinner === "DRAW" ? "empate" : "ganador";
+    return { points: breakdown.points, reason: `Acertaste ${resultLabel}` };
+  }
+
+  if (breakdown.goalDifferenceCorrect) {
+    return { points: breakdown.points, reason: "Acertaste diferencia" };
+  }
+
+  return { points: breakdown.points, reason: "Pick incorrecto, punto por participación" };
 }
 
 export function getScoringStatus(match: MatchForScoringStatus, now = new Date()): ScoringStatus {

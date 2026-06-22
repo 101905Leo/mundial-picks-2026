@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import type { Match } from "@/components/types";
 import { isPickClosed } from "@/lib/pick-lock";
+import { explainPredictionPoints } from "@/lib/scoring";
 import { matchStatusLabel } from "@/lib/status-labels";
 import { flagForTeam } from "@/lib/team-flags";
 
@@ -42,6 +43,13 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
   const isClosed = isPickClosed(startsAt) || match.status === "LIVE" || match.status === "FINISHED";
   const inputDisabled = isClosed || !canPredict;
   const trend = trendForMatch(match);
+  const pointExplanation =
+    prediction && match.homeScore !== null && match.awayScore !== null
+      ? explainPredictionPoints(
+          { homeScore: prediction.homeScore, awayScore: prediction.awayScore },
+          { homeScore: match.homeScore, awayScore: match.awayScore },
+        )
+      : null;
   const quickPicks = [
     { label: "Victoria local", homeScore: 1, awayScore: 0 },
     { label: "Empate", homeScore: 1, awayScore: 1 },
@@ -173,6 +181,15 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
       <div className="points-cell">
         <strong>{prediction ? prediction.points : "-"}</strong>
         {prediction ? <span>{prediction.homeScore}-{prediction.awayScore}</span> : <span>Sin pick</span>}
+        {prediction && pointExplanation ? (
+          <details className="points-breakdown">
+            <summary>Detalle</summary>
+            <span>Resultado: {match.homeScore} - {match.awayScore}</span>
+            <span>Tu pick: {prediction.homeScore} - {prediction.awayScore}</span>
+            <span>Puntos: {pointExplanation.points}</span>
+            <span>Motivo: {pointExplanation.reason}</span>
+          </details>
+        ) : null}
         {message ? <span>{message}</span> : null}
       </div>
 

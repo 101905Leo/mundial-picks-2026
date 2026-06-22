@@ -5531,6 +5531,22 @@ button {
   font-size: 1.2rem;
 }
 
+.points-breakdown {
+  max-width: 190px;
+  text-align: right;
+}
+
+.points-breakdown summary {
+  color: var(--gold-soft);
+  cursor: pointer;
+  font-size: 0.72rem;
+}
+
+.points-breakdown span {
+  display: block;
+  margin-top: 3px;
+}
+
 .payment-gate {
   align-items: center;
   display: grid;

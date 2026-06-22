@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { calculatePredictionPoints } from "./scoring";
+import { calculatePredictionPoints, explainPredictionPoints } from "./scoring";
 import { rankingPredictionPoints } from "./prediction-points";
 import { roomPredictionPoints } from "./room-scoring";
 
@@ -22,6 +22,34 @@ assert.equal(calculatePredictionPoints({ homeScore: 1, awayScore: 0 }, oneNilRes
 assert.equal(calculatePredictionPoints({ homeScore: 3, awayScore: 1 }, oneNilResult), 3);
 assert.equal(calculatePredictionPoints({ homeScore: 3, awayScore: 2 }, oneNilResult), 3);
 assert.equal(calculatePredictionPoints({ homeScore: 0, awayScore: 1 }, oneNilResult), 1);
+assert.deepEqual(explainPredictionPoints({ homeScore: 1, awayScore: 0 }, oneNilResult), {
+  points: 5,
+  reason: "Marcador exacto",
+});
+assert.deepEqual(explainPredictionPoints({ homeScore: 3, awayScore: 1 }, oneNilResult), {
+  points: 3,
+  reason: "Acertaste ganador",
+});
+assert.deepEqual(explainPredictionPoints({ homeScore: 3, awayScore: 2 }, oneNilResult), {
+  points: 3,
+  reason: "Acertaste ganador y diferencia; se aplicó el mejor puntaje disponible.",
+});
+assert.deepEqual(explainPredictionPoints({ homeScore: 0, awayScore: 1 }, oneNilResult), {
+  points: 1,
+  reason: "Pick incorrecto, punto por participación",
+});
+assert.deepEqual(explainPredictionPoints({ homeScore: 1, awayScore: 1 }, { homeScore: 2, awayScore: 2 }), {
+  points: 3,
+  reason: "Acertaste empate y diferencia; se aplicó el mejor puntaje disponible.",
+});
+assert.deepEqual(explainPredictionPoints({ homeScore: 2, awayScore: 2 }, { homeScore: 2, awayScore: 2 }), {
+  points: 5,
+  reason: "Marcador exacto",
+});
+assert.deepEqual(explainPredictionPoints(null, oneNilResult), {
+  points: 0,
+  reason: "Sin pronóstico",
+});
 
 const oneNilPick = { homeScore: 1, awayScore: 0 };
 
