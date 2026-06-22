@@ -157,22 +157,55 @@ export async function PATCH(request: NextRequest) {
 
   const roomId = parsed.data.leagueId || "";
   const roomKey = roomId || "GLOBAL";
-  const prediction = await prisma.prediction.findUnique({
-    where: {
-      userId_matchId_roomKey: {
-        userId: parsed.data.userId,
-        matchId: parsed.data.matchId,
-        roomKey,
+  const [prediction, room, roomMatch] = await Promise.all([
+    prisma.prediction.findUnique({
+      where: {
+        userId_matchId_roomKey: {
+          userId: parsed.data.userId,
+          matchId: parsed.data.matchId,
+          roomKey,
+        },
       },
-    },
-    include: {
-      user: { select: { id: true, name: true, role: true } },
-      match: { select: { id: true, homeTeam: true, awayTeam: true, startsAt: true, status: true } },
-    },
-  });
+      include: {
+        user: { select: { id: true, name: true, role: true } },
+        match: { select: { id: true, homeTeam: true, awayTeam: true, startsAt: true, status: true, roomId: true } },
+      },
+    }),
+    roomId
+      ? prisma.league.findUnique({
+          where: { id: roomId },
+          select: {
+            id: true,
+            memberships: { where: { userId: parsed.data.userId }, select: { id: true } },
+          },
+        })
+      : Promise.resolve(null),
+    roomId
+      ? prisma.match.findUnique({
+          where: { id: parsed.data.matchId },
+          select: { id: true, roomId: true },
+        })
+      : Promise.resolve(null),
+  ]);
+
+  if (roomId) {
+    if (!room) {
+      return Response.json({ error: "Sala no encontrada" }, { status: 404 });
+    }
+    if (room.memberships.length === 0) {
+      return Response.json({ error: "El participante no pertenece a esta sala" }, { status: 403 });
+    }
+    if (!roomMatch || roomMatch.roomId !== room.id) {
+      return Response.json({ error: "El partido seleccionado no pertenece a la sala indicada." }, { status: 400 });
+    }
+  }
 
   if (!prediction) {
     return Response.json({ error: "Primero crea el pick del participante y luego ajusta sus puntos" }, { status: 404 });
+  }
+
+  if (roomId && (prediction.roomKey !== roomId || (prediction.leagueId && prediction.leagueId !== roomId))) {
+    return Response.json({ error: "El pick no corresponde a la sala indicada." }, { status: 400 });
   }
 
   const updatedPrediction = await prisma.prediction.update({
