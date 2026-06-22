@@ -701,27 +701,6 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
     await onChanged();
   }
 
-  async function keepOnlyFamiliaAvella() {
-    if (!window.confirm("¿Eliminar todas las salas excepto Familia Avella? Esta acción no se puede deshacer.")) return;
-    setMessage("Limpiando salas y conservando Familia Avella...");
-    const response = await fetch("/api/admin/rooms", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "keepOnlyRoom", name: "Familia Avella" }),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      setMessage(data.error ?? "No se pudieron limpiar las salas");
-      return;
-    }
-    setMessage(
-      `Se conservó ${data.keptRoom.name}. Salas eliminadas ${data.deletedRooms}. Resultados actualizados ${data.roomMatchesSynced}. Picks recalculados ${data.predictionsUpdated}. Puntos manuales antiguos limpiados.`,
-    );
-    await loadRooms();
-    await loadRoomDashboard(data.keptRoom.id);
-    await onChanged();
-  }
-
   async function copyRoomInvitation(room: AdminRoom) {
     const invitation = `Únete a "${room.name}" en Mundial Picks: https://www.mundialpicks.online. Código: ${room.inviteCode}`;
     await navigator.clipboard.writeText(invitation);
