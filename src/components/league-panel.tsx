@@ -7,6 +7,7 @@ import { FormidableFacts } from "@/components/formidable-facts";
 import { StatisticsPanel } from "@/components/statistics-panel";
 import type { Competition, League, LeagueMember, Match, RankingEntry, User } from "@/components/types";
 import { isPickClosed } from "@/lib/pick-lock";
+import { explainPredictionPoints } from "@/lib/scoring";
 import { matchStatusLabel, roomStatusLabel } from "@/lib/status-labels";
 import { flagForTeam } from "@/lib/team-flags";
 
@@ -684,6 +685,16 @@ export function LeaguePanel({
     (match.predictions ?? []).map((prediction) => ({ match, prediction })),
   );
   const featuredPrediction = featuredMatch?.predictions?.[0] ?? null;
+  const featuredPointExplanation =
+    featuredMatch &&
+    featuredPrediction &&
+    featuredMatch.homeScore !== null &&
+    featuredMatch.awayScore !== null
+      ? explainPredictionPoints(
+          { homeScore: featuredPrediction.homeScore, awayScore: featuredPrediction.awayScore },
+          { homeScore: featuredMatch.homeScore, awayScore: featuredMatch.awayScore },
+        )
+      : null;
   const featuredActionLabel = featuredMatch
     ? featuredMatchStatus === "LIVE"
       ? featuredPrediction
@@ -1281,10 +1292,21 @@ export function LeaguePanel({
                           {featuredMatch.venue ? ` · ${featuredMatch.venue}` : ""}
                         </p>
                         {featuredPrediction ? (
-                          <div className="room-my-pick-pill">
-                            <span>Mi pronóstico</span>
-                            <strong>{featuredPrediction.homeScore} - {featuredPrediction.awayScore}</strong>
-                          </div>
+                          <>
+                            <div className="room-my-pick-pill">
+                              <span>Mi pronóstico</span>
+                              <strong>{featuredPrediction.homeScore} - {featuredPrediction.awayScore}</strong>
+                            </div>
+                            {featuredPointExplanation ? (
+                              <details className="points-breakdown">
+                                <summary>Detalle de puntos</summary>
+                                <span>Resultado: {featuredMatch.homeScore} - {featuredMatch.awayScore}</span>
+                                <span>Tu pick: {featuredPrediction.homeScore} - {featuredPrediction.awayScore}</span>
+                                <span>Puntos: {featuredPointExplanation.points}</span>
+                                <span>Motivo: {featuredPointExplanation.reason}</span>
+                              </details>
+                            ) : null}
+                          </>
                         ) : featuredMatchStatus === "LIVE" || featuredMatchStatus === "FINISHED" ? (
                           <>
                             <div className="room-my-pick-pill">
