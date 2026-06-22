@@ -2404,9 +2404,6 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
 	                        >
 	                          Ver participantes
 	                        </button>
-	                        <a className="button secondary" href="/api/admin/export" download>
-	                          Descargar Excel global
-	                        </a>
 	                      </div>
 	                      <details className="admin-room-accordion nested-admin-option">
 	                        <summary>Editar sala</summary>
