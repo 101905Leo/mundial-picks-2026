@@ -3,7 +3,21 @@
 import { FormEvent, useEffect, useState } from "react";
 import type { Competition, User } from "@/components/types";
 
-export function CompetitionPanel({ user }: { user: User }) {
+type CompetitionPanelProps = {
+  description?: string;
+  kicker?: string;
+  onChanged?: () => Promise<void> | void;
+  title?: string;
+  user: User;
+};
+
+export function CompetitionPanel({
+  description = "Crear una liga nueva no modifica las salas existentes; solo queda disponible para salas futuras.",
+  kicker = "Competiciones",
+  onChanged,
+  title = "Ligas disponibles",
+  user,
+}: CompetitionPanelProps) {
   const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [message, setMessage] = useState("");
 
@@ -35,6 +49,7 @@ export function CompetitionPanel({ user }: { user: User }) {
     if (response.ok) {
       form.reset();
       await loadCompetitions();
+      await onChanged?.();
     }
   }
 
@@ -42,9 +57,9 @@ export function CompetitionPanel({ user }: { user: User }) {
     <section className="competition-page">
       <div className="panel competition-header">
         <div>
-          <span className="market-kicker">Competiciones</span>
-          <h2>Ligas disponibles</h2>
-          <p>Crear una liga nueva no modifica las salas existentes; solo queda disponible para salas futuras.</p>
+          <span className="market-kicker">{kicker}</span>
+          <h2>{title}</h2>
+          <p>{description}</p>
         </div>
       </div>
       {message ? <div className="notice">{message}</div> : null}

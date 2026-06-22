@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { CompetitionPanel } from "@/components/competition-panel";
 import { LeaguePanel } from "@/components/league-panel";
 import type { Competition, Match, RoomPlan, User } from "@/components/types";
 import { matchStatusLabel, roomStatusLabel } from "@/lib/status-labels";
@@ -1542,6 +1543,14 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
         ) : null}
         {adminView === "matches" ? (
           <>
+            <CompetitionPanel
+              description="Crea y consulta las ligas o torneos base que luego podrán usarse para alimentar salas."
+              kicker="Torneos"
+              onChanged={loadRooms}
+              title="Torneos / ligas base"
+              user={user}
+            />
+
             <section className="form league-hub admin-room-section-wide">
               <div className="section-title">
                 <div>
