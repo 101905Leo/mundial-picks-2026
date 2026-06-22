@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 
 const defaultScheduleUrl =
   "https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json";
+const worldCupCompetitionSlug = "mundial-2026";
+const openFootballWorldCupSourcePrefix = "openfootball-worldcup-2026";
 
 type OpenFootballMatch = {
   round?: string;
@@ -60,6 +62,27 @@ export async function importWorldCupCalendar() {
     throw new Error("El calendario no tiene una lista de partidos valida");
   }
 
+  const competition = await prisma.competition.upsert({
+    where: { slug: worldCupCompetitionSlug },
+    update: { isActive: true },
+    create: {
+      slug: worldCupCompetitionSlug,
+      name: "Mundial 2026",
+      country: "Internacional",
+      season: "2026",
+      isActive: true,
+    },
+  });
+
+  const backfilled = await prisma.match.updateMany({
+    where: {
+      sourceKey: { startsWith: openFootballWorldCupSourcePrefix },
+      roomId: null,
+      competitionId: null,
+    },
+    data: { competitionId: competition.id },
+  });
+
   await prisma.match.deleteMany({
     where: {
       id: {
@@ -73,7 +96,7 @@ export async function importWorldCupCalendar() {
   let updated = 0;
 
   for (const [index, match] of schedule.matches.entries()) {
-    const sourceKey = `openfootball-worldcup-2026-${String(index + 1).padStart(3, "0")}-${slug(
+    const sourceKey = `${openFootballWorldCupSourcePrefix}-${String(index + 1).padStart(3, "0")}-${slug(
       `${match.team1}-${match.team2}`,
     )}`;
 
@@ -84,6 +107,7 @@ export async function importWorldCupCalendar() {
       group: match.group || match.round || null,
       venue: match.ground || null,
       startsAt: startsAtFromOpenFootball(match),
+      competitionId: competition.id,
     };
 
     await prisma.match.upsert({
@@ -107,5 +131,12 @@ export async function importWorldCupCalendar() {
     total: schedule.matches.length,
     created,
     updated,
+    backfilled: backfilled.count,
+    competition: {
+      id: competition.id,
+      slug: competition.slug,
+      name: competition.name,
+      season: competition.season,
+    },
   };
 }
