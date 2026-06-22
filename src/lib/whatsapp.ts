@@ -1,5 +1,3 @@
-import { prisma } from "@/lib/prisma";
-
 function whatsappConfig() {
   return {
     accessToken: process.env.WHATSAPP_ACCESS_TOKEN,
@@ -60,19 +58,17 @@ export async function sendWhatsAppMessage(to: string, body: string) {
 export async function notifyWhatsAppUsers(body: string) {
   try {
     const config = whatsappConfig();
-    const recipients = config.notifyOnlyPhone
-      ? [{ phone: config.notifyOnlyPhone, name: "Mundial Picks" }]
-      : (
-          await prisma.user.findMany({
-            where: {
-              OR: [
-                { isActive: true },
-                { leagues: { some: {} } },
-              ],
-            },
-            select: { phone: true, name: true },
-          })
-        ).map((user) => ({ phone: user.phone, name: user.name }));
+    if (!config.notifyOnlyPhone) {
+      return {
+        attempted: 0,
+        sent: 0,
+        skipped: 1,
+        failed: 0,
+        errors: ["WhatsApp omitido: configura WHATSAPP_NOTIFY_ONLY_PHONE para pruebas controladas."],
+      };
+    }
+
+    const recipients = [{ phone: config.notifyOnlyPhone, name: "Mundial Picks" }];
 
     const results = await Promise.allSettled(
       recipients.map((recipient) => sendWhatsAppTemplate(recipient.phone, recipient.name, body)),
