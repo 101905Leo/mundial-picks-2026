@@ -28,33 +28,33 @@ export function getPredictionOutcome(prediction: Score, result: Score): Predicti
     return "EXACT";
   }
 
-  if (goalDifference(prediction) === goalDifference(result)) {
-    return "GOAL_DIFFERENCE";
-  }
-
   if (winner(prediction) === winner(result)) {
     return "WINNER";
+  }
+
+  if (goalDifference(prediction) === goalDifference(result)) {
+    return "GOAL_DIFFERENCE";
   }
 
   return "PARTICIPATION";
 }
 
 export function calculatePredictionPoints(prediction: Score, result: Score) {
-  const outcome = getPredictionOutcome(prediction, result);
+  const applicablePoints = [1];
 
-  if (outcome === "EXACT") {
-    return 5;
+  if (prediction.homeScore === result.homeScore && prediction.awayScore === result.awayScore) {
+    applicablePoints.push(5);
   }
 
-  if (outcome === "GOAL_DIFFERENCE") {
-    return 2;
+  if (winner(prediction) === winner(result)) {
+    applicablePoints.push(3);
   }
 
-  if (outcome === "WINNER") {
-    return 3;
+  if (goalDifference(prediction) === goalDifference(result)) {
+    applicablePoints.push(2);
   }
 
-  return 1;
+  return Math.max(...applicablePoints);
 }
 
 export function getScoringStatus(match: MatchForScoringStatus, now = new Date()): ScoringStatus {
