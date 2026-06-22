@@ -1880,26 +1880,46 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
                 </p>
               </div>
             </div>
-            <div className="admin-action-grid admin-action-grid-tools admin-tools-grid">
-              <button className="button admin-tool-button" onClick={() => recalculate()} type="button">
-                Recalcular ranking
-              </button>
-              <button className="button admin-tool-button" onClick={syncAllRoomResults} type="button">
-                Sincronizar salas
-              </button>
-              <button className="button admin-tool-button" onClick={importWorldCupCalendar} type="button">
-                Importar calendario base
-              </button>
-              <button className="button admin-tool-button" onClick={testWhatsApp} type="button">
-                Probar WhatsApp
-              </button>
-              <a className="button admin-tool-button" href="/api/admin/export" download>
-                Descargar Excel global
-              </a>
-            </div>
+            <section className="admin-tool-note">
+              <strong>Reportes y exportación</strong>
+              <div className="admin-action-grid admin-action-grid-tools admin-tools-grid">
+                <a className="button admin-tool-button" href="/api/admin/export" download>
+                  Descargar Excel global
+                </a>
+              </div>
+            </section>
+            <section className="admin-tool-note">
+              <strong>Mantenimiento</strong>
+              <div className="admin-action-grid admin-action-grid-tools admin-tools-grid">
+                <button className="button admin-tool-button" onClick={() => recalculate()} type="button">
+                  Recalcular ranking
+                </button>
+                <button className="button admin-tool-button" onClick={syncAllRoomResults} type="button">
+                  Sincronizar salas
+                </button>
+              </div>
+            </section>
+            <details className="admin-room-accordion nested-admin-option">
+              <summary>Importaciones técnicas</summary>
+              <p className="muted">Crea o actualiza partidos base. Usar solo cuando sea necesario.</p>
+              <div className="admin-action-grid admin-action-grid-tools admin-tools-grid">
+                <button className="button admin-tool-button" onClick={importWorldCupCalendar} type="button">
+                  Importar calendario base
+                </button>
+              </div>
+            </details>
+            <section className="admin-tool-note">
+              <strong>Pruebas técnicas</strong>
+              <p className="muted">Puede enviar un mensaje real de prueba.</p>
+              <div className="admin-action-grid admin-action-grid-tools admin-tools-grid">
+                <button className="button admin-tool-button" onClick={testWhatsApp} type="button">
+                  Probar WhatsApp
+                </button>
+              </div>
+            </section>
             <div className="admin-tool-note">
               <strong>Acciones separadas, misma intención:</strong>
-              <span>Sincronizar resultados trae marcadores; recalcular revisa puntos; sincronizar salas copia el estado correcto a cada sala.</span>
+              <span>Recalcular revisa puntos; sincronizar salas copia el estado correcto a cada sala.</span>
             </div>
           </section>
         ) : null}
