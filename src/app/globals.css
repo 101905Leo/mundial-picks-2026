@@ -3121,6 +3121,32 @@ button {
   font-size: 1.2rem;
 }
 
+.room-live-pick-row {
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.room-prediction-score {
+  display: grid;
+  gap: 4px;
+  justify-items: end;
+  text-align: right;
+}
+
+.room-prediction-score > strong {
+  color: var(--gold-soft);
+  font-size: 1.2rem;
+}
+
+.room-prediction-score > span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.room-live-pick-breakdown {
+  margin-top: 2px;
+}
+
 .league-play-grid {
   display: grid;
   gap: 14px;
@@ -5532,19 +5558,32 @@ button {
 }
 
 .points-breakdown {
-  max-width: 190px;
+  max-width: 210px;
   text-align: right;
 }
 
 .points-breakdown summary {
+  align-items: center;
+  background: rgba(244, 189, 79, 0.12);
+  border: 1px solid rgba(244, 189, 79, 0.24);
+  border-radius: 999px;
   color: var(--gold-soft);
   cursor: pointer;
+  display: inline-flex;
   font-size: 0.72rem;
+  font-weight: 900;
+  gap: 6px;
+  list-style: none;
+  padding: 5px 8px;
+}
+
+.points-breakdown summary::-webkit-details-marker {
+  display: none;
 }
 
 .points-breakdown span {
   display: block;
-  margin-top: 3px;
+  margin-top: 4px;
 }
 
 .payment-gate {

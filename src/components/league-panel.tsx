@@ -685,16 +685,6 @@ export function LeaguePanel({
     (match.predictions ?? []).map((prediction) => ({ match, prediction })),
   );
   const featuredPrediction = featuredMatch?.predictions?.[0] ?? null;
-  const featuredPointExplanation =
-    featuredMatch &&
-    featuredPrediction &&
-    featuredMatch.homeScore !== null &&
-    featuredMatch.awayScore !== null
-      ? explainPredictionPoints(
-          { homeScore: featuredPrediction.homeScore, awayScore: featuredPrediction.awayScore },
-          { homeScore: featuredMatch.homeScore, awayScore: featuredMatch.awayScore },
-        )
-      : null;
   const featuredActionLabel = featuredMatch
     ? featuredMatchStatus === "LIVE"
       ? featuredPrediction
@@ -1292,21 +1282,10 @@ export function LeaguePanel({
                           {featuredMatch.venue ? ` · ${featuredMatch.venue}` : ""}
                         </p>
                         {featuredPrediction ? (
-                          <>
-                            <div className="room-my-pick-pill">
-                              <span>Mi pronóstico</span>
-                              <strong>{featuredPrediction.homeScore} - {featuredPrediction.awayScore}</strong>
-                            </div>
-                            {featuredPointExplanation ? (
-                              <details className="points-breakdown">
-                                <summary>Detalle de puntos</summary>
-                                <span>Resultado: {featuredMatch.homeScore} - {featuredMatch.awayScore}</span>
-                                <span>Tu pick: {featuredPrediction.homeScore} - {featuredPrediction.awayScore}</span>
-                                <span>Puntos: {featuredPointExplanation.points}</span>
-                                <span>Motivo: {featuredPointExplanation.reason}</span>
-                              </details>
-                            ) : null}
-                          </>
+                          <div className="room-my-pick-pill">
+                            <span>Mi pronóstico</span>
+                            <strong>{featuredPrediction.homeScore} - {featuredPrediction.awayScore}</strong>
+                          </div>
                         ) : featuredMatchStatus === "LIVE" || featuredMatchStatus === "FINISHED" ? (
                           <>
                             <div className="room-my-pick-pill">
@@ -1422,7 +1401,7 @@ export function LeaguePanel({
                         >
                           <span>{index === 0 ? "🏆" : `#${index + 1}`}</span>
                           <strong>{entry.name}</strong>
-                          <em>{entry.points} pts · {entry.predictions} picks</em>
+                          <em>{entry.points} pts</em>
                         </article>
                       ))}
                       {!ranking.length ? <div className="empty">El ranking aparecerá cuando haya participantes.</div> : null}
@@ -1437,24 +1416,50 @@ export function LeaguePanel({
                       </div>
                     </div>
                     <div className="room-prediction-list compact-prediction-list">
-                      {roomHomePredictions.map((prediction) => (
-                        <article className="room-prediction" key={prediction.id}>
-                          <div>
-                            <strong>{prediction.user.name}</strong>
-                            <span>
-                              {prediction.match.homeTeam} vs {prediction.match.awayTeam}
-                              {" · "}
-                              {matchStatusLabel(prediction.match.status)}
-                            </span>
-                          </div>
-                          <strong>
-                            {prediction.homeScore !== null && prediction.awayScore !== null
-                              ? `${prediction.homeScore} - ${prediction.awayScore}`
-                              : "Sin pronóstico"}
-                          </strong>
-                          <span>{prediction.points} pts</span>
-                        </article>
-                      ))}
+                      {roomHomePredictions.map((prediction) => {
+                        const matchResult = matches.find((match) => match.id === prediction.match.id);
+                        const pickScore =
+                          prediction.homeScore !== null && prediction.awayScore !== null
+                            ? { homeScore: prediction.homeScore, awayScore: prediction.awayScore }
+                            : null;
+                        const resultScore =
+                          matchResult?.homeScore !== null &&
+                          matchResult?.homeScore !== undefined &&
+                          matchResult.awayScore !== null &&
+                          matchResult.awayScore !== undefined
+                            ? { homeScore: matchResult.homeScore, awayScore: matchResult.awayScore }
+                            : null;
+                        const pointExplanation =
+                          pickScore && resultScore ? explainPredictionPoints(pickScore, resultScore) : null;
+
+                        return (
+                          <article className="room-prediction room-live-pick-row" key={prediction.id}>
+                            <div>
+                              <strong>{prediction.user.name}</strong>
+                              <span>
+                                {prediction.match.homeTeam} vs {prediction.match.awayTeam}
+                                {" · "}
+                                {matchStatusLabel(prediction.match.status)}
+                              </span>
+                            </div>
+                            <div className="room-prediction-score">
+                              <strong>
+                                {pickScore ? `${pickScore.homeScore} - ${pickScore.awayScore}` : "Sin pronóstico"}
+                              </strong>
+                              <span>{prediction.points} pts</span>
+                              {pointExplanation && resultScore && pickScore ? (
+                                <details className="points-breakdown room-live-pick-breakdown">
+                                  <summary>¿Por qué estos puntos?</summary>
+                                  <span>Resultado: {resultScore.homeScore} - {resultScore.awayScore}</span>
+                                  <span>Tu pick: {pickScore.homeScore} - {pickScore.awayScore}</span>
+                                  <span>Puntos: {pointExplanation.points}</span>
+                                  <span>Motivo: {pointExplanation.reason}</span>
+                                </details>
+                              ) : null}
+                            </div>
+                          </article>
+                        );
+                      })}
                       {!roomHomePredictions.length ? <div className="empty">Los picks se mostrarán cuando inicie el partido.</div> : null}
                     </div>
                   </section>
@@ -1820,14 +1825,13 @@ export function LeaguePanel({
                 <article className="panel room-my-ranking-card">
                   <span>{isSuperAdmin ? "Sala completa" : "Mi posición"}</span>
                   <strong>{userRanking ? `#${userRankingIndex + 1}` : "-"}</strong>
-                  <p>{userRanking ? `${userRanking.points} puntos · ${userRanking.predictions} picks` : `${members.length} participantes · ${totalPicks} picks`}</p>
+                  <p>{userRanking ? `${userRanking.points} puntos` : `${members.length} participantes`}</p>
                   {!isSuperAdmin ? <small>{userRanking ? `${pointsBehindLeader} pts del líder` : "Aún sin posición"}</small> : null}
                 </article>
                 <article className="panel room-group-mini">
                   <span>Información del grupo</span>
                   <div>
                     <strong>{groupInfo?.memberCount ?? members.length}</strong><small>miembros</small>
-                    <strong>{groupInfo?.predictionCount ?? totalPicks}</strong><small>picks</small>
                     <strong>{groupInfo?.mostExact?.exactScores ?? 0}</strong><small>exactos</small>
                   </div>
                 </article>
@@ -1843,10 +1847,9 @@ export function LeaguePanel({
                       <span>{index === 0 ? "🏆 #1" : `#${index + 1}`}</span>
                       <strong>{entry.name}</strong>
                       <em>{entry.points} pts</em>
-                      <small>{entry.predictions} picks</small>
                     </article>
                   ))}
-                  {!rankingTopThree.length ? <div className="empty">El ranking aparecerá cuando haya picks guardados.</div> : null}
+                  {!rankingTopThree.length ? <div className="empty">El ranking aparecerá cuando haya participantes con puntos.</div> : null}
                 </div>
               </section>
 
@@ -1859,7 +1862,6 @@ export function LeaguePanel({
                     <article className={entry.id === user.id ? "current-user" : ""} key={entry.id}>
                       <span>{index === 0 ? "🏆 #1" : `#${index + 1}`}</span>
                       <strong>{entry.name}</strong>
-                      <small>{entry.predictions} picks</small>
                       <em>{entry.points} pts</em>
                     </article>
                   ))}
