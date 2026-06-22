@@ -743,6 +743,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        competitionId: String(formData.get("competitionId")),
         homeTeam: String(formData.get("homeTeam")),
         awayTeam: String(formData.get("awayTeam")),
         group: String(formData.get("group") ?? ""),
@@ -1759,6 +1760,17 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
             </section>
             <form className="form" onSubmit={createMatch}>
               <h3>Crear partido</h3>
+              <div className="form-row">
+                <label htmlFor="baseMatchCompetitionId">Liga / torneo base</label>
+                <select id="baseMatchCompetitionId" name="competitionId" required>
+                  <option value="">Selecciona liga o torneo</option>
+                  {competitions.map((competition) => (
+                    <option key={competition.id} value={competition.id}>
+                      {competition.name} · {competition.season}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div className="inline-form">
                 <div className="form-row">
                   <label htmlFor="homeTeam">Local</label>
