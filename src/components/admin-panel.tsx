@@ -244,6 +244,8 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
   const [selectedPublishDate, setSelectedPublishDate] = useState("");
   const [adminPickLeagueId, setAdminPickLeagueId] = useState("");
   const [adminPickMatches, setAdminPickMatches] = useState<AdminRoomDashboard["matches"]>([]);
+  const [adminPickParticipants, setAdminPickParticipants] = useState<AdminRoomDashboard["participants"]>([]);
+  const [adminPickUserId, setAdminPickUserId] = useState("");
   const [adminPickMatchesLoading, setAdminPickMatchesLoading] = useState(false);
   const [adminPickSaving, setAdminPickSaving] = useState(false);
   const publishedMatches = matches.filter((match) => match.isPublished).length;
@@ -409,6 +411,8 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
   async function loadAdminPickMatches(roomId: string) {
     setAdminPickLeagueId(roomId);
     setAdminPickMatches([]);
+    setAdminPickParticipants([]);
+    setAdminPickUserId("");
 
     if (!roomId) return;
 
@@ -423,6 +427,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
       }
 
       setAdminPickMatches(data.matches ?? []);
+      setAdminPickParticipants(data.participants ?? []);
     } finally {
       setAdminPickMatchesLoading(false);
     }
@@ -2170,16 +2175,40 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
                     </div>
                     <div className="form-row">
                       <label htmlFor="adminPickUserId">Usuario</label>
-                      <select id="adminPickUserId" name="adminPickUserId" onFocus={() => !usersLoaded && loadUsers()} required>
-                        <option value="">Selecciona usuario</option>
-                        {users.map((user) => (
-                          <option key={user.id} value={user.id}>{user.name} - {user.phone}</option>
+                      <select
+                        disabled={!adminPickLeagueId || adminPickMatchesLoading || adminPickParticipants.length === 0}
+                        id="adminPickUserId"
+                        name="adminPickUserId"
+                        onChange={(event) => setAdminPickUserId(event.target.value)}
+                        required
+                        value={adminPickLeagueId ? adminPickUserId : ""}
+                      >
+                        <option value="">
+                          {adminPickMatchesLoading
+                            ? "Cargando participantes de la sala..."
+                            : adminPickLeagueId
+                              ? adminPickParticipants.length
+                                ? "Selecciona participante de esta sala"
+                                : "Esta sala no tiene participantes."
+                              : "Selecciona sala primero"}
+                        </option>
+                        {adminPickParticipants.map((participant) => (
+                          <option key={participant.id} value={participant.id}>{participant.name} - {participant.phone}</option>
                         ))}
                       </select>
+                      {adminPickLeagueId && !adminPickMatchesLoading && adminPickParticipants.length === 0 ? (
+                        <span className="muted">Esta sala no tiene participantes.</span>
+                      ) : null}
                     </div>
                     <div className="form-row">
                       <label htmlFor="adminPickMatchId">Partido</label>
-                      <select id="adminPickMatchId" name="adminPickMatchId" disabled={!adminPickLeagueId || adminPickMatchesLoading} required>
+                      <select
+                        disabled={!adminPickLeagueId || adminPickMatchesLoading}
+                        id="adminPickMatchId"
+                        key={adminPickLeagueId}
+                        name="adminPickMatchId"
+                        required
+                      >
                         <option value="">
                           {adminPickMatchesLoading
                             ? "Cargando partidos de la sala..."
@@ -2214,7 +2243,8 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
                   <form className="form" onSubmit={saveAdminPickPoints}>
                     <h3>Ajustar puntos manuales</h3>
                     <p className="muted">
-                      Usa esto solo para corregir puntos de un pick existente. Estos puntos se respetan al recalcular.
+                      Este ajuste es para picks globales o casos legacy. Para corregir puntos de una sala,
+                      entra a Salas, selecciona la sala y luego el participante.
                     </p>
                     <div className="form-row">
                       <label htmlFor="adminPointsUserId">Usuario</label>
