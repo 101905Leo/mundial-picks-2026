@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       name: parsed.data.name,
       phone: parsed.data.phone,
       passwordHash: await hashPassword(parsed.data.password),
-      isActive: false,
+      isActive: true,
     },
     select: { id: true, name: true, phone: true, role: true, isActive: true, entryPaidAt: true },
   });

@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       name: parsed.data.name,
       phone: parsed.data.phone,
       passwordHash: await hashPassword(parsed.data.password),
-      isActive: false,
+      isActive: Boolean(league) || parsed.data.registrationPurpose === "CREATE_ROOM",
       ...(league ? { leagues: { create: { leagueId: league.id } } } : {}),
     },
     select: { id: true, name: true, phone: true, role: true, isActive: true, entryPaidAt: true },

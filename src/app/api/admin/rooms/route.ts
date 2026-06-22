@@ -157,6 +157,10 @@ export async function POST(request: NextRequest) {
     },
     select: { id: true, name: true, inviteCode: true, maxParticipants: true, expiresAt: true },
   });
+  await prisma.user.update({
+    where: { id: owner.id },
+    data: { isActive: true },
+  });
 
   return Response.json({ room, owner: owner.name }, { status: 201 });
 }
@@ -265,6 +269,10 @@ export async function PATCH(request: NextRequest) {
 
     const room = await prisma.$transaction(async (tx) => {
       if (nextOwner) {
+        await tx.user.update({
+          where: { id: nextOwner.id },
+          data: { isActive: true },
+        });
         await tx.leagueMembership.upsert({
           where: {
             userId_leagueId: {

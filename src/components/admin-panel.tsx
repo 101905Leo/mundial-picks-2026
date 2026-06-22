@@ -1064,7 +1064,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
       return;
     }
 
-    setMessage(`${data.user.name} fue creado desactivado con PIN inicial. Entrega ese PIN de forma segura.`);
+    setMessage(`${data.user.name} fue creado activo con PIN inicial. Entrega ese PIN de forma segura.`);
     setPinDeliveryNote({
       name: data.user.name,
       phone: data.user.phone,
@@ -2078,7 +2078,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
                     />
                   </div>
                   <button className="button primary" type="submit">
-                    Crear usuario desactivado
+                    Crear usuario activo
                   </button>
                 </form>
                 <form className="form" onSubmit={editUser}>

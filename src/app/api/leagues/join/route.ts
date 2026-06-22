@@ -51,6 +51,12 @@ export async function POST(request: NextRequest) {
     update: {},
     create: { userId: user!.id, leagueId: league.id },
   });
+  if (!user!.isActive) {
+    await prisma.user.update({
+      where: { id: user!.id },
+      data: { isActive: true },
+    });
+  }
 
   return Response.json({ league, membership });
 }

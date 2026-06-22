@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
   }
 
   let joinedLeague = null;
+  let userIsActive = user.isActive;
 
   if (inviteCode) {
     const league = await prisma.league.findUnique({ where: { inviteCode } });
@@ -53,6 +54,13 @@ export async function POST(request: NextRequest) {
         update: {},
         create: { userId: user.id, leagueId: league.id },
       });
+      if (!userIsActive) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { isActive: true },
+        });
+        userIsActive = true;
+      }
 
       joinedLeague = league;
     }
@@ -64,7 +72,7 @@ export async function POST(request: NextRequest) {
     name: user.name,
     phone: user.phone,
     role: user.role,
-    isActive: user.isActive,
+    isActive: userIsActive,
     entryPaidAt: user.entryPaidAt,
     hasLeagueAccess: user.role !== "ADMIN" && leagueCount > 0,
   };
