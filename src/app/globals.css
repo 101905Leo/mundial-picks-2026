@@ -10803,3 +10803,52 @@ button {
     padding: 8px 9px;
   }
 }
+
+/* Home ranking: full list with controlled internal scroll */
+.room-ranking-preview.room-complete-ranking .section-title small {
+  color: var(--muted);
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 800;
+  margin-top: 3px;
+}
+
+.room-ranking-preview.room-complete-ranking .full-home-ranking-list {
+  max-height: min(52vh, 520px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 6px;
+  scrollbar-width: thin;
+}
+
+.room-ranking-preview.room-complete-ranking .full-home-ranking-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.room-ranking-preview.room-complete-ranking .full-home-ranking-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 204, 92, 0.24);
+  border-radius: 999px;
+}
+
+.room-ranking-preview.room-complete-ranking .full-home-ranking-list article:nth-child(1) {
+  border-color: rgba(255, 204, 92, 0.48);
+}
+
+.room-ranking-preview.room-complete-ranking .full-home-ranking-list article:nth-child(2) {
+  border-color: rgba(203, 213, 225, 0.34);
+}
+
+.room-ranking-preview.room-complete-ranking .full-home-ranking-list article:nth-child(3) {
+  border-color: rgba(251, 146, 60, 0.34);
+}
+
+@media (max-width: 850px) {
+  .room-ranking-preview.room-complete-ranking .full-home-ranking-list {
+    max-height: 280px;
+    padding-right: 4px;
+  }
+
+  .room-ranking-preview.room-complete-ranking .full-home-ranking-list article {
+    min-height: 46px;
+  }
+}

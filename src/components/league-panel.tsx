@@ -1443,21 +1443,26 @@ export function LeaguePanel({
                     <div className="section-title">
                       <div>
                         <span className="market-kicker">Ranking</span>
-                        <h3>Top 3 de la sala</h3>
+                        <h3>Ranking de la sala</h3>
+                        <small>{ranking.length} {ranking.length === 1 ? "participante" : "participantes"}</small>
                       </div>
                     </div>
-                    <div className="room-ranking-card-list">
-                      {rankingTopThree.map((entry, index) => (
-                        <article
-                          className={`${entry.id === user.id ? "current-user" : ""} podium-rank`}
-                          key={entry.id}
-                        >
-                          <span>{index === 0 ? "🏆" : `#${index + 1}`}</span>
-                          <strong>{entry.name}</strong>
-                          <em>{entry.points} pts</em>
-                        </article>
-                      ))}
-                      {!rankingTopThree.length ? <div className="empty">El ranking aparecerá cuando haya participantes.</div> : null}
+                    <div className="room-ranking-card-list full-home-ranking-list" aria-label="Ranking completo de la sala">
+                      {ranking.map((entry, index) => {
+                        const rankIcon = index === 0 ? "🏆" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`;
+
+                        return (
+                          <article
+                            className={`${entry.id === user.id ? "current-user" : ""} ${index < 3 ? "podium-rank" : ""}`.trim()}
+                            key={entry.id}
+                          >
+                            <span>{rankIcon}</span>
+                            <strong>{entry.name}</strong>
+                            <em>{entry.points} pts</em>
+                          </article>
+                        );
+                      })}
+                      {!ranking.length ? <div className="empty">El ranking aparecerá cuando haya participantes.</div> : null}
                     </div>
                   </section>
 
