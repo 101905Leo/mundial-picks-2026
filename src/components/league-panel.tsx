@@ -1402,6 +1402,12 @@ export function LeaguePanel({
                     </section>
                   ) : null}
 
+                  <section className="panel room-home-summary compact-home-summary personal-room-summary">
+                    <article><span>Tu posición</span><strong>{userRanking ? `#${userRankingIndex + 1}` : "-"}</strong></article>
+                    <article><span>Tus puntos</span><strong>{userRanking?.points ?? 0}</strong></article>
+                    <article><span>Tus aciertos</span><strong>{userExactScores}</strong></article>
+                  </section>
+
                   <section className="panel room-create-promo-card visual-room-ad">
                     <div>
                       <span className="market-kicker">Crea tu propia liga</span>
@@ -1421,12 +1427,6 @@ export function LeaguePanel({
                       Crear liga
                     </a>
                   </section>
-
-                  <section className="panel room-home-summary compact-home-summary personal-room-summary">
-                    <article><span>Tu posición</span><strong>{userRanking ? `#${userRankingIndex + 1}` : "-"}</strong></article>
-                    <article><span>Tus puntos</span><strong>{userRanking?.points ?? 0}</strong></article>
-                    <article><span>Tus aciertos</span><strong>{userExactScores}</strong></article>
-                  </section>
                 </div>
 
                 <aside className="room-home-sidebar">
@@ -1434,13 +1434,13 @@ export function LeaguePanel({
                     <div className="section-title">
                       <div>
                         <span className="market-kicker">Ranking</span>
-                        <h3>Ranking completo</h3>
+                        <h3>Top 3 de la sala</h3>
                       </div>
                     </div>
                     <div className="room-ranking-card-list">
-                      {ranking.map((entry, index) => (
+                      {rankingTopThree.map((entry, index) => (
                         <article
-                          className={`${entry.id === user.id ? "current-user" : ""} ${index < 3 ? "podium-rank" : ""}`}
+                          className={`${entry.id === user.id ? "current-user" : ""} podium-rank`}
                           key={entry.id}
                         >
                           <span>{index === 0 ? "🏆" : `#${index + 1}`}</span>
@@ -1448,7 +1448,7 @@ export function LeaguePanel({
                           <em>{entry.points} pts</em>
                         </article>
                       ))}
-                      {!ranking.length ? <div className="empty">El ranking aparecerá cuando haya participantes.</div> : null}
+                      {!rankingTopThree.length ? <div className="empty">El ranking aparecerá cuando haya participantes.</div> : null}
                     </div>
                   </section>
 
