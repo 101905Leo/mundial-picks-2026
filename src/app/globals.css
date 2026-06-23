@@ -10927,3 +10927,43 @@ button {
     padding: 12px;
   }
 }
+
+/* Mobile MatchCard clarity: prioritize pick action and saved prediction */
+@media (max-width: 850px) {
+  .room-picks-screen .match-pick-action .pick-launcher {
+    grid-template-columns: 1fr;
+  }
+
+  .room-picks-screen .saved-pick-pill {
+    border-radius: 16px;
+    justify-content: space-between;
+    order: -1;
+    width: 100%;
+  }
+
+  .room-picks-screen .saved-pick-pill span {
+    font-size: 0.68rem;
+  }
+
+  .room-picks-screen .saved-pick-pill strong {
+    font-size: 1rem;
+  }
+
+  .room-picks-screen .pick-open-button {
+    font-size: 0.88rem;
+    font-weight: 950;
+    width: 100%;
+  }
+
+  .room-picks-screen .match-status-scheduled .official-score,
+  .room-picks-screen .match-status-scheduled .points-cell {
+    display: none;
+  }
+
+  .room-picks-screen .pick-closed-message,
+  .room-picks-screen .pick-payment-message {
+    font-size: 0.72rem;
+    line-height: 1.25;
+    margin: 0;
+  }
+}

@@ -92,7 +92,7 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
   }
 
   return (
-    <article className="market-row">
+    <article className={`market-row match-status-${match.status.toLowerCase()}`}>
       <div className="match-cell">
         <div className="match-time">
           <span className={`status ${match.status}`}>{matchStatusLabel(match.status)}</span>
@@ -134,23 +134,23 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
               }}
               type="button"
             >
-              {prediction ? "Editar pick" : "Hacer pick"}
+              {prediction ? "Editar pronóstico" : "Hacer pronóstico"}
             </button>
             {prediction ? (
               <div className="saved-pick-pill">
-                <span>Tu pick</span>
+                <span>Mi pronóstico</span>
                 <strong>{prediction.homeScore} - {prediction.awayScore}</strong>
               </div>
             ) : null}
             {isClosed ? (
-              <p className="pick-closed-message">Predicciones cerradas. No se pueden guardar picks al comenzar el partido.</p>
+              <p className="pick-closed-message">Pronósticos cerrados. No se pueden guardar al comenzar el partido.</p>
             ) : null}
             {!canPredict && !isClosed ? (
               <p className="pick-payment-message">{disabledMessage}</p>
             ) : null}
           </div>
         ) : (
-          <p className="match-login-message">Inicia sesion para guardar tu marcador.</p>
+          <p className="match-login-message">Inicia sesión para guardar tu marcador.</p>
         )}
       </div>
 
