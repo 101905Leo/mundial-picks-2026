@@ -10657,3 +10657,30 @@ button {
     top: 1px;
   }
 }
+
+/* Mobile nav safety space: avoid covering pick CTA */
+@media (max-width: 850px) {
+  .league-room,
+  .league-room.is-mobile-nav-open {
+    padding-bottom: calc(150px + env(safe-area-inset-bottom));
+  }
+
+  .room-mobile-drawer,
+  .room-mobile-drawer.is-hidden,
+  .room-mobile-drawer.is-open {
+    bottom: calc(4px + env(safe-area-inset-bottom));
+    height: 64px;
+    max-height: 64px;
+  }
+
+  .room-mobile-back-button {
+    transform: translateY(-8px);
+  }
+
+  .prediction-modal,
+  .room-picks-board,
+  .room-picks-board .panel,
+  .quick-picks {
+    scroll-margin-bottom: calc(160px + env(safe-area-inset-bottom));
+  }
+}
