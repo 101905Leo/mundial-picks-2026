@@ -10603,3 +10603,23 @@ button {
   }
 }
 
+
+/* Mobile nav fine tune: Chat slightly emphasized */
+@media (max-width: 850px) {
+  .room-mobile-cajon-chat .room-mobile-cajon-icon {
+    font-size: 1.06rem;
+  }
+
+  .room-mobile-cajon-chat strong {
+    font-size: 0.7rem;
+  }
+
+  .room-mobile-cajon-chat.active {
+    background: rgba(255, 255, 255, 0.17);
+  }
+
+  .room-mobile-cajon-chat .room-mobile-cajon-badge {
+    right: 8px;
+    top: 0;
+  }
+}
