@@ -1431,6 +1431,11 @@ export function LeaguePanel({
                             : null;
                         const pointExplanation =
                           pickScore && resultScore ? explainPredictionPoints(pickScore, resultScore) : null;
+                        const pointsTone = [2, 3, 5].includes(prediction.points)
+                          ? "positive"
+                          : [0, 1].includes(prediction.points)
+                            ? "negative"
+                            : "neutral";
 
                         return (
                           <article className="room-prediction room-live-pick-row" key={prediction.id}>
@@ -1446,15 +1451,12 @@ export function LeaguePanel({
                               <strong>
                                 {pickScore ? `${pickScore.homeScore} - ${pickScore.awayScore}` : "Sin pronóstico"}
                               </strong>
-                              <span>{prediction.points} pts</span>
-                              {pointExplanation && resultScore && pickScore ? (
-                                <details className="points-breakdown room-live-pick-breakdown">
-                                  <summary>Ver cálculo</summary>
+                              <span className={`room-prediction-points ${pointsTone}`}>{prediction.points} pts</span>
+                              {pointExplanation && resultScore ? (
+                                <div className="room-prediction-detail">
                                   <span>Resultado: {resultScore.homeScore} - {resultScore.awayScore}</span>
-                                  <span>Pick: {pickScore.homeScore} - {pickScore.awayScore}</span>
-                                  <span>Puntos: {pointExplanation.points}</span>
-                                  <span>Motivo: {pointExplanation.reason}</span>
-                                </details>
+                                  <span>{pointExplanation.reason}</span>
+                                </div>
                               ) : null}
                             </div>
                           </article>
