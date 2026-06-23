@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 export function EntryResult() {
-  const [message, setMessage] = useState("Confirmando inscripción...");
+  const [message, setMessage] = useState("Confirmando pago...");
 
   useEffect(() => {
     async function confirmEntry() {
@@ -22,7 +22,7 @@ export function EntryResult() {
       const data = await response.json();
 
       if (!response.ok) {
-        setMessage(data.error ?? "No se pudo confirmar la inscripción.");
+        setMessage(data.error ?? "No se pudo confirmar el pago.");
         return;
       }
 
@@ -34,7 +34,7 @@ export function EntryResult() {
 
       if (data.status === "APPROVED") {
         window.setTimeout(() => {
-          window.location.href = "/";
+          window.location.href = "/mi-sala";
         }, 900);
       }
     }
@@ -46,7 +46,7 @@ export function EntryResult() {
     <main className="payment-page">
       <section className="panel payment-result">
         <img className="brand-logo-image" src="/logo-copa-mundial-2026.png" alt="Copa Mundial de la FIFA 2026™" />
-        <h1>Inscripción</h1>
+        <h1>Pago</h1>
         <p className="muted">{message}</p>
         <a className="button primary" href="/">
           Volver
