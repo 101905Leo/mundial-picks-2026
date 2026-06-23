@@ -108,7 +108,7 @@ export async function updateWorldCupResultsFromFootballData() {
     throw new Error(data.message || "football-data.org no devolvio partidos validos");
   }
 
-  const localMatches = await prisma.match.findMany();
+  const localMatches = await prisma.match.findMany({ where: { roomId: null } });
   let checked = 0;
   let matched = 0;
   let updated = 0;

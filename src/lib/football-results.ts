@@ -117,7 +117,7 @@ export async function updateWorldCupResultsFromApiFootball() {
     throw new Error(`API-Football reporto: ${serializedErrors}`);
   }
 
-  const matches = await prisma.match.findMany();
+  const matches = await prisma.match.findMany({ where: { roomId: null } });
   let updated = 0;
   let checked = 0;
   let matched = 0;
