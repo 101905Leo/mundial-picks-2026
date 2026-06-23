@@ -2498,6 +2498,57 @@ button {
   min-width: min(100%, 280px);
 }
 
+.room-next-actions {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.room-next-actions h3 {
+  color: #fff;
+  font-size: 1rem;
+  margin: 2px 0 0;
+}
+
+.room-next-action-list {
+  display: grid;
+  gap: 8px;
+}
+
+.room-next-action {
+  align-items: center;
+  background: rgba(5, 9, 18, 0.54);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: inherit;
+  cursor: pointer;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-height: 42px;
+  padding: 9px 11px;
+  text-align: left;
+}
+
+.room-next-action:hover {
+  border-color: rgba(93, 220, 255, 0.24);
+  background: rgba(9, 15, 27, 0.72);
+}
+
+.room-next-action strong {
+  color: #fff;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.room-next-action span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-align: right;
+  white-space: nowrap;
+}
+
 .compact-room-games .room-home-day-list {
   gap: 8px;
 }

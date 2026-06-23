@@ -756,6 +756,33 @@ export function LeaguePanel({
       : chatMessages.length;
   const chatActivityLabel = chatActivityCount > 9 ? "9+" : String(chatActivityCount);
   const hasChatActivity = chatActivityCount > 0;
+  const roomNextActions: Array<{ label: string; detail: string; onClick: () => void }> = [];
+
+  if (!isSuperAdmin) {
+    if (pendingPickCount > 0 && roomCanPredict) {
+      roomNextActions.push({
+        label: "Completar picks",
+        detail: `Te faltan ${pendingPickCount}`,
+        onClick: () => {
+          setPicksFilter("PENDING");
+          goToRoomView("picks");
+        },
+      });
+    }
+
+    if (liveMatches.length > 0 || liveRoomPredictions.length > 0) {
+      roomNextActions.push({
+        label: "Ver picks en vivo",
+        detail: "Hay partido en vivo",
+        onClick: () => {
+          setPicksFilter("LIVE");
+          goToRoomView("picks");
+        },
+      });
+    }
+  }
+
+  const visibleRoomNextActions = roomNextActions.slice(0, 2);
   const intelligenceMatch = featuredMatch ?? lastFinishedMatch ?? sortedMatches[0] ?? null;
   const intelligenceHasEnoughInfo = Boolean(intelligenceMatch);
   const intelligenceScore =
@@ -1357,6 +1384,23 @@ export function LeaguePanel({
                       </>
                     )}
                   </section>
+
+                  {visibleRoomNextActions.length ? (
+                    <section className="panel room-next-actions" aria-label="Qué hacer ahora">
+                      <div>
+                        <span className="market-kicker">Guía rápida</span>
+                        <h3>Qué hacer ahora</h3>
+                      </div>
+                      <div className="room-next-action-list">
+                        {visibleRoomNextActions.map((action) => (
+                          <button className="room-next-action" key={action.label} onClick={action.onClick} type="button">
+                            <strong>{action.label}</strong>
+                            <span>{action.detail}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </section>
+                  ) : null}
 
                   <section className="panel room-create-promo-card visual-room-ad">
                     <div>
