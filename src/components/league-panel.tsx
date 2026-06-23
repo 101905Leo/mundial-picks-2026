@@ -2001,10 +2001,10 @@ export function LeaguePanel({
                     <article className="league-member" key={member.id}>
                       <div className="league-member-copy">
                         <strong>{member.name}</strong>
-                        <span>{member.predictions} picks · {member.points} puntos</span>
+                        <span>{member.predictions} pronósticos · {member.points} puntos</span>
                       </div>
                       {canModerateRoom && member.id !== user.id ? (
-                        <button className="button danger compact-button" onClick={() => removeMember(member)} type="button">Retirar</button>
+                        <button className="button danger compact-button" onClick={() => removeMember(member)} type="button">Retirar de sala</button>
                       ) : null}
                       {member.roomRole === "ADMIN" ? <span className="market-kicker">Admin sala</span> : null}
                     </article>

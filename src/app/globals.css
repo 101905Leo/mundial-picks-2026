@@ -11059,3 +11059,82 @@ button {
     padding-inline: 14px;
   }
 }
+
+/* Mobile participants flow: readable member list and safer admin actions */
+@media (max-width: 850px) {
+  .room-participants-screen {
+    display: grid;
+    gap: 12px;
+  }
+
+  .room-participants-panel,
+  .room-participants-settings {
+    padding: 14px;
+  }
+
+  .room-participants-panel .section-title p,
+  .room-participants-settings .room-settings-intro p {
+    display: none;
+  }
+
+  .league-member-list {
+    gap: 10px;
+  }
+
+  .league-member {
+    align-items: stretch;
+    display: grid;
+    gap: 9px;
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+
+  .league-member-copy {
+    min-width: 0;
+  }
+
+  .league-member-copy strong {
+    overflow-wrap: anywhere;
+  }
+
+  .league-member-copy span {
+    font-size: 0.8rem;
+  }
+
+  .league-member .compact-button {
+    justify-self: stretch;
+    min-height: 40px;
+    width: 100%;
+  }
+
+  .league-member .market-kicker {
+    justify-self: start;
+  }
+
+  .room-invitation-section {
+    align-items: stretch;
+    display: grid;
+    gap: 10px;
+  }
+
+  .room-invitation-section strong {
+    overflow-wrap: anywhere;
+  }
+
+  .room-invitation-section .button {
+    width: 100%;
+  }
+
+  .room-participants-settings textarea {
+    min-height: 108px;
+  }
+
+  .room-danger-actions .room-danger-buttons {
+    display: grid;
+    gap: 8px;
+  }
+
+  .room-danger-actions .button {
+    width: 100%;
+  }
+}
