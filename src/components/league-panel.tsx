@@ -1847,7 +1847,7 @@ export function LeaguePanel({
                     <button className="button secondary room-more-action" onClick={() => openRoomTab("facts")} type="button">
                       <span>
                         <strong>IA / Previa</strong>
-                        <small>Contexto para tus picks</small>
+                        <small>Contexto para tus pronósticos</small>
                       </span>
                     </button>
                     {!embedded ? (
@@ -1901,7 +1901,7 @@ export function LeaguePanel({
               <div className="room-more-info">
                 <article>
                   <span className="market-kicker">Reglas</span>
-                  <h4>{selectedLeague.description || "Sala privada de picks"}</h4>
+                  <h4>{selectedLeague.description || "Sala privada de pronósticos"}</h4>
                   <p>{selectedLeague.rules || "El administrador de la sala todavía no ha publicado reglas internas."}</p>
                 </article>
                 <p className="room-legal-notice">
