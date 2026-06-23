@@ -1712,10 +1712,26 @@ export function LeaguePanel({
                           </div>
                           <div className="room-calendar-result">
                             <strong>{match.homeScore !== null && match.awayScore !== null ? `${match.homeScore} - ${match.awayScore}` : "vs"}</strong>
-                            {prediction ? <span>Mi pick {prediction.homeScore} - {prediction.awayScore} · {prediction.points} pts</span> : <span>Sin pick</span>}
+                            {prediction ? <span>Mi pronóstico {prediction.homeScore} - {prediction.awayScore} · {prediction.points} pts</span> : <span>Sin pronóstico</span>}
                           </div>
                           <div className="room-calendar-actions">
-                            <button className="button primary compact-button" onClick={() => goToRoomView("picks")} type="button">
+                            <button
+                              className="button primary compact-button"
+                              onClick={() => {
+                                if (match.status === "FINISHED") {
+                                  setPicksFilter("FINISHED");
+                                } else if (match.status === "LIVE") {
+                                  setPicksFilter("LIVE");
+                                } else if (prediction) {
+                                  setPicksFilter("ALL");
+                                } else {
+                                  setPicksFilter("PENDING");
+                                }
+
+                                goToRoomView("picks");
+                              }}
+                              type="button"
+                            >
                               {actionLabel}
                             </button>
                             {canEditRoomInfo ? (
