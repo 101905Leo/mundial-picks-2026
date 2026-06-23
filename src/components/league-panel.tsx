@@ -1449,9 +1449,9 @@ export function LeaguePanel({
                               <span>{prediction.points} pts</span>
                               {pointExplanation && resultScore && pickScore ? (
                                 <details className="points-breakdown room-live-pick-breakdown">
-                                  <summary>¿Por qué estos puntos?</summary>
+                                  <summary>Ver cálculo</summary>
                                   <span>Resultado: {resultScore.homeScore} - {resultScore.awayScore}</span>
-                                  <span>Tu pick: {pickScore.homeScore} - {pickScore.awayScore}</span>
+                                  <span>Pick: {pickScore.homeScore} - {pickScore.awayScore}</span>
                                   <span>Puntos: {pointExplanation.points}</span>
                                   <span>Motivo: {pointExplanation.reason}</span>
                                 </details>

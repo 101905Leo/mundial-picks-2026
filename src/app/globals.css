@@ -5586,6 +5586,27 @@ button {
   margin-top: 4px;
 }
 
+.room-live-pick-breakdown {
+  max-width: 220px;
+}
+
+.room-live-pick-breakdown summary {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  padding: 0;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.room-live-pick-breakdown[open] summary {
+  color: var(--gold-soft);
+  margin-bottom: 4px;
+}
+
 .payment-gate {
   align-items: center;
   display: grid;
