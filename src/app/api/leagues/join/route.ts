@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { removeSuperAdminRoomMemberships } from "@/lib/remove-super-admin-room-memberships";
 import { joinLeagueSchema } from "@/lib/validators";
+import { isRoomActivated } from "@/lib/room-activation";
 
 export async function POST(request: NextRequest) {
   const { user, response } = await requireUser(request);
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
 
   await removeSuperAdminRoomMemberships();
 
-  if (!league.paidAt || !["APPROVED", "TRIAL", "MANUAL"].includes(league.paymentStatus)) {
+  if (!isRoomActivated(league)) {
     return Response.json({ error: "Esta sala todavía no ha confirmado el pago de su cupo" }, { status: 403 });
   }
 

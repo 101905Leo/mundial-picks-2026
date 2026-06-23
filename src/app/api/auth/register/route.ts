@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, setAuthCookie, signToken } from "@/lib/auth";
 import { registerSchema } from "@/lib/validators";
+import { isRoomActivated } from "@/lib/room-activation";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (league) {
-    if (!league.paidAt || !["APPROVED", "TRIAL", "MANUAL"].includes(league.paymentStatus)) {
+    if (!isRoomActivated(league)) {
       return Response.json({ error: "La sala todavía no ha confirmado el pago de su cupo" }, { status: 403 });
     }
     if (league.status !== "ACTIVE" || (league.expiresAt && league.expiresAt <= new Date())) {
