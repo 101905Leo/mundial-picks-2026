@@ -1529,7 +1529,7 @@ export function LeaguePanel({
           ) : null}
 
           {roomView === "picks" ? (
-            <div className="room-screen">
+            <div className="room-screen room-picks-screen">
               <section className="panel room-screen-header">
                 <div>
                   <span className="market-kicker">Tus pronósticos</span>

@@ -10852,3 +10852,78 @@ button {
     min-height: 46px;
   }
 }
+
+/* Mobile Picks flow: prioritize actionable match list without changing desktop */
+@media (max-width: 850px) {
+  .room-picks-screen {
+    display: grid;
+    gap: 12px;
+  }
+
+  .room-picks-screen .room-screen-header {
+    order: 1;
+    padding: 14px;
+  }
+
+  .room-picks-screen .room-screen-header p {
+    display: none;
+  }
+
+  .room-picks-screen .room-filter-pills {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .room-picks-screen .room-filter-pills::-webkit-scrollbar {
+    display: none;
+  }
+
+  .room-picks-screen .room-filter-pills button {
+    flex: 0 0 auto;
+    min-height: 38px;
+    padding: 8px 11px;
+    white-space: nowrap;
+  }
+
+  .room-picks-screen .room-picks-board {
+    order: 2;
+    padding: 12px;
+  }
+
+  .room-picks-screen .room-picks-summary {
+    gap: 8px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    order: 3;
+  }
+
+  .room-picks-screen .room-picks-summary article {
+    min-height: auto;
+    padding: 10px 8px;
+  }
+
+  .room-picks-screen .room-picks-summary span {
+    font-size: 0.68rem;
+    line-height: 1.15;
+  }
+
+  .room-picks-screen .room-picks-summary strong {
+    font-size: 1.25rem;
+  }
+
+  .room-picks-screen .compact-history-panel {
+    order: 4;
+  }
+
+  .room-picks-screen .room-picks-list {
+    gap: 10px;
+  }
+
+  .room-picks-screen .match-card {
+    gap: 10px;
+    padding: 12px;
+  }
+}
