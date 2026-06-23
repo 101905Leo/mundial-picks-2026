@@ -171,6 +171,8 @@ export function PublicLandingPage() {
         <nav className="public-landing-links" aria-label="Accesos de Mundial Picks">
           <Link href="/planes">Ver planes</Link>
           <Link href="/mi-sala">Entrar sin escribir número</Link>
+          <Link href="/terminos">Términos</Link>
+          <Link href="/privacidad">Privacidad</Link>
         </nav>
       </section>
 

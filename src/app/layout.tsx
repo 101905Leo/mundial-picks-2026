@@ -5,8 +5,25 @@ import { PwaRegister } from "@/components/pwa-register";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.mundialpicks.online"),
   title: "Mundial Picks | Salas privadas de picks",
   description: "Crea y administra salas privadas de picks con chat y ranking independiente.",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "Mundial Picks | Salas privadas de picks",
+    description: "Crea y administra salas privadas de picks con chat y ranking independiente.",
+    url: "https://www.mundialpicks.online",
+    siteName: "Mundial Picks",
+    locale: "es_CO",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Mundial Picks | Salas privadas de picks",
+    description: "Crea y administra salas privadas de picks con chat y ranking independiente.",
+  },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

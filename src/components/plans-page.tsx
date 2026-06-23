@@ -258,9 +258,15 @@ export function PlansPage() {
       {message ? <div className="notice">{message}</div> : null}
 
       <section className="panel room-legal-notice plans-legal">
-        Mundial Picks solo proporciona la plataforma tecnológica para crear y administrar salas privadas. Los premios,
-        pagos, acuerdos o beneficios ofrecidos dentro de cada sala son responsabilidad exclusiva del creador o
-        administrador de la sala.
+        <p>
+          Mundial Picks solo proporciona la plataforma tecnológica para crear y administrar salas privadas. Los premios,
+          pagos, acuerdos o beneficios ofrecidos dentro de cada sala son responsabilidad exclusiva del creador o
+          administrador de la sala.
+        </p>
+        <p>
+          Al crear una sala aceptas los <Link href="/terminos">términos del servicio</Link> y la{" "}
+          <Link href="/privacidad">política de privacidad</Link>.
+        </p>
       </section>
     </main>
   );
