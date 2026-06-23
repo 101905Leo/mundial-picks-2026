@@ -98,10 +98,8 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "La prediccion se cierra 5 minutos antes del partido." }, { status: 409 });
   }
 
-  const hasLeagueAccess = (await prisma.leagueMembership.count({ where: { userId: user!.id } })) > 0;
-
-  if (!user!.isActive && !hasLeagueAccess) {
-    return Response.json({ error: "Tu usuario esta desactivado para guardar picks." }, { status: 403 });
+  if (!user!.isActive) {
+    return Response.json({ error: "Tu usuario está desactivado para guardar picks." }, { status: 403 });
   }
 
   const roomKey = roomAccess.id;

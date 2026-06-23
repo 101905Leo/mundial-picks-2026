@@ -41,6 +41,11 @@ export async function POST(request: NextRequest) {
   const existingMembership = await prisma.leagueMembership.findUnique({
     where: { userId_leagueId: { userId: user!.id, leagueId: league.id } },
   });
+
+  if (!user!.isActive && existingMembership) {
+    return Response.json({ error: "Tu usuario está desactivado. Contacta al administrador de la sala." }, { status: 403 });
+  }
+
   const participants = await prisma.leagueMembership.count({ where: { leagueId: league.id } });
 
   if (!existingMembership && participants >= league.maxParticipants) {
@@ -52,7 +57,7 @@ export async function POST(request: NextRequest) {
     update: {},
     create: { userId: user!.id, leagueId: league.id },
   });
-  if (!user!.isActive) {
+  if (!user!.isActive && !existingMembership) {
     await prisma.user.update({
       where: { id: user!.id },
       data: { isActive: true },

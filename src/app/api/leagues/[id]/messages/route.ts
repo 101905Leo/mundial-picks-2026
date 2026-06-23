@@ -30,6 +30,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const { user, response } = await requireUser(request);
   if (response) return response;
 
+  if (user!.role !== "ADMIN" && !user!.isActive) {
+    return Response.json({ error: "Tu usuario está desactivado para usar el chat." }, { status: 403 });
+  }
+
   const { id } = await params;
   const access = await getLeagueAccess(user!.id, user!.role, id);
   if (!access) {
@@ -57,6 +61,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { user, response } = await requireUser(request);
   if (response) return response;
+
+  if (user!.role !== "ADMIN" && !user!.isActive) {
+    return Response.json({ error: "Tu usuario está desactivado para usar el chat." }, { status: 403 });
+  }
 
   const { id } = await params;
   const access = await getLeagueAccess(user!.id, user!.role, id);
