@@ -56,6 +56,7 @@ type MobileRoomNavItem = {
   key: string;
   label: string;
   description: string;
+  icon: string;
   active: boolean;
   badge?: string;
   onClick: () => void;
@@ -906,66 +907,47 @@ export function LeaguePanel({
     {
       key: "home",
       label: "Inicio",
-      description: "Pick principal",
-      active: roomView === "home",
+      description: "Principal",
+      icon: "⌂",
+      active: roomView === "home" && !isChatOpen && !isRoomMenuOpen,
       onClick: () => openRoomTab("home"),
     },
     {
-      key: "matches",
-      label: "Partidos",
-      description: "Calendario",
-      active: roomView === "matches",
-      onClick: () => openRoomTab("matches"),
-    },
-    {
-      key: "ranking",
-      label: "Ranking",
-      description: "Posiciones",
-      active: roomView === "ranking",
-      onClick: () => openRoomTab("ranking"),
+      key: "picks",
+      label: "Picks",
+      description: pendingPickCount ? `${pendingPickCount} pendientes` : "Jugar",
+      icon: "✓",
+      active: roomView === "picks" && !isChatOpen,
+      badge: pendingPickCount ? (pendingPickCount > 9 ? "9+" : String(pendingPickCount)) : undefined,
+      onClick: () => openRoomTab("picks"),
     },
     {
       key: "chat",
       label: "Chat",
       description: hasChatActivity ? "Mensajes nuevos" : "Mensajes",
+      icon: "💬",
       active: isChatOpen,
       badge: hasChatActivity ? chatActivityLabel : undefined,
       onClick: () => {
         setIsChatOpen(true);
+        setIsRoomMenuOpen(false);
         hideMobileNavSoon();
       },
     },
-    ...(!embedded
-      ? [{
-        key: "rooms",
-        label: "Salas",
-        description: "Cambiar",
-        active: isRoomMenuOpen,
-        onClick: () => {
-          setIsRoomMenuOpen(true);
-          hideMobileNavSoon();
-        },
-      }]
-      : []),
     {
-      key: "picks",
-      label: "Picks",
-      description: pendingPickCount ? `${pendingPickCount} pendientes` : "Mis picks",
-      active: roomView === "picks",
-      onClick: () => openRoomTab("picks"),
-    },
-    {
-      key: "facts",
-      label: "IA",
-      description: "Previa",
-      active: roomView === "facts",
-      onClick: () => openRoomTab("facts"),
+      key: "ranking",
+      label: "Ranking",
+      description: "Posiciones",
+      icon: "🏆",
+      active: roomView === "ranking" && !isChatOpen,
+      onClick: () => openRoomTab("ranking"),
     },
     {
       key: "more",
       label: "Más",
       description: "Opciones",
-      active: roomView === "more" || moreRoomViews.includes(roomView),
+      icon: "⋯",
+      active: roomView === "more" || moreRoomViews.includes(roomView) || isRoomMenuOpen,
       onClick: () => openRoomTab("more"),
     },
   ];
@@ -1007,6 +989,8 @@ export function LeaguePanel({
   }
 
   function openRoomTab(view: RoomView) {
+    setIsChatOpen(false);
+    setIsRoomMenuOpen(false);
     goToRoomView(view, { hideMobileNav: true });
   }
 
@@ -1018,6 +1002,23 @@ export function LeaguePanel({
     const targetView = resolvePreviousRoomView();
     setPreviousRoomView(null);
     setRoomView(targetView);
+  }
+
+  function handleMobileBack() {
+    if (isChatOpen) {
+      setIsChatOpen(false);
+      showMobileNav(false);
+      return;
+    }
+
+    if (isRoomMenuOpen) {
+      setIsRoomMenuOpen(false);
+      showMobileNav(false);
+      return;
+    }
+
+    returnToPreviousRoomView();
+    showMobileNav(false);
   }
 
   function shouldIgnoreRoomEdgeSwipe(target: EventTarget | null) {
@@ -1229,18 +1230,26 @@ export function LeaguePanel({
           </button>
 
           <div className={`room-mobile-drawer ${isMobileNavOpen ? "is-open" : "is-hidden"}`}>
-            <span>
-              <strong>{selectedLeague.name}</strong>
-              <small>Navegación de sala</small>
-            </span>
+            <div className="room-mobile-drawer-header">
+              <span>
+                <strong>{selectedLeague.name}</strong>
+                <small>Navegación de sala</small>
+              </span>
+              {(roomView !== "home" || isChatOpen || isRoomMenuOpen) ? (
+                <button className="room-mobile-back-button" onClick={handleMobileBack} type="button">
+                  ← Volver
+                </button>
+              ) : null}
+            </div>
             <div className="room-mobile-cajons">
               {mobileRoomNavItems.map((item) => (
                 <button
-                  className={`room-mobile-cajon ${item.active ? "active" : ""} ${item.badge ? "has-badge" : ""}`}
+                  className={`room-mobile-cajon room-mobile-cajon-${item.key} ${item.active ? "active" : ""} ${item.badge ? "has-badge" : ""}`}
                   key={item.key}
                   onClick={item.onClick}
                   type="button"
                 >
+                  <span className="room-mobile-cajon-icon" aria-hidden="true">{item.icon}</span>
                   <strong>{item.label}</strong>
                   <small>{item.active ? "Abierto" : item.description}</small>
                   {item.badge ? <span className="room-mobile-cajon-badge">{item.badge}</span> : null}
@@ -1808,6 +1817,33 @@ export function LeaguePanel({
                     <p>Consulta integrantes y comparte el acceso cuando corresponda.</p>
                   </div>
                   <div className="room-more-grid">
+                    <button className="button secondary room-more-action" onClick={() => openRoomTab("matches")} type="button">
+                      <span>
+                        <strong>Calendario</strong>
+                        <small>Partidos, filtros y horarios</small>
+                      </span>
+                    </button>
+                    <button className="button secondary room-more-action" onClick={() => openRoomTab("facts")} type="button">
+                      <span>
+                        <strong>IA / Previa</strong>
+                        <small>Contexto para tus picks</small>
+                      </span>
+                    </button>
+                    {!embedded ? (
+                      <button
+                        className="button secondary room-more-action"
+                        onClick={() => {
+                          setIsRoomMenuOpen(true);
+                          hideMobileNavSoon();
+                        }}
+                        type="button"
+                      >
+                        <span>
+                          <strong>Salas</strong>
+                          <small>Cambiar o ingresar con código</small>
+                        </span>
+                      </button>
+                    ) : null}
                     <button className={`button secondary room-more-action ${canEditRoomInfo ? "is-admin" : ""}`} onClick={() => goToRoomView("participants")} type="button">
                       <span>
                         <strong>{canEditRoomInfo ? "Participantes y ajustes" : "Participantes"}</strong>
