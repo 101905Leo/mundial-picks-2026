@@ -166,7 +166,7 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
           <details className="points-breakdown">
             <summary>Detalle</summary>
             <span>Resultado: {match.homeScore} - {match.awayScore}</span>
-            <span>Tu pick: {prediction.homeScore} - {prediction.awayScore}</span>
+            <span>Mi pronóstico: {prediction.homeScore} - {prediction.awayScore}</span>
             <span>Puntos: {pointExplanation.points}</span>
             <span>Motivo: {pointExplanation.reason}</span>
           </details>
