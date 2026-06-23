@@ -10684,3 +10684,122 @@ button {
     scroll-margin-bottom: calc(160px + env(safe-area-inset-bottom));
   }
 }
+
+/* Prediction modal UX cleanup: focus on score and save action */
+.prediction-scoring-details {
+  background: rgba(15, 23, 42, 0.62);
+  border: 1px solid rgba(191, 219, 254, 0.12);
+  border-radius: 18px;
+  color: var(--muted);
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+}
+
+.prediction-scoring-details summary {
+  color: var(--gold-soft);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 950;
+  letter-spacing: 0.04em;
+  list-style: none;
+  text-transform: uppercase;
+}
+
+.prediction-scoring-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.prediction-scoring-details summary::after {
+  content: "+";
+  float: right;
+}
+
+.prediction-scoring-details[open] summary::after {
+  content: "−";
+}
+
+.prediction-scoring-details div {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.prediction-scoring-details span {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  display: flex;
+  font-size: 0.82rem;
+  font-weight: 800;
+  gap: 8px;
+  padding: 9px 10px;
+}
+
+.prediction-scoring-details strong {
+  color: var(--gold-soft);
+}
+
+@media (max-width: 850px) {
+  .prediction-modal-backdrop {
+    z-index: 140;
+  }
+
+  .prediction-modal {
+    gap: 14px;
+    max-height: 94dvh;
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+    scroll-padding-bottom: calc(112px + env(safe-area-inset-bottom));
+  }
+
+  .prediction-submit {
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    box-shadow: 0 -10px 28px rgba(0, 0, 0, 0.34);
+    min-height: 58px;
+    position: sticky;
+    z-index: 8;
+  }
+
+  .compact-quick-picks {
+    gap: 8px;
+  }
+
+  .compact-quick-picks > span {
+    font-size: 0.74rem;
+  }
+
+  .compact-quick-picks > div {
+    gap: 8px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .compact-quick-picks button {
+    border-radius: 16px;
+    gap: 4px;
+    min-height: 62px;
+    padding: 8px 6px;
+  }
+
+  .compact-quick-picks strong {
+    font-size: 1.08rem;
+  }
+
+  .compact-quick-picks small {
+    font-size: 0.6rem;
+    line-height: 1.1;
+  }
+
+  .prediction-scoring-details {
+    border-radius: 16px;
+    padding: 10px 12px;
+  }
+
+  .prediction-scoring-details div {
+    grid-template-columns: 1fr;
+  }
+
+  .prediction-scoring-details span {
+    font-size: 0.78rem;
+    padding: 8px 9px;
+  }
+}

@@ -16,33 +16,15 @@ type Props = {
   roomId?: string;
 };
 
-function trendForMatch(match: Match) {
-  const seed = `${match.homeTeam}-${match.awayTeam}`
-    .split("")
-    .reduce((total, char) => total + char.charCodeAt(0), 0);
-  const home = 38 + (seed % 19);
-  const draw = 18 + (seed % 9);
-  const away = Math.max(12, 100 - home - draw);
-  const total = home + draw + away;
-
-  return {
-    home: Math.round((home / total) * 100),
-    draw: Math.round((draw / total) * 100),
-    away: Math.round((away / total) * 100),
-  };
-}
-
 export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSaved, roomId }: Props) {
   const prediction = match.predictions?.[0];
   const [message, setMessage] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
-  const [aiPreviewOpen, setAiPreviewOpen] = useState(false);
   const [homePick, setHomePick] = useState(prediction?.homeScore ?? 0);
   const [awayPick, setAwayPick] = useState(prediction?.awayScore ?? 0);
   const startsAt = new Date(match.startsAt);
   const isClosed = isPickClosed(startsAt) || match.status === "LIVE" || match.status === "FINISHED";
   const inputDisabled = isClosed || !canPredict;
-  const trend = trendForMatch(match);
   const pointExplanation =
     prediction && match.homeScore !== null && match.awayScore !== null
       ? explainPredictionPoints(
@@ -148,7 +130,6 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
               disabled={inputDisabled}
               onClick={() => {
                 setMessage("");
-                setAiPreviewOpen(false);
                 setModalOpen(true);
               }}
               type="button"
@@ -241,8 +222,8 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
 
             <p className="prediction-helper prediction-edit-note">Puedes editar tu pronóstico hasta 1 hora antes del partido.</p>
 
-            <section className="quick-picks">
-              <span>Predicciones rápidas</span>
+            <section className="quick-picks compact-quick-picks">
+              <span>Atajos rápidos</span>
               <div>
                 {quickPicks.map((quickPick) => (
                   <button
@@ -262,56 +243,20 @@ export function MatchCard({ match, signedIn, canPredict, disabledMessage, onSave
               </div>
             </section>
 
-            <section className="possible-points" aria-label="Puntos posibles">
-              <span>Puntos posibles</span>
-              <div>
-                <p><strong>🎯 Marcador exacto:</strong> <span>+5 pts</span></p>
-                <p><strong>📊 Diferencia correcta:</strong> <span>+2 pts</span></p>
-                <p><strong>✅ Ganador correcto:</strong> <span>+3 pts</span></p>
-                <p><strong>👀 Participación:</strong> <span>+1 pt</span></p>
-              </div>
-            </section>
-
-            <section className={`ai-preview ${aiPreviewOpen ? "open" : ""}`}>
-              <button
-                aria-controls={`ai-preview-${match.id}`}
-                aria-expanded={aiPreviewOpen}
-                className="ai-preview-toggle"
-                onClick={() => setAiPreviewOpen((open) => !open)}
-                type="button"
-              >
-                <span>✨ Previa con IA</span>
-                <strong>{aiPreviewOpen ? "−" : "+"}</strong>
-              </button>
-              {aiPreviewOpen ? (
-                <p className="ai-preview-content" id={`ai-preview-${match.id}`}>
-                  Análisis disponible antes del partido.
-                </p>
-              ) : null}
-            </section>
-
-            <section className="prediction-trend">
-              <span>Probabilidades sugeridas por algoritmo</span>
-              <div>
-                <article>
-                  <small>Victoria local</small>
-                  <strong>{trend.home}%</strong>
-                </article>
-                <article>
-                  <small>Empate</small>
-                  <strong>{trend.draw}%</strong>
-                </article>
-                <article>
-                  <small>Victoria visitante</small>
-                  <strong>{trend.away}%</strong>
-                </article>
-              </div>
-            </section>
-
             <button className="button primary prediction-submit" type="submit">
               Guardar pronóstico
             </button>
             {message ? <p className="prediction-error">{message}</p> : null}
+
+            <details className="prediction-scoring-details">
+              <summary>¿Cómo se puntúa?</summary>
+              <div>
+                <span><strong>+5</strong> Marcador exacto</span>
+                <span><strong>+3</strong> Ganador correcto</span>
+                <span><strong>+2</strong> Diferencia correcta</span>
+                <span><strong>+1</strong> Participación</span>
+              </div>
+            </details>
           </form>
         </div>
       ) : null}
