@@ -680,7 +680,8 @@ export function LeaguePanel({
     .join(" ");
   const roomIsRoundOf32Mode = isRoundOf32Text(roomModeText);
   const roundOf32Matches = roomIsRoundOf32Mode ? sortedMatches.filter(isRoundOf32Match) : [];
-  const activeRoomMatches = roomIsRoundOf32Mode && roundOf32Matches.length ? roundOf32Matches : sortedMatches;
+  const activeRoomMatches = roomIsRoundOf32Mode ? roundOf32Matches : sortedMatches;
+  const activeRoomMatchIds = new Set(activeRoomMatches.map((match) => match.id));
   const visualMatchStatus = (match: Match) => getVisualMatchStatus(match, now);
   const liveMatches = activeRoomMatches.filter((match) => visualMatchStatus(match) === "LIVE");
   const scheduledMatches = activeRoomMatches.filter((match) => visualMatchStatus(match) === "SCHEDULED");
@@ -1478,6 +1479,7 @@ export function LeaguePanel({
                           <li><b>3 pts</b> ganador o empate correcto.</li>
                           <li><b>2 pts</b> diferencia de gol correcta.</li>
                           <li><b>1 pt</b> participación.</li>
+                          <li><b>Penales:</b> la tanda de penales no cuenta para puntos. Solo vale el marcador antes de penales.</li>
                         </ul>
                       </article>
 
@@ -1521,7 +1523,7 @@ export function LeaguePanel({
                     <span className="market-kicker">Modo competencia</span>
                     <h3>16avos de final</h3>
                     <p>
-                      Esta sala está enfocada en los partidos de 16avos. El ranking y los picks se concentran en esta fase.
+                      Esta sala está enfocada solo en partidos de 16avos. Los picks y el ranking deben concentrarse en esta fase.
                     </p>
                   </div>
                   <strong>{roundOf32Matches.length || activeRoomMatches.length} partidos</strong>
