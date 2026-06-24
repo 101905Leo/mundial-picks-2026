@@ -1,7 +1,7 @@
 {
   "name": "Mundial Picks Arena",
   "short_name": "MP Arena",
-  "description": "Crea salas privadas de predicciones, invita a tu grupo y compite en el ranking.",
+  "description": "Donde tus predicciones compiten. Crea tu arena, invita a tu grupo y sigue el ranking.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

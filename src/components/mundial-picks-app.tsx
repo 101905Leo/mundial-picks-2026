@@ -300,7 +300,7 @@ export function MundialPicksApp({ initialMode = "login", initialPhone = "" }: Mu
           <img className="brand-logo-image" src="/logo-mpa-badge.png" alt="Mundial Picks Arena" />
           <span>
             <strong>Mundial Picks Arena</strong>
-            <span>11 jun 2026 - 19 jul 2026</span>
+            <span>Donde tus predicciones compiten</span>
           </span>
         </div>
         <Countdown matches={matches} compact />

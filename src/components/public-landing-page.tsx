@@ -92,7 +92,7 @@ export function PublicLandingPage() {
         </div>
 
         <div className="public-landing-copy">
-          <p className="public-landing-kicker">Salas privadas de predicciones</p>
+          <p className="public-landing-kicker">Donde tus predicciones compiten</p>
           <h1 id="public-landing-title">Predice partidos, compite con tu grupo y sigue el ranking en vivo</h1>
         </div>
 

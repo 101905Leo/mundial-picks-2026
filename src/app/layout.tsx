@@ -7,13 +7,13 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.mundialpicks.online"),
   title: "Mundial Picks Arena | Donde tus predicciones compiten",
-  description: "Crea y administra salas privadas de predicciones con chat y ranking independiente.",
+  description: "Donde tus predicciones compiten. Crea tu arena, invita a tu grupo y sigue el ranking.",
   alternates: {
     canonical: "/",
   },
   openGraph: {
     title: "Mundial Picks Arena | Donde tus predicciones compiten",
-    description: "Crea y administra salas privadas de predicciones con chat y ranking independiente.",
+    description: "Donde tus predicciones compiten. Crea tu arena, invita a tu grupo y sigue el ranking.",
     url: "https://www.mundialpicks.online",
     siteName: "Mundial Picks Arena",
     locale: "es_CO",
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary",
     title: "Mundial Picks Arena | Donde tus predicciones compiten",
-    description: "Crea y administra salas privadas de predicciones con chat y ranking independiente.",
+    description: "Donde tus predicciones compiten. Crea tu arena, invita a tu grupo y sigue el ranking.",
   },
   manifest: "/manifest.json",
   appleWebApp: {
