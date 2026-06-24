@@ -11,11 +11,11 @@ export async function POST(request: NextRequest) {
   const clearManualPoints = body?.clearManualPoints === true;
   const updated = await recalculateFinishedMatchPoints({ clearManualPoints });
 
-  await notifyWhatsAppUsers(
+  const whatsapp = await notifyWhatsAppUsers(
     clearManualPoints
       ? `Mundial Picks Arena: puntos recalculados automaticamente. Picks actualizados: ${updated}.`
       : `Mundial Picks Arena: puntos recalculados. Picks actualizados: ${updated}.`,
   );
 
-  return Response.json({ updated, clearManualPoints });
+  return Response.json({ updated, clearManualPoints, whatsapp });
 }
