@@ -612,6 +612,7 @@ export function LeaguePanel({
   }
 
   const [selectedLiveMatchId, setSelectedLiveMatchId] = useState<string | null>(null);
+  const [selectedScheduledMatchId, setSelectedScheduledMatchId] = useState<string | null>(null);
 
   const sortedMatches = [...matches].sort((first, second) => new Date(first.startsAt).getTime() - new Date(second.startsAt).getTime());
   const visualMatchStatus = (match: Match) => getVisualMatchStatus(match, now);
@@ -621,15 +622,23 @@ export function LeaguePanel({
     (match) => visualMatchStatus(match) === "FINISHED" && match.homeScore !== null && match.awayScore !== null,
   );
   const nextScheduledMatch = scheduledMatches.find((match) => new Date(match.startsAt) >= now) ?? scheduledMatches[0] ?? null;
+  const nextScheduledMatchTime = nextScheduledMatch ? new Date(nextScheduledMatch.startsAt).getTime() : null;
+  const nextScheduledMatches = nextScheduledMatchTime
+    ? scheduledMatches.filter((match) => new Date(match.startsAt).getTime() === nextScheduledMatchTime)
+    : [];
   const lastFinishedMatch = finishedMatchesWithScore[finishedMatchesWithScore.length - 1] ?? null;
   const selectedLiveMatch = selectedLiveMatchId
     ? liveMatches.find((match) => match.id === selectedLiveMatchId) ?? null
     : null;
   const activeLiveMatch = selectedLiveMatch ?? liveMatches[0] ?? null;
+  const selectedScheduledMatch = selectedScheduledMatchId
+    ? nextScheduledMatches.find((match) => match.id === selectedScheduledMatchId) ?? null
+    : null;
+  const activeScheduledMatch = selectedScheduledMatch ?? nextScheduledMatches[0] ?? nextScheduledMatch ?? null;
   // LIVE tiene prioridad para no cambiar la tarjeta mientras el partido está en curso.
   const featuredMatch =
     activeLiveMatch ??
-    nextScheduledMatch ??
+    activeScheduledMatch ??
     lastFinishedMatch ??
     null;
   const featuredMatchStatus = featuredMatch ? visualMatchStatus(featuredMatch) : null;
@@ -1340,10 +1349,11 @@ export function LeaguePanel({
                     </div>
                     {featuredMatch ? (
                       <>
-                        {liveMatches.length > 1 && featuredMatchStatus === "LIVE" ? (
+                        {((liveMatches.length > 1 && featuredMatchStatus === "LIVE") || (!activeLiveMatch && nextScheduledMatches.length > 1 && featuredMatchStatus === "SCHEDULED")) ? (
                           <div className="room-live-fan-selector" aria-label="Partidos en vivo">
-                            {liveMatches.map((match, index) => {
-                              const offset = index - (liveMatches.length - 1) / 2;
+                            {(featuredMatchStatus === "LIVE" ? liveMatches : nextScheduledMatches).map((match, index, fanMatches) => {
+                              const offset = index - (fanMatches.length - 1) / 2;
+                              const isLiveFan = featuredMatchStatus === "LIVE";
                               const isSelected = match.id === featuredMatch.id;
                               const matchHasScore = match.homeScore !== null && match.awayScore !== null;
 
@@ -1352,20 +1362,20 @@ export function LeaguePanel({
                                   aria-pressed={isSelected}
                                   className={`room-live-fan-match ${isSelected ? "selected" : ""}`}
                                   key={match.id}
-                                  onClick={() => setSelectedLiveMatchId(match.id)}
+                                  onClick={() => isLiveFan ? setSelectedLiveMatchId(match.id) : setSelectedScheduledMatchId(match.id)}
                                   style={{
                                     transform: `translateX(${offset * 34}px) rotate(${offset * 5}deg)`,
                                     zIndex: 20 + index,
                                   }}
                                   type="button"
                                 >
-                                  <span className="room-live-fan-status">EN VIVO</span>
+                                  <span className="room-live-fan-status">{isLiveFan ? "EN VIVO" : "PRÓXIMO"}</span>
                                   <div className="room-live-fan-teams">
                                     <div>
                                       <span>{flagForTeam(match.homeTeam)}</span>
                                       <strong>{match.homeTeam}</strong>
                                     </div>
-                                    <em>{matchHasScore ? `${match.homeScore} - ${match.awayScore}` : "En vivo"}</em>
+                                    <em>{isLiveFan ? (matchHasScore ? `${match.homeScore} - ${match.awayScore}` : "En vivo") : "vs"}</em>
                                     <div>
                                       <span>{flagForTeam(match.awayTeam)}</span>
                                       <strong>{match.awayTeam}</strong>
