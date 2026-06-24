@@ -798,41 +798,33 @@ export function LeaguePanel({
   const roomRulesStorageKey = selectedLeague ? `mpa-room-rules-${selectedLeague.id}-${user.id}` : null;
 
   useEffect(() => {
-    if (!roomRulesStorageKey || !roomIsActivated || isSuperAdmin) {
-      setRoomRulesAccepted(true);
+    if (!roomRulesStorageKey) {
       setRoomRulesModalOpen(false);
       return;
     }
 
-    const accepted = window.localStorage.getItem(roomRulesStorageKey);
+    const alreadySeen = window.localStorage.getItem(roomRulesStorageKey);
 
-    if (accepted === "accepted") {
-      setRoomRulesAccepted(true);
+    if (alreadySeen === "seen") {
       setRoomRulesModalOpen(false);
       return;
     }
 
-    setRoomRulesAccepted(false);
     setRoomRulesModalWarning("");
     setRoomRulesModalOpen(true);
-  }, [isSuperAdmin, roomIsActivated, roomRulesStorageKey]);
+  }, [roomRulesStorageKey]);
 
-  function acceptRoomRules() {
+
+  function acknowledgeRoomRules() {
     if (roomRulesStorageKey) {
-      window.localStorage.setItem(roomRulesStorageKey, "accepted");
+      window.localStorage.setItem(roomRulesStorageKey, "seen");
     }
 
-    setRoomRulesAccepted(true);
     setRoomRulesModalWarning("");
     setRoomRulesModalOpen(false);
   }
 
-  function declineRoomRules() {
-    setRoomRulesAccepted(false);
-    setRoomRulesModalWarning("Para participar debes aceptar las reglas de la sala. Si no estás de acuerdo, no podrás guardar picks ni competir en esta sala.");
-  }
-
-  const roomCanPredict = baseRoomCanPredict && roomRulesAccepted;
+  const roomCanPredict = baseRoomCanPredict;
   const shouldRenderMobileAdSlot = Boolean(selectedLeague && roomIsActivated && roomView === "home");
   const showMobileAdSlot = Boolean(shouldRenderMobileAdSlot && mobileAdVisible);
   const featuredPickClosed = featuredMatch ? isPickClosed(new Date(featuredMatch.startsAt)) || featuredMatchStatus === "LIVE" || featuredMatchStatus === "FINISHED" : true;
@@ -1380,7 +1372,7 @@ export function LeaguePanel({
                     <div className="room-rules-modal-header">
                       <span className="market-kicker">Antes de competir</span>
                       <h2 id="room-rules-modal-title">Reglas de la sala</h2>
-                      <p>Lee y acepta las reglas para participar. Si no aceptas, no podrás guardar picks.</p>
+                      <p>Antes de participar, revisa cómo se calculan los puntos, cuándo se cierran los picks y cómo se resuelven los empates.</p>
                     </div>
 
                     <div className="room-rules-modal-grid">
@@ -1419,14 +1411,9 @@ export function LeaguePanel({
                       </article>
                     </div>
 
-                    {roomRulesModalWarning ? <p className="room-rules-modal-warning">{roomRulesModalWarning}</p> : null}
-
                     <div className="room-rules-modal-actions">
-                      <button className="button secondary" onClick={declineRoomRules} type="button">
-                        No estoy de acuerdo
-                      </button>
-                      <button className="button primary" onClick={acceptRoomRules} type="button">
-                        De acuerdo
+                      <button className="button primary" onClick={acknowledgeRoomRules} type="button">
+                        Entendido
                       </button>
                     </div>
                   </section>
