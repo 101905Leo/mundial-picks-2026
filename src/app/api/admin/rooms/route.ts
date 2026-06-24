@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
       maxParticipants,
       status: "ACTIVE",
       expiresAt,
-      description: "Sala privada creada y administrada desde Mundial Picks.",
+      description: "Sala privada creada y administrada desde Mundial Picks Arena.",
       rules: "El propietario puede publicar aquí las reglas internas de su grupo.",
       paymentStatus: parsed.data.mode,
       paymentAmountInCents: (parsed.data.pricePaidCop ?? 0) * 100,

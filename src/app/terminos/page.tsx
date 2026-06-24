@@ -5,9 +5,9 @@ export default function TermsPage() {
     <main className="plans-shell">
       <header className="plans-header">
         <Link className="brand plans-brand" href="/">
-          <img className="brand-logo-image" src="/logo-copa-mundial-2026.png" alt="" />
+          <img className="brand-logo-image" src="/logo-mpa.svg" alt="" />
           <span>
-            <strong>Mundial Picks</strong>
+            <strong>Mundial Picks Arena</strong>
             <span>Términos del servicio</span>
           </span>
         </Link>
@@ -18,7 +18,7 @@ export default function TermsPage() {
         <span className="market-kicker">Condiciones de uso</span>
         <h1>Términos y condiciones</h1>
         <p>
-          Mundial Picks permite crear salas privadas para organizar predicciones deportivas entre grupos.
+          Mundial Picks Arena permite crear salas privadas para organizar predicciones deportivas entre grupos.
           El servicio incluye administración de sala, calendario, picks, ranking, chat y herramientas de seguimiento.
         </p>
 
@@ -43,7 +43,7 @@ export default function TermsPage() {
         <h2>Disponibilidad</h2>
         <p>
           El servicio puede depender de proveedores externos como Wompi, WhatsApp, Vercel, base de datos y fuentes
-          de resultados deportivos. Mundial Picks puede realizar mantenimientos o ajustes para mejorar la estabilidad.
+          de resultados deportivos. Mundial Picks Arena puede realizar mantenimientos o ajustes para mejorar la estabilidad.
         </p>
 
         <h2>Contacto</h2>

@@ -5,9 +5,9 @@ export default function PrivacyPage() {
     <main className="plans-shell">
       <header className="plans-header">
         <Link className="brand plans-brand" href="/">
-          <img className="brand-logo-image" src="/logo-copa-mundial-2026.png" alt="" />
+          <img className="brand-logo-image" src="/logo-mpa.svg" alt="" />
           <span>
-            <strong>Mundial Picks</strong>
+            <strong>Mundial Picks Arena</strong>
             <span>Política de privacidad</span>
           </span>
         </Link>
@@ -18,7 +18,7 @@ export default function PrivacyPage() {
         <span className="market-kicker">Datos personales</span>
         <h1>Política de privacidad</h1>
         <p>
-          Mundial Picks recopila la información necesaria para crear cuentas, administrar salas, procesar pagos,
+          Mundial Picks Arena recopila la información necesaria para crear cuentas, administrar salas, procesar pagos,
           mostrar rankings y brindar soporte.
         </p>
 
@@ -36,7 +36,7 @@ export default function PrivacyPage() {
 
         <h2>Pagos</h2>
         <p>
-          Los pagos son procesados por Wompi. Mundial Picks no almacena datos sensibles de tarjetas o métodos de pago.
+          Los pagos son procesados por Wompi. Mundial Picks Arena no almacena datos sensibles de tarjetas o métodos de pago.
           Solo guarda referencias, estados y montos necesarios para confirmar la activación del servicio.
         </p>
 

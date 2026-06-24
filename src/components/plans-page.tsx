@@ -141,10 +141,10 @@ export function PlansPage() {
     <main className="plans-shell">
       <header className="plans-header">
         <Link className="brand plans-brand" href="/">
-          <img className="brand-logo-image" src="/logo-copa-mundial-2026.png" alt="" />
+          <img className="brand-logo-image" src="/logo-mpa.svg" alt="" />
           <span>
-            <strong>Mundial Picks</strong>
-            <span>Salas privadas de picks</span>
+            <strong>Mundial Picks Arena</strong>
+            <span>Donde tus predicciones compiten</span>
           </span>
         </Link>
         <Link className="button secondary" href="/">Volver al inicio</Link>
@@ -259,7 +259,7 @@ export function PlansPage() {
 
       <section className="panel room-legal-notice plans-legal">
         <p>
-          Mundial Picks solo proporciona la plataforma tecnológica para crear y administrar salas privadas. Los premios,
+          Mundial Picks Arena solo proporciona la plataforma tecnológica para crear y administrar salas privadas. Los premios,
           pagos, acuerdos o beneficios ofrecidos dentro de cada sala son responsabilidad exclusiva del creador o
           administrador de la sala.
         </p>

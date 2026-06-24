@@ -6,29 +6,29 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.mundialpicks.online"),
-  title: "Mundial Picks | Salas privadas de picks",
-  description: "Crea y administra salas privadas de picks con chat y ranking independiente.",
+  title: "Mundial Picks Arena | Donde tus predicciones compiten",
+  description: "Crea y administra salas privadas de predicciones con chat y ranking independiente.",
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: "Mundial Picks | Salas privadas de picks",
-    description: "Crea y administra salas privadas de picks con chat y ranking independiente.",
+    title: "Mundial Picks Arena | Donde tus predicciones compiten",
+    description: "Crea y administra salas privadas de predicciones con chat y ranking independiente.",
     url: "https://www.mundialpicks.online",
-    siteName: "Mundial Picks",
+    siteName: "Mundial Picks Arena",
     locale: "es_CO",
     type: "website",
   },
   twitter: {
     card: "summary",
-    title: "Mundial Picks | Salas privadas de picks",
-    description: "Crea y administra salas privadas de picks con chat y ranking independiente.",
+    title: "Mundial Picks Arena | Donde tus predicciones compiten",
+    description: "Crea y administra salas privadas de predicciones con chat y ranking independiente.",
   },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Mundial 2026",
+    title: "MP Arena",
   },
   icons: {
     icon: [

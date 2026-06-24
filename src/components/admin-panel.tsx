@@ -189,7 +189,7 @@ function formatAdminMatchOption(
 }
 
 function buildPinDeliveryMessage(name: string, phone: string, pin: string) {
-  return `Hola, ${name}. Tu acceso a Mundial Picks está listo. Entra con tu WhatsApp ${phone} y tu PIN: ${pin}. No compartas este PIN.`;
+  return `Hola, ${name}. Tu acceso a Mundial Picks Arena está listo. Entra con tu WhatsApp ${phone} y tu PIN: ${pin}. No compartas este PIN.`;
 }
 
 function isAdminRoomActivated(room: Pick<AdminRoom, "paidAt" | "paymentStatus">) {
@@ -731,7 +731,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
   }
 
   async function copyRoomInvitation(room: AdminRoom) {
-    const invitation = `Únete a "${room.name}" en Mundial Picks: https://www.mundialpicks.online. Código: ${room.inviteCode}`;
+    const invitation = `Únete a "${room.name}" en Mundial Picks Arena: https://www.mundialpicks.online. Código: ${room.inviteCode}`;
     await navigator.clipboard.writeText(invitation);
     setMessage(`Invitación copiada para ${room.name}`);
   }
@@ -1371,7 +1371,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
         <div>
           <span className="market-kicker">Control general</span>
           <h2>Panel administrador</h2>
-          <p>Control general de Mundial Picks 2026</p>
+          <p>Control general de Mundial Picks Arena</p>
         </div>
         {adminView === "overview" ? (
           <button className="button admin-refresh-inline" onClick={updateResults} type="button">

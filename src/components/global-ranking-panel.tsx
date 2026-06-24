@@ -28,7 +28,7 @@ export function GlobalRankingPanel({ ranking, user, onOpenPicks }: Props) {
     <section className="ranking-page">
       <div className="ranking-hero">
         <div>
-          <span className="market-kicker">Mundial Picks 2026</span>
+          <span className="market-kicker">Mundial Picks Arena</span>
           <h2>Ranking mundial</h2>
           <p>
             El ranking oficial de picks aparecerá cuando empiece el Mundial. Desde aquí puedes buscar jugadores,

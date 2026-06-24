@@ -1,7 +1,7 @@
 {
-  "name": "Copa Mundial de la FIFA 2026™",
-  "short_name": "Mundial 2026",
-  "description": "Picks, créditos, ligas y ranking de la Copa Mundial de la FIFA 2026™.",
+  "name": "Mundial Picks Arena",
+  "short_name": "MP Arena",
+  "description": "Crea salas privadas de predicciones, invita a tu grupo y compite en el ranking.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

@@ -149,7 +149,7 @@ async function roomStatistics(options: StatisticsOptions) {
       confidence: dataPoints >= 4 ? "Media" : dataPoints > 0 ? "Baja" : "Inicial",
       reason:
         dataPoints > 0
-          ? "Basado en goles a favor, goles recibidos y resultados cargados en Mundial Picks."
+          ? "Basado en goles a favor, goles recibidos y resultados cargados en Mundial Picks Arena."
           : "Sin historial suficiente; sugerencia inicial conservadora.",
     };
   });

@@ -407,14 +407,14 @@ export function LeaguePanel({
 
   async function copyInvitation() {
     if (!selectedLeague) return;
-    const invitation = `Únete a "${selectedLeague.name}" en Mundial Picks: https://www.mundialpicks.online. Código: ${selectedLeague.inviteCode}`;
+    const invitation = `Únete a "${selectedLeague.name}" en Mundial Picks Arena: https://www.mundialpicks.online. Código: ${selectedLeague.inviteCode}`;
     await navigator.clipboard.writeText(invitation);
     setMessage("Invitación copiada para compartir.");
   }
 
   function shareInvitation() {
     if (!selectedLeague) return;
-    const invitation = `Únete a mi sala privada "${selectedLeague.name}" en Mundial Picks. Código: ${selectedLeague.inviteCode}. Entra en https://www.mundialpicks.online`;
+    const invitation = `Únete a mi sala privada "${selectedLeague.name}" en Mundial Picks Arena. Código: ${selectedLeague.inviteCode}. Entra en https://www.mundialpicks.online`;
     window.open(`https://wa.me/?text=${encodeURIComponent(invitation)}`, "_blank", "noopener,noreferrer");
   }
 
@@ -1081,7 +1081,7 @@ export function LeaguePanel({
 
   function shareRanking() {
     if (!selectedLeague || !userRanking) return;
-    const text = `${user.name} está en la posición #${userRankingIndex + 1} de "${selectedLeague.name}" con ${userRanking.points} puntos en Mundial Picks. https://www.mundialpicks.online`;
+    const text = `${user.name} está en la posición #${userRankingIndex + 1} de "${selectedLeague.name}" con ${userRanking.points} puntos en Mundial Picks Arena. https://www.mundialpicks.online`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
   }
 
@@ -1905,7 +1905,7 @@ export function LeaguePanel({
                   <p>{selectedLeague.rules || "El administrador de la sala todavía no ha publicado reglas internas."}</p>
                 </article>
                 <p className="room-legal-notice">
-                  Mundial Picks solo proporciona la plataforma tecnológica para crear y administrar salas privadas. Los premios,
+                  Mundial Picks Arena solo proporciona la plataforma tecnológica para crear y administrar salas privadas. Los premios,
                   pagos, acuerdos o beneficios ofrecidos dentro de cada sala son responsabilidad exclusiva del creador o
                   administrador de la sala.
                 </p>

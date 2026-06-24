@@ -87,8 +87,8 @@ export function PublicLandingPage() {
     <main className="public-landing-page">
       <section className="public-landing-hero" aria-labelledby="public-landing-title">
         <div className="public-landing-brand">
-          <img className="public-landing-logo" src="/logo-copa-mundial-2026.png" alt="" />
-          <span>Mundial Picks</span>
+          <img className="public-landing-logo" src="/logo-mpa.svg" alt="" />
+          <span>Mundial Picks Arena</span>
         </div>
 
         <div className="public-landing-copy">
@@ -168,7 +168,7 @@ export function PublicLandingPage() {
           ))}
         </ul>
 
-        <nav className="public-landing-links" aria-label="Accesos de Mundial Picks">
+        <nav className="public-landing-links" aria-label="Accesos de Mundial Picks Arena">
           <Link href="/planes">Ver planes</Link>
           <Link href="/mi-sala">Entrar sin escribir número</Link>
           <Link href="/terminos">Términos</Link>

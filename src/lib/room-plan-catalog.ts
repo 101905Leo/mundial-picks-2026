@@ -44,6 +44,6 @@ export const roomPlanCatalog: RoomPlanCatalogItem[] = [
 
 export function salesWhatsAppUrl(planName: string) {
   const phone = (process.env.NEXT_PUBLIC_SALES_WHATSAPP || "573008588571").replace(/\D/g, "");
-  const message = `Hola, quiero alquilar una sala privada en Mundial Picks. Me interesa el plan ${planName}.`;
+  const message = `Hola, quiero alquilar una sala privada en Mundial Picks Arena. Me interesa el plan ${planName}.`;
   return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 }

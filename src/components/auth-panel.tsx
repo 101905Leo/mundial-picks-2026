@@ -150,7 +150,7 @@ export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: 
 
           <p className="quick-pin-helper">No dudamos que seas tú, pero es mejor confirmar.</p>
 
-          <aside className="quick-pin-promo" aria-label="Promoción de Mundial Picks">
+          <aside className="quick-pin-promo" aria-label="Promoción de Mundial Picks Arena">
             <strong>Crea tu propia sala</strong>
             <span>Invita a tu familia, hagan picks y sigan el ranking.</span>
             <Link href="/planes">Crear sala</Link>

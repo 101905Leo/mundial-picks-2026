@@ -257,9 +257,9 @@ export function MundialPicksApp({ initialMode = "login", initialPhone = "" }: Mu
       <main className="mi-sala-public-entry">
         <section className="mi-sala-entry-panel" aria-labelledby="mi-sala-entry-title">
           <div className="mi-sala-entry-copy">
-            <img className="mi-sala-entry-logo" src="/logo-copa-mundial-2026.png" alt="" />
+            <img className="mi-sala-entry-logo" src="/logo-mpa.svg" alt="" />
             <span className="market-kicker">Acceso seguro</span>
-            <h1 id="mi-sala-entry-title">Entra a Mundial Picks</h1>
+            <h1 id="mi-sala-entry-title">Entra a Mundial Picks Arena</h1>
             <p>
               Escribe tu WhatsApp y PIN para entrar a tu sala. Si todavía no tienes cuenta,
               regístrate con el código que te compartió el administrador.
@@ -297,9 +297,9 @@ export function MundialPicksApp({ initialMode = "login", initialPhone = "" }: Mu
     <main className={`app-shell ${isActionView ? "action-view" : ""}`}>
       <header className="topbar">
         <div className="brand">
-          <img className="brand-logo-image" src="/logo-copa-mundial-2026.png" alt="Copa Mundial de la FIFA 2026™" />
+          <img className="brand-logo-image" src="/logo-mpa.svg" alt="Mundial Picks Arena" />
           <span>
-            <strong>Mundial Picks 2026</strong>
+            <strong>Mundial Picks Arena</strong>
             <span>11 jun 2026 - 19 jul 2026</span>
           </span>
         </div>
@@ -317,7 +317,7 @@ export function MundialPicksApp({ initialMode = "login", initialPhone = "" }: Mu
       <section className="hero-band">
         <div className="hero-content">
           <div className="hero-title-group">
-            <img className="hero-logo-image" src="/logo-copa-mundial-2026.png" alt="Copa Mundial de la FIFA 2026™" />
+            <img className="hero-logo-image" src="/logo-mpa.svg" alt="Mundial Picks Arena" />
             <div>
               <h1>{!user ? "Tu liga privada del Mundial." : "Copa Mundial de la FIFA 2026™"}</h1>
               {!user ? (
@@ -466,7 +466,7 @@ export function MundialPicksApp({ initialMode = "login", initialPhone = "" }: Mu
                 </section>
 
                 <footer className="landing-footer">
-                  <span>Desarrollado por Mundial Picks 2026</span>
+                  <span>Desarrollado por Mundial Picks Arena</span>
                   <a href={salesWhatsAppUrl("Sala Básica")} rel="noreferrer" target="_blank">Contacto</a>
                 </footer>
 
