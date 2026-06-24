@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Estadísticas | Mundial Picks Arena",
-  description: "Estadísticas reales del torneo: goleadas, equipos más goleadores, mejores defensas e invictos.",
+  description: "Goleadas, equipos más goleadores, mejores defensas, invictos y partidos con más goles.",
 };
 
 type TeamStats = {
@@ -19,6 +19,12 @@ type TeamStats = {
   goalsAgainst: number;
   goalDifference: number;
   points: number;
+};
+
+type StatRow = {
+  label: string;
+  value: string;
+  meta: string;
 };
 
 function formatDate(date: Date) {
@@ -104,146 +110,185 @@ export default async function EstadisticasPage() {
 
   const teams = Array.from(teamMap.values());
 
-  const topScorers = [...teams].sort((a, b) => b.goalsFor - a.goalsFor || b.goalDifference - a.goalDifference).slice(0, 8);
-  const bestDefenses = [...teams].sort((a, b) => a.goalsAgainst - b.goalsAgainst || b.points - a.points).slice(0, 8);
-  const bestDifference = [...teams].sort((a, b) => b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor).slice(0, 8);
-  const invictos = [...teams].filter((team) => team.played > 0 && team.losses === 0).sort((a, b) => b.points - a.points);
-  const sinGanar = [...teams].filter((team) => team.played > 0 && team.wins === 0).sort((a, b) => b.played - a.played);
-
-  const goleadas = [...matches]
-    .map((match) => ({
-      ...match,
-      totalGoals: (match.homeScore ?? 0) + (match.awayScore ?? 0),
-      difference: Math.abs((match.homeScore ?? 0) - (match.awayScore ?? 0)),
-    }))
-    .sort((a, b) => b.difference - a.difference || b.totalGoals - a.totalGoals)
+  const topScorers = [...teams]
+    .sort((a, b) => b.goalsFor - a.goalsFor || b.goalDifference - a.goalDifference)
     .slice(0, 8);
 
-  const partidosConMasGoles = [...matches]
-    .map((match) => ({
-      ...match,
-      totalGoals: (match.homeScore ?? 0) + (match.awayScore ?? 0),
-    }))
-    .sort((a, b) => b.totalGoals - a.totalGoals)
+  const bestDefenses = [...teams]
+    .sort((a, b) => a.goalsAgainst - b.goalsAgainst || b.points - a.points)
     .slice(0, 8);
 
-  const totalGoals = matches.reduce((sum, match) => sum + (match.homeScore ?? 0) + (match.awayScore ?? 0), 0);
+  const bestDifference = [...teams]
+    .sort((a, b) => b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor)
+    .slice(0, 8);
+
+  const invictos = [...teams]
+    .filter((team) => team.played > 0 && team.losses === 0)
+    .sort((a, b) => b.points - a.points || b.goalDifference - a.goalDifference);
+
+  const sinGanar = [...teams]
+    .filter((team) => team.played > 0 && team.wins === 0)
+    .sort((a, b) => b.played - a.played || a.points - b.points);
+
+  const enrichedMatches = matches.map((match) => ({
+    ...match,
+    homeScore: match.homeScore ?? 0,
+    awayScore: match.awayScore ?? 0,
+    totalGoals: (match.homeScore ?? 0) + (match.awayScore ?? 0),
+    difference: Math.abs((match.homeScore ?? 0) - (match.awayScore ?? 0)),
+  }));
+
+  const biggestWin = [...enrichedMatches].sort(
+    (a, b) => b.difference - a.difference || b.totalGoals - a.totalGoals,
+  )[0];
+
+  const highestScoring = [...enrichedMatches].sort((a, b) => b.totalGoals - a.totalGoals)[0];
+  const bestAttack = topScorers[0];
+  const bestDefense = bestDefenses[0];
+
+  const totalGoals = enrichedMatches.reduce((sum, match) => sum + match.totalGoals, 0);
   const averageGoals = matches.length > 0 ? (totalGoals / matches.length).toFixed(2) : "0.00";
 
   return (
-    <main className="tournament-public-page">
-      <section className="tournament-public-hero">
-        <div>
-          <p className="tournament-public-eyebrow">Estadísticas</p>
-          <h1>Datos reales del torneo</h1>
+    <main className="stats-premium-page">
+      <section className="stats-premium-hero">
+        <div className="stats-premium-hero__content">
+          <p className="stats-premium-kicker">Mundial Picks Arena</p>
+          <h1>Centro de estadísticas del torneo</h1>
           <p>
-            Goleadas, equipos más goleadores, mejores defensas, invictos y partidos con más goles dentro de Mundial Picks Arena.
+            Goleadas, equipos más goleadores, mejores defensas, invictos y partidos con más goles.
+            Una sección pensada para que el fanático entre a revisar cómo se mueve el Mundial.
           </p>
+
+          <div className="stats-premium-actions">
+            <Link href="/mi-sala">Entrar a mi sala</Link>
+            <Link href="/" className="secondary">
+              Volver al inicio
+            </Link>
+          </div>
         </div>
 
-        <Link href="/mi-sala" className="tournament-public-cta">
-          Entrar a mi sala
-        </Link>
+        <div className="stats-premium-hero__panel">
+          <span>Partidos analizados</span>
+          <strong>{matches.length}</strong>
+          <p>{totalGoals} goles registrados</p>
+        </div>
       </section>
 
-      <nav className="tournament-public-nav" aria-label="Secciones del torneo">
-        <Link href="/calendario">Calendario</Link>
-        <Link href="/resultados">Resultados</Link>
-        <Link href="/grupos">Grupos</Link>
-        <Link href="/mejores-terceros">Mejores terceros</Link>
-        <Link href="/llaves">Llaves</Link>
-        <Link href="/estadisticas">Estadísticas</Link>
-      </nav>
-
-      <section className="stats-summary-grid">
-        <article>
-          <span>Partidos finalizados</span>
-          <strong>{matches.length}</strong>
-        </article>
-        <article>
-          <span>Goles totales</span>
-          <strong>{totalGoals}</strong>
-        </article>
-        <article>
-          <span>Promedio de goles</span>
-          <strong>{averageGoals}</strong>
-        </article>
-        <article>
-          <span>Equipos registrados</span>
-          <strong>{teams.length}</strong>
-        </article>
+      <section className="stats-premium-metrics">
+        <MetricCard label="Partidos finalizados" value={matches.length.toString()} icon="🏟️" />
+        <MetricCard label="Goles totales" value={totalGoals.toString()} icon="⚽" />
+        <MetricCard label="Promedio de goles" value={averageGoals} icon="📊" />
+        <MetricCard label="Equipos con datos" value={teams.length.toString()} icon="🌍" />
       </section>
 
       {matches.length === 0 ? (
-        <section className="tournament-empty-state">
+        <section className="stats-premium-empty">
           <h2>Todavía no hay estadísticas disponibles</h2>
-          <p>Cuando existan partidos finalizados con marcador, esta sección mostrará goleadas, goles y rankings de equipos.</p>
-          <Link href="/calendario">Ver calendario</Link>
+          <p>Cuando existan partidos finalizados, aquí aparecerán goleadas, goles, defensas e invictos.</p>
+          <Link href="/mi-sala">Entrar a mi sala</Link>
         </section>
       ) : (
         <>
-          <section className="stats-section-grid">
-            <StatsCard title="⚽ Equipos más goleadores" rows={topScorers.map((team) => ({
-              label: team.team,
-              value: `${team.goalsFor} goles`,
-              meta: `DG ${team.goalDifference}`,
-            }))} />
+          <section className="stats-premium-highlights">
+            <HighlightCard
+              label="Equipo más goleador"
+              title={bestAttack?.team || "Sin datos"}
+              value={bestAttack ? `${bestAttack.goalsFor} goles` : "0 goles"}
+              detail={bestAttack ? `Diferencia de gol: ${bestAttack.goalDifference}` : "Esperando resultados"}
+              icon="⚽"
+            />
 
-            <StatsCard title="🛡️ Mejores defensas" rows={bestDefenses.map((team) => ({
-              label: team.team,
-              value: `${team.goalsAgainst} recibidos`,
-              meta: `${team.points} pts`,
-            }))} />
+            <HighlightCard
+              label="Mejor defensa"
+              title={bestDefense?.team || "Sin datos"}
+              value={bestDefense ? `${bestDefense.goalsAgainst} recibidos` : "0 recibidos"}
+              detail={bestDefense ? `${bestDefense.points} puntos acumulados` : "Esperando resultados"}
+              icon="🛡️"
+            />
 
-            <StatsCard title="🔥 Mejor diferencia de gol" rows={bestDifference.map((team) => ({
-              label: team.team,
-              value: `DG ${team.goalDifference}`,
-              meta: `${team.goalsFor} GF`,
-            }))} />
+            <HighlightCard
+              label="Mayor goleada"
+              title={biggestWin ? `${biggestWin.homeTeam} ${biggestWin.homeScore} - ${biggestWin.awayScore} ${biggestWin.awayTeam}` : "Sin datos"}
+              value={biggestWin ? `Diferencia: ${biggestWin.difference}` : "Sin marcador"}
+              detail={biggestWin ? formatDate(biggestWin.startsAt) : "Esperando resultados"}
+              icon="💥"
+            />
 
-            <StatsCard title="✅ Invictos" rows={invictos.map((team) => ({
-              label: team.team,
-              value: `${team.played} PJ`,
-              meta: `${team.points} pts`,
-            }))} empty="No hay invictos por ahora." />
+            <HighlightCard
+              label="Partido con más goles"
+              title={highestScoring ? `${highestScoring.homeTeam} vs ${highestScoring.awayTeam}` : "Sin datos"}
+              value={highestScoring ? `${highestScoring.totalGoals} goles` : "0 goles"}
+              detail={highestScoring ? `${highestScoring.homeScore} - ${highestScoring.awayScore}` : "Esperando resultados"}
+              icon="🔥"
+            />
           </section>
 
-          <section className="stats-wide-grid">
-            <article className="stats-card stats-card-wide">
-              <h2>💥 Mayores goleadas</h2>
-              <div className="stats-match-list">
-                {goleadas.map((match) => (
-                  <div key={match.id} className="stats-match-row">
-                    <strong>{match.homeTeam}</strong>
-                    <span>{match.homeScore} - {match.awayScore}</span>
-                    <strong>{match.awayTeam}</strong>
-                    <small>{match.group ? `Grupo ${match.group}` : "Torneo"} · {formatDate(match.startsAt)}</small>
-                  </div>
-                ))}
-              </div>
-            </article>
+          <section className="stats-premium-grid">
+            <RankingCard
+              title="⚽ Equipos más goleadores"
+              rows={topScorers.map((team) => ({
+                label: team.team,
+                value: `${team.goalsFor} goles`,
+                meta: `DG ${team.goalDifference}`,
+              }))}
+            />
 
-            <article className="stats-card stats-card-wide">
-              <h2>🎯 Partidos con más goles</h2>
-              <div className="stats-match-list">
-                {partidosConMasGoles.map((match) => (
-                  <div key={match.id} className="stats-match-row">
-                    <strong>{match.homeTeam}</strong>
-                    <span>{match.homeScore} - {match.awayScore}</span>
-                    <strong>{match.awayTeam}</strong>
-                    <small>{match.totalGoals} goles · {formatDate(match.startsAt)}</small>
-                  </div>
-                ))}
-              </div>
-            </article>
+            <RankingCard
+              title="🛡️ Mejores defensas"
+              rows={bestDefenses.map((team) => ({
+                label: team.team,
+                value: `${team.goalsAgainst} recibidos`,
+                meta: `${team.points} pts`,
+              }))}
+            />
+
+            <RankingCard
+              title="📈 Mejor diferencia de gol"
+              rows={bestDifference.map((team) => ({
+                label: team.team,
+                value: `DG ${team.goalDifference}`,
+                meta: `${team.goalsFor} GF`,
+              }))}
+            />
+
+            <RankingCard
+              title="✅ Equipos invictos"
+              rows={invictos.map((team) => ({
+                label: team.team,
+                value: `${team.played} PJ`,
+                meta: `${team.points} pts`,
+              }))}
+              empty="No hay invictos por ahora."
+            />
           </section>
 
-          <section className="stats-section-grid">
-            <StatsCard title="❌ Equipos sin ganar" rows={sinGanar.map((team) => ({
-              label: team.team,
-              value: `${team.played} PJ`,
-              meta: `${team.draws}E / ${team.losses}P`,
-            }))} empty="Todos los equipos registrados ya ganaron al menos una vez." />
+          <section className="stats-premium-match-grid">
+            <MatchList
+              title="💥 Mayores goleadas"
+              matches={[...enrichedMatches]
+                .sort((a, b) => b.difference - a.difference || b.totalGoals - a.totalGoals)
+                .slice(0, 8)}
+              mode="difference"
+            />
+
+            <MatchList
+              title="🎯 Partidos con más goles"
+              matches={[...enrichedMatches].sort((a, b) => b.totalGoals - a.totalGoals).slice(0, 8)}
+              mode="total"
+            />
+          </section>
+
+          <section className="stats-premium-grid one">
+            <RankingCard
+              title="❌ Equipos sin ganar"
+              rows={sinGanar.map((team) => ({
+                label: team.team,
+                value: `${team.played} PJ`,
+                meta: `${team.draws}E / ${team.losses}P`,
+              }))}
+              empty="Todos los equipos con partidos registrados ya ganaron al menos una vez."
+            />
           </section>
         </>
       )}
@@ -251,33 +296,117 @@ export default async function EstadisticasPage() {
   );
 }
 
-function StatsCard({
+function MetricCard({ label, value, icon }: { label: string; value: string; icon: string }) {
+  return (
+    <article className="stats-premium-metric">
+      <span>{icon}</span>
+      <div>
+        <p>{label}</p>
+        <strong>{value}</strong>
+      </div>
+    </article>
+  );
+}
+
+function HighlightCard({
+  label,
+  title,
+  value,
+  detail,
+  icon,
+}: {
+  label: string;
+  title: string;
+  value: string;
+  detail: string;
+  icon: string;
+}) {
+  return (
+    <article className="stats-premium-highlight">
+      <div className="stats-premium-highlight__icon">{icon}</div>
+      <p>{label}</p>
+      <h2>{title}</h2>
+      <strong>{value}</strong>
+      <span>{detail}</span>
+    </article>
+  );
+}
+
+function RankingCard({
   title,
   rows,
   empty = "Sin datos disponibles.",
 }: {
   title: string;
-  rows: { label: string; value: string; meta: string }[];
+  rows: StatRow[];
   empty?: string;
 }) {
   return (
-    <article className="stats-card">
+    <article className="stats-premium-card">
       <h2>{title}</h2>
 
       {rows.length === 0 ? (
-        <p className="stats-empty">{empty}</p>
+        <p className="stats-premium-empty-text">{empty}</p>
       ) : (
-        <div className="stats-list">
+        <div className="stats-premium-ranking">
           {rows.map((row, index) => (
-            <div key={`${row.label}-${index}`} className="stats-row">
+            <div key={`${row.label}-${index}`} className="stats-premium-ranking-row">
               <span>{index + 1}</span>
-              <strong>{row.label}</strong>
+              <div>
+                <strong>{row.label}</strong>
+                <small>{row.meta}</small>
+              </div>
               <em>{row.value}</em>
-              <small>{row.meta}</small>
             </div>
           ))}
         </div>
       )}
+    </article>
+  );
+}
+
+function MatchList({
+  title,
+  matches,
+  mode,
+}: {
+  title: string;
+  matches: {
+    id: string;
+    homeTeam: string;
+    awayTeam: string;
+    homeScore: number;
+    awayScore: number;
+    group: string | null;
+    startsAt: Date;
+    totalGoals: number;
+    difference: number;
+  }[];
+  mode: "difference" | "total";
+}) {
+  return (
+    <article className="stats-premium-card">
+      <h2>{title}</h2>
+
+      <div className="stats-premium-matches">
+        {matches.map((match) => (
+          <div key={match.id} className="stats-premium-match-row">
+            <div>
+              <strong>{match.homeTeam}</strong>
+              <strong>{match.awayTeam}</strong>
+            </div>
+
+            <span>
+              {match.homeScore} - {match.awayScore}
+            </span>
+
+            <small>
+              {mode === "difference" ? `Diferencia ${match.difference}` : `${match.totalGoals} goles`} ·{" "}
+              {match.group ? `Grupo ${match.group}` : "Torneo"} · {formatDate(match.startsAt)}
+            </small>
+          </div>
+        ))}
+      </div>
     </article>
   );
 }
