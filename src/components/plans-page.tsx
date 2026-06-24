@@ -143,7 +143,7 @@ export function PlansPage() {
         <Link className="brand plans-brand" href="/">
           <img className="brand-logo-image" src="/logo-mpa-badge.png" alt="" />
           <span>
-            <strong className="brand-wordmark"><span>Mundial Picks</span><em>Arena</em></strong>
+            <strong>Mundial Picks Arena</strong>
             <span>Donde tus predicciones compiten</span>
           </span>
         </Link>
