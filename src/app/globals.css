@@ -11288,3 +11288,161 @@ button {
 .mi-sala-entry-copy h1 {
   letter-spacing: 0.015em;
 }
+
+/* Tournament statistics */
+.stats-summary-grid {
+  max-width: 1180px;
+  margin: 0 auto 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+}
+
+.stats-summary-grid article,
+.stats-card {
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 24px;
+  background: rgba(15, 23, 42, 0.78);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.22);
+}
+
+.stats-summary-grid article {
+  padding: 18px;
+}
+
+.stats-summary-grid span {
+  display: block;
+  color: #94a3b8;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.stats-summary-grid strong {
+  display: block;
+  margin-top: 8px;
+  color: #facc15;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.stats-section-grid,
+.stats-wide-grid {
+  max-width: 1180px;
+  margin: 0 auto 24px;
+  display: grid;
+  gap: 16px;
+}
+
+.stats-section-grid {
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+}
+
+.stats-wide-grid {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.stats-card {
+  padding: 18px;
+}
+
+.stats-card h2 {
+  margin: 0 0 14px;
+  color: #f8fafc;
+  font-size: 1.1rem;
+}
+
+.stats-list,
+.stats-match-list {
+  display: grid;
+  gap: 10px;
+}
+
+.stats-row,
+.stats-match-row {
+  display: grid;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(2, 6, 23, 0.36);
+}
+
+.stats-row {
+  grid-template-columns: auto 1fr auto;
+}
+
+.stats-row span {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(250, 204, 21, 0.16);
+  color: #facc15;
+  font-weight: 900;
+}
+
+.stats-row strong,
+.stats-match-row strong {
+  color: #f8fafc;
+}
+
+.stats-row em {
+  color: #bbf7d0;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.stats-row small {
+  grid-column: 2 / -1;
+  color: #94a3b8;
+}
+
+.stats-match-row {
+  grid-template-columns: 1fr auto 1fr;
+}
+
+.stats-match-row strong:last-of-type {
+  text-align: right;
+}
+
+.stats-match-row span {
+  border-radius: 14px;
+  padding: 8px 10px;
+  background: rgba(248, 250, 252, 0.08);
+  color: #facc15;
+  font-weight: 900;
+}
+
+.stats-match-row small {
+  grid-column: 1 / -1;
+  color: #94a3b8;
+}
+
+.stats-empty {
+  margin: 0;
+  color: #94a3b8;
+}
+
+@media (max-width: 720px) {
+  .stats-row,
+  .stats-match-row {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-row span {
+    width: auto;
+    padding: 6px 10px;
+  }
+
+  .stats-row small,
+  .stats-match-row small {
+    grid-column: auto;
+  }
+
+  .stats-match-row strong:last-of-type {
+    text-align: left;
+  }
+}
