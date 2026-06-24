@@ -13,8 +13,8 @@ export async function POST(request: NextRequest) {
 
   await notifyWhatsAppUsers(
     clearManualPoints
-      ? `Puntos recalculados automaticamente en Copa Mundial de la FIFA 2026™. Picks actualizados: ${updated}.`
-      : `Puntos recalculados en Copa Mundial de la FIFA 2026™. Picks actualizados: ${updated}.`,
+      ? `Mundial Picks Arena: puntos recalculados automaticamente. Picks actualizados: ${updated}.`
+      : `Mundial Picks Arena: puntos recalculados. Picks actualizados: ${updated}.`,
   );
 
   return Response.json({ updated, clearManualPoints });

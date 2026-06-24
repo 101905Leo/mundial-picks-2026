@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
   });
 
   await notifyWhatsAppUsers(
-    `Nuevo partido en Copa Mundial de la FIFA 2026™: ${match.homeTeam} vs ${match.awayTeam}. Fecha: ${match.startsAt.toLocaleString("es-CO")}.`,
+    `Mundial Picks Arena: nuevo partido creado: ${match.homeTeam} vs ${match.awayTeam}. Fecha: ${match.startsAt.toLocaleString("es-CO")}.`,
   );
 
   return Response.json({ match }, { status: 201 });

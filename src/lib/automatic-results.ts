@@ -88,7 +88,7 @@ export async function updateResultsAndRecalculate(options: { enforceSchedule?: b
         : "";
 
     await notifyWhatsAppUsers(
-      `Resultados actualizados Copa Mundial de la FIFA 2026™:\n${scoreLines || "Salas sincronizadas con resultados existentes."}${extraMatches}\nPartidos de sala sincronizados: ${roomMatchesSynced}.\nPicks recalculados: ${predictionsUpdated}.`,
+      `Mundial Picks Arena: resultados actualizados.\n${scoreLines || "Salas sincronizadas con resultados existentes."}${extraMatches}\nPartidos de sala sincronizados: ${roomMatchesSynced}.\nPicks recalculados: ${predictionsUpdated}.`,
     );
   }
 

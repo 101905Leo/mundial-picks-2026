@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     const result = await importWorldCupCalendar();
 
     await notifyWhatsAppUsers(
-      `Calendario actualizado en Copa Mundial de la FIFA 2026™. Partidos cargados: ${result.total}.`,
+      `Mundial Picks Arena: calendario actualizado. Partidos cargados: ${result.total}.`,
     );
 
     return Response.json(result);

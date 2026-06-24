@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
   if (response) return response;
 
   const result = await notifyWhatsAppUsers(
-    "mensaje de prueba enviado desde el panel administrador. Si recibes este aviso, WhatsApp quedo conectado",
+    "Mundial Picks Arena: mensaje de prueba enviado desde el panel administrador. Si recibes este aviso, WhatsApp quedo conectado.",
   );
 
   return Response.json(result);
