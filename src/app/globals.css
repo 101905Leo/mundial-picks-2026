@@ -11870,3 +11870,89 @@ button {
     justify-self: start;
   }
 }
+
+/* Scroll experience for statistics dashboard */
+.stats-premium-ranking,
+.stats-premium-matches,
+.stats-list,
+.stats-match-list {
+  max-height: 430px;
+  overflow-y: auto;
+  padding-right: 6px;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.stats-premium-ranking::-webkit-scrollbar,
+.stats-premium-matches::-webkit-scrollbar,
+.stats-list::-webkit-scrollbar,
+.stats-match-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.stats-premium-ranking::-webkit-scrollbar-track,
+.stats-premium-matches::-webkit-scrollbar-track,
+.stats-list::-webkit-scrollbar-track,
+.stats-match-list::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 999px;
+}
+
+.stats-premium-ranking::-webkit-scrollbar-thumb,
+.stats-premium-matches::-webkit-scrollbar-thumb,
+.stats-list::-webkit-scrollbar-thumb,
+.stats-match-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(250, 204, 21, 0.9), rgba(34, 197, 94, 0.85));
+  border-radius: 999px;
+}
+
+.stats-premium-card {
+  max-height: 560px;
+  overflow: hidden;
+}
+
+.stats-premium-card h2 {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding-bottom: 12px;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.72));
+  backdrop-filter: blur(10px);
+}
+
+@media (max-width: 720px) {
+  .stats-premium-highlights {
+    display: flex;
+    overflow-x: auto;
+    gap: 14px;
+    padding-bottom: 10px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .stats-premium-highlight {
+    min-width: 82vw;
+    scroll-snap-align: start;
+  }
+
+  .stats-premium-highlights::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .stats-premium-highlights::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 999px;
+  }
+
+  .stats-premium-highlights::-webkit-scrollbar-thumb {
+    background: linear-gradient(90deg, rgba(250, 204, 21, 0.9), rgba(34, 197, 94, 0.85));
+    border-radius: 999px;
+  }
+
+  .stats-premium-ranking,
+  .stats-premium-matches,
+  .stats-list,
+  .stats-match-list {
+    max-height: 360px;
+  }
+}
