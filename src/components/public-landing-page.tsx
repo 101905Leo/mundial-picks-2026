@@ -206,6 +206,12 @@ export function PublicLandingPage() {
         </nav>
       </section>
 
+      {liveMatches.length > 0 ? (
+        <section className="public-landing-live-wrap" aria-label="Partidos en vivo">
+          <LivePanel matches={matches} />
+        </section>
+      ) : null}
+
       <section className="public-landing-info-section" id="conoce-la-app" aria-labelledby="public-landing-info-title">
         <p className="public-landing-kicker">Cómo funciona</p>
         <h2 id="public-landing-info-title">Una sala simple para jugar predicciones en grupo</h2>
