@@ -12256,3 +12256,92 @@ button {
     transform: translateY(-6px) !important;
   }
 }
+
+/* Room achievements / incentives */
+.room-achievements-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.room-achievements-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at top left, rgba(250, 204, 21, 0.12), transparent 16rem),
+    radial-gradient(circle at bottom right, rgba(34, 197, 94, 0.10), transparent 14rem);
+}
+
+.room-achievement-list {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.room-achievement-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 20px;
+  padding: 14px;
+  background: rgba(15, 23, 42, 0.58);
+}
+
+.room-achievement-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 1.35rem;
+}
+
+.room-achievement-card strong {
+  display: block;
+  color: #f8fafc;
+  font-size: 1.15rem;
+  font-weight: 950;
+}
+
+.room-achievement-card span:not(.room-achievement-icon) {
+  display: block;
+  color: #e2e8f0;
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.room-achievement-card small {
+  display: block;
+  margin-top: 3px;
+  color: #94a3b8;
+  font-size: 0.72rem;
+  line-height: 1.25;
+}
+
+.room-achievement-card.gold {
+  border-color: rgba(250, 204, 21, 0.45);
+  box-shadow: 0 18px 48px rgba(250, 204, 21, 0.10);
+}
+
+.room-achievement-card.green {
+  border-color: rgba(34, 197, 94, 0.40);
+}
+
+.room-achievement-card.orange {
+  border-color: rgba(249, 115, 22, 0.40);
+}
+
+.room-achievement-card.blue {
+  border-color: rgba(59, 130, 246, 0.40);
+}
+
+@media (max-width: 720px) {
+  .room-achievement-list {
+    grid-template-columns: 1fr;
+  }
+}

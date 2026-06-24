@@ -729,6 +729,46 @@ export function LeaguePanel({
     if (match.status === "SCHEDULED" || match.homeScore === null || match.awayScore === null) return sum;
     return sum + (prediction.points ?? 0);
   }, 0);
+  const roomAchievementCards = [
+    {
+      icon: "🏆",
+      label: "Posición actual",
+      value: userRanking ? `#${userRankingIndex + 1}` : "-",
+      detail: userRankingIndex === 0
+        ? "Vas liderando la sala."
+        : userRanking
+          ? `${pointsBehindLeader} pts del líder.`
+          : "Entra al ranking guardando picks.",
+      tone: userRankingIndex === 0 ? "gold" : "neutral",
+    },
+    {
+      icon: "🎯",
+      label: "Marcadores exactos",
+      value: String(userExactScores),
+      detail: userExactScores > 0
+        ? "Tienes aciertos perfectos."
+        : "Busca tu primer marcador exacto.",
+      tone: userExactScores > 0 ? "green" : "neutral",
+    },
+    {
+      icon: "🔥",
+      label: "Picks guardados",
+      value: String(userPickCount),
+      detail: pendingPickCount > 0
+        ? `${pendingPickCount} partidos pendientes.`
+        : "Vas al día con tus pronósticos.",
+      tone: userPickCount >= 3 ? "orange" : "neutral",
+    },
+    {
+      icon: "⚡",
+      label: "Actividad reciente",
+      value: String(recentUserPicks.length),
+      detail: recentUserPicks.length
+        ? "Últimos picks registrados."
+        : "Aún no hay picks recientes.",
+      tone: recentUserPicks.length ? "blue" : "neutral",
+    },
+  ];
   const roomHasExpired = Boolean(selectedLeague?.expiresAt && new Date(selectedLeague.expiresAt) <= new Date());
   const activeLeagues = leagues.filter(isActiveLeague);
   const selectableLeagues = isSuperAdmin ? leagues : activeLeagues;
@@ -1461,6 +1501,28 @@ export function LeaguePanel({
                     <article><span>Tu posición</span><strong>{userRanking ? `#${userRankingIndex + 1}` : "-"}</strong></article>
                     <article><span>Tus puntos</span><strong>{userRanking?.points ?? 0}</strong></article>
                     <article><span>Tus aciertos</span><strong>{userExactScores}</strong></article>
+                  </section>
+
+                  <section className="panel room-achievements-card" aria-label="Tus logros">
+                    <div className="section-title">
+                      <div>
+                        <span className="market-kicker">Incentivos</span>
+                        <h3>Tus logros</h3>
+                        <small>Motívate a seguir compitiendo en la sala.</small>
+                      </div>
+                    </div>
+                    <div className="room-achievement-list">
+                      {roomAchievementCards.map((achievement) => (
+                        <article className={`room-achievement-card ${achievement.tone}`} key={achievement.label}>
+                          <span className="room-achievement-icon">{achievement.icon}</span>
+                          <div>
+                            <strong>{achievement.value}</strong>
+                            <span>{achievement.label}</span>
+                            <small>{achievement.detail}</small>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
                   </section>
 
                   <section className="panel room-create-promo-card visual-room-ad">
