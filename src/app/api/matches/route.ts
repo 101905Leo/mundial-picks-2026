@@ -77,7 +77,14 @@ export async function GET(request: NextRequest) {
       ? includeRoomMatches
         ? {}
         : { roomId: null }
-      : { isPublished: true, roomId: null },
+      : {
+          roomId: null,
+          OR: [
+            { isPublished: true },
+            { status: "LIVE" },
+            { status: "FINISHED", homeScore: { not: null }, awayScore: { not: null } },
+          ],
+        },
     orderBy: { startsAt: "asc" },
     include: {
       predictions: user
