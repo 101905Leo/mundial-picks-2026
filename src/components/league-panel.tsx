@@ -611,6 +611,8 @@ export function LeaguePanel({
     await loadRoom();
   }
 
+  const [selectedLiveMatchId, setSelectedLiveMatchId] = useState<string | null>(null);
+
   const sortedMatches = [...matches].sort((first, second) => new Date(first.startsAt).getTime() - new Date(second.startsAt).getTime());
   const visualMatchStatus = (match: Match) => getVisualMatchStatus(match, now);
   const liveMatches = sortedMatches.filter((match) => visualMatchStatus(match) === "LIVE");
@@ -620,9 +622,13 @@ export function LeaguePanel({
   );
   const nextScheduledMatch = scheduledMatches.find((match) => new Date(match.startsAt) >= now) ?? scheduledMatches[0] ?? null;
   const lastFinishedMatch = finishedMatchesWithScore[finishedMatchesWithScore.length - 1] ?? null;
+  const selectedLiveMatch = selectedLiveMatchId
+    ? liveMatches.find((match) => match.id === selectedLiveMatchId) ?? null
+    : null;
+  const activeLiveMatch = selectedLiveMatch ?? liveMatches[0] ?? null;
   // LIVE tiene prioridad para no cambiar la tarjeta mientras el partido está en curso.
   const featuredMatch =
-    liveMatches[0] ??
+    activeLiveMatch ??
     nextScheduledMatch ??
     lastFinishedMatch ??
     null;
@@ -705,12 +711,14 @@ export function LeaguePanel({
     .slice(0, 3);
   const pendingPickCount = sortedMatches.filter((match) => match.status !== "FINISHED" && !(match.predictions ?? []).length).length;
   const rankingTopThree = ranking.slice(0, 3);
-  const livePredictionMatchIds = new Set(liveMatches.map((match) => match.id));
-  const liveRoomPredictions = predictions.filter((prediction) => livePredictionMatchIds.has(prediction.match.id));
+  const activeLivePredictionMatch = featuredMatch && featuredMatchStatus === "LIVE" ? featuredMatch : null;
+  const liveRoomPredictions = activeLivePredictionMatch
+    ? predictions.filter((prediction) => prediction.match.id === activeLivePredictionMatch.id)
+    : [];
   const visibleRoomPredictions = predictions.filter(
-    (prediction) => prediction.match.status === "LIVE" || prediction.match.status === "FINISHED",
+    (prediction) => prediction.match.status === "FINISHED",
   );
-  const roomHomePredictions = liveRoomPredictions.length ? liveRoomPredictions : visibleRoomPredictions;
+  const roomHomePredictions = activeLivePredictionMatch ? liveRoomPredictions : visibleRoomPredictions;
   const userRankingIndex = ranking.findIndex((entry) => entry.id === user.id);
   const userRanking = userRankingIndex >= 0 ? ranking[userRankingIndex] : null;
   const userPickCount = userRanking?.predictions ?? savedPicks.length;
@@ -1292,24 +1300,62 @@ export function LeaguePanel({
                     </div>
                     {featuredMatch ? (
                       <>
-                        <div className="room-next-teams">
-                          <div>
-                            <span>{flagForTeam(featuredMatch.homeTeam)}</span>
-                            <strong>{featuredMatch.homeTeam}</strong>
+                        {liveMatches.length > 1 && featuredMatchStatus === "LIVE" ? (
+                          <div className="room-live-fan-selector" aria-label="Partidos en vivo">
+                            {liveMatches.map((match, index) => {
+                              const offset = index - (liveMatches.length - 1) / 2;
+                              const isSelected = match.id === featuredMatch.id;
+                              const matchHasScore = match.homeScore !== null && match.awayScore !== null;
+
+                              return (
+                                <button
+                                  aria-pressed={isSelected}
+                                  className={`room-live-fan-match ${isSelected ? "selected" : ""}`}
+                                  key={match.id}
+                                  onClick={() => setSelectedLiveMatchId(match.id)}
+                                  style={{
+                                    transform: `translateX(${offset * 34}px) rotate(${offset * 5}deg)`,
+                                    zIndex: 20 + index,
+                                  }}
+                                  type="button"
+                                >
+                                  <span className="room-live-fan-status">EN VIVO</span>
+                                  <div className="room-live-fan-teams">
+                                    <div>
+                                      <span>{flagForTeam(match.homeTeam)}</span>
+                                      <strong>{match.homeTeam}</strong>
+                                    </div>
+                                    <em>{matchHasScore ? `${match.homeScore} - ${match.awayScore}` : "En vivo"}</em>
+                                    <div>
+                                      <span>{flagForTeam(match.awayTeam)}</span>
+                                      <strong>{match.awayTeam}</strong>
+                                    </div>
+                                  </div>
+                                  <small>{match.group ?? "Partido en vivo"}</small>
+                                </button>
+                              );
+                            })}
                           </div>
-                          <em>
-                            {(featuredMatchStatus === "LIVE" || featuredMatchStatus === "FINISHED") &&
-                            featuredMatchHasScore
-                              ? `${featuredMatch.homeScore} - ${featuredMatch.awayScore}`
-                              : featuredMatchStatus === "LIVE"
-                                ? "En vivo"
-                                : "vs"}
-                          </em>
-                          <div>
-                            <span>{flagForTeam(featuredMatch.awayTeam)}</span>
-                            <strong>{featuredMatch.awayTeam}</strong>
+                        ) : (
+                          <div className="room-next-teams">
+                            <div>
+                              <span>{flagForTeam(featuredMatch.homeTeam)}</span>
+                              <strong>{featuredMatch.homeTeam}</strong>
+                            </div>
+                            <em>
+                              {(featuredMatchStatus === "LIVE" || featuredMatchStatus === "FINISHED") &&
+                              featuredMatchHasScore
+                                ? `${featuredMatch.homeScore} - ${featuredMatch.awayScore}`
+                                : featuredMatchStatus === "LIVE"
+                                  ? "En vivo"
+                                  : "vs"}
+                            </em>
+                            <div>
+                              <span>{flagForTeam(featuredMatch.awayTeam)}</span>
+                              <strong>{featuredMatch.awayTeam}</strong>
+                            </div>
                           </div>
-                        </div>
+                        )}
                         <p>
                           {featuredMatch.group ? `${featuredMatch.group} · ` : ""}
                           {new Date(featuredMatch.startsAt).toLocaleDateString("es", { weekday: "short", day: "2-digit", month: "short" })}
@@ -1470,7 +1516,10 @@ export function LeaguePanel({
                     <div className="section-title">
                       <div>
                         <span className="market-kicker">Picks</span>
-                        <h3>{liveRoomPredictions.length ? "Picks en vivo" : "Picks finales"}</h3>
+                        <h3>{activeLivePredictionMatch ? "Picks en vivo" : "Picks finales"}</h3>
+                        {activeLivePredictionMatch ? (
+                          <small>{activeLivePredictionMatch.homeTeam} vs {activeLivePredictionMatch.awayTeam}</small>
+                        ) : null}
                       </div>
                     </div>
                     <div className="room-prediction-list compact-prediction-list">
@@ -1520,7 +1569,13 @@ export function LeaguePanel({
                           </article>
                         );
                       })}
-                      {!roomHomePredictions.length ? <div className="empty">Los picks se mostrarán cuando inicie el partido.</div> : null}
+                      {!roomHomePredictions.length ? (
+                        <div className="empty">
+                          {activeLivePredictionMatch
+                            ? "Aún no hay picks visibles para este partido."
+                            : "Los picks se mostrarán cuando inicie el partido."}
+                        </div>
+                      ) : null}
                     </div>
                   </section>
                 </aside>
