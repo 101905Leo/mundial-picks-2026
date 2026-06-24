@@ -614,6 +614,10 @@ export function LeaguePanel({
   const [selectedLiveMatchId, setSelectedLiveMatchId] = useState<string | null>(null);
   const [selectedScheduledMatchId, setSelectedScheduledMatchId] = useState<string | null>(null);
 
+  const [roomRulesModalOpen, setRoomRulesModalOpen] = useState(false);
+  const [roomRulesModalWarning, setRoomRulesModalWarning] = useState("");
+  const [roomRulesAccepted, setRoomRulesAccepted] = useState(false);
+
   const sortedMatches = [...matches].sort((first, second) => new Date(first.startsAt).getTime() - new Date(second.startsAt).getTime());
   const visualMatchStatus = (match: Match) => getVisualMatchStatus(match, now);
   const liveMatches = sortedMatches.filter((match) => visualMatchStatus(match) === "LIVE");
@@ -786,11 +790,49 @@ export function LeaguePanel({
     ["APPROVED", "TRIAL", "MANUAL"].includes(selectedLeague?.paymentStatus ?? "") ||
     isSuperAdmin,
   );
-  const roomCanPredict =
+  const baseRoomCanPredict =
     !isSuperAdmin &&
     (selectedLeague?.status ?? "ACTIVE") === "ACTIVE" &&
     !roomHasExpired &&
     roomIsActivated;
+  const roomRulesStorageKey = selectedLeague ? `mpa-room-rules-${selectedLeague.id}-${user.id}` : null;
+
+  useEffect(() => {
+    if (!roomRulesStorageKey || !roomIsActivated || isSuperAdmin) {
+      setRoomRulesAccepted(true);
+      setRoomRulesModalOpen(false);
+      return;
+    }
+
+    const accepted = window.localStorage.getItem(roomRulesStorageKey);
+
+    if (accepted === "accepted") {
+      setRoomRulesAccepted(true);
+      setRoomRulesModalOpen(false);
+      return;
+    }
+
+    setRoomRulesAccepted(false);
+    setRoomRulesModalWarning("");
+    setRoomRulesModalOpen(true);
+  }, [isSuperAdmin, roomIsActivated, roomRulesStorageKey]);
+
+  function acceptRoomRules() {
+    if (roomRulesStorageKey) {
+      window.localStorage.setItem(roomRulesStorageKey, "accepted");
+    }
+
+    setRoomRulesAccepted(true);
+    setRoomRulesModalWarning("");
+    setRoomRulesModalOpen(false);
+  }
+
+  function declineRoomRules() {
+    setRoomRulesAccepted(false);
+    setRoomRulesModalWarning("Para participar debes aceptar las reglas de la sala. Si no estás de acuerdo, no podrás guardar picks ni competir en esta sala.");
+  }
+
+  const roomCanPredict = baseRoomCanPredict && roomRulesAccepted;
   const shouldRenderMobileAdSlot = Boolean(selectedLeague && roomIsActivated && roomView === "home");
   const showMobileAdSlot = Boolean(shouldRenderMobileAdSlot && mobileAdVisible);
   const featuredPickClosed = featuredMatch ? isPickClosed(new Date(featuredMatch.startsAt)) || featuredMatchStatus === "LIVE" || featuredMatchStatus === "FINISHED" : true;
@@ -1332,6 +1374,65 @@ export function LeaguePanel({
             <div className="room-main-content">
           {roomView === "home" ? (
             <div className="room-home-screen">
+              {roomRulesModalOpen ? (
+                <div className="room-rules-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="room-rules-modal-title">
+                  <section className="room-rules-modal-card">
+                    <div className="room-rules-modal-header">
+                      <span className="market-kicker">Antes de competir</span>
+                      <h2 id="room-rules-modal-title">Reglas de la sala</h2>
+                      <p>Lee y acepta las reglas para participar. Si no aceptas, no podrás guardar picks.</p>
+                    </div>
+
+                    <div className="room-rules-modal-grid">
+                      <article>
+                        <span>📌</span>
+                        <strong>Sistema de puntos</strong>
+                        <ul>
+                          <li><b>5 pts</b> marcador exacto.</li>
+                          <li><b>3 pts</b> ganador o empate correcto.</li>
+                          <li><b>2 pts</b> diferencia de gol correcta.</li>
+                          <li><b>1 pt</b> participación.</li>
+                        </ul>
+                      </article>
+
+                      <article>
+                        <span>⏱️</span>
+                        <strong>Cierre de picks</strong>
+                        <p>Los picks se cierran cuando inicia cada partido. En vivo o finalizado ya no se puede editar.</p>
+                      </article>
+
+                      <article>
+                        <span>🏆</span>
+                        <strong>Premios</strong>
+                        <p>Los premios definidos por el administrador se entregan según el ranking final de la sala.</p>
+                      </article>
+
+                      <article>
+                        <span>⚖️</span>
+                        <strong>Desempates</strong>
+                        <ol>
+                          <li>Más marcadores exactos.</li>
+                          <li>Más picks guardados.</li>
+                          <li>Más puntos en el último partido.</li>
+                          <li>Decisión del administrador.</li>
+                        </ol>
+                      </article>
+                    </div>
+
+                    {roomRulesModalWarning ? <p className="room-rules-modal-warning">{roomRulesModalWarning}</p> : null}
+
+                    <div className="room-rules-modal-actions">
+                      <button className="button secondary" onClick={declineRoomRules} type="button">
+                        No estoy de acuerdo
+                      </button>
+                      <button className="button primary" onClick={acceptRoomRules} type="button">
+                        De acuerdo
+                      </button>
+                    </div>
+                  </section>
+                </div>
+              ) : null}
+
               <div className="room-home-grid">
                 <div className="room-home-primary">
                   <section className="room-next-card room-featured-match">
