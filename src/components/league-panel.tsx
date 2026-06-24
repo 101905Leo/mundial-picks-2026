@@ -616,7 +616,7 @@ export function LeaguePanel({
 
   const [roomRulesModalOpen, setRoomRulesModalOpen] = useState(false);
   const [roomRulesModalWarning, setRoomRulesModalWarning] = useState("");
-  const [roomRulesAccepted, setRoomRulesAccepted] = useState(false);
+  const [roomShareNotice, setRoomShareNotice] = useState("");
 
   const sortedMatches = [...matches].sort((first, second) => new Date(first.startsAt).getTime() - new Date(second.startsAt).getTime());
   const visualMatchStatus = (match: Match) => getVisualMatchStatus(match, now);
@@ -825,6 +825,38 @@ export function LeaguePanel({
   }
 
   const roomCanPredict = baseRoomCanPredict;
+  function shareRoomOnWhatsApp() {
+    if (!selectedLeague) {
+      return;
+    }
+
+    const roomMeta = selectedLeague as unknown as {
+      code?: string | null;
+      inviteCode?: string | null;
+      joinCode?: string | null;
+      accessCode?: string | null;
+      name?: string | null;
+    };
+
+    const roomCode = roomMeta.code ?? roomMeta.inviteCode ?? roomMeta.joinCode ?? roomMeta.accessCode ?? "";
+    const roomUrl = typeof window !== "undefined" ? `${window.location.origin}/mi-sala` : "https://www.mundialpicks.online/mi-sala";
+    const shareText = [
+      "🏆 Únete a mi sala en Mundial Picks Arena",
+      `Sala: ${roomMeta.name ?? selectedLeague.name ?? "Mi sala"}`,
+      roomCode ? `Código de sala: ${roomCode}` : null,
+      "Haz tus predicciones y compite en el ranking.",
+      roomUrl,
+      "Donde tus predicciones compiten.",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    void navigator.clipboard?.writeText(shareText).catch(() => undefined);
+    setRoomShareNotice("Invitación copiada. WhatsApp se abrirá con el mensaje listo.");
+
+    window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, "_blank", "noopener,noreferrer");
+  }
+
   const shouldRenderMobileAdSlot = Boolean(selectedLeague && roomIsActivated && roomView === "home");
   const showMobileAdSlot = Boolean(shouldRenderMobileAdSlot && mobileAdVisible);
   const featuredPickClosed = featuredMatch ? isPickClosed(new Date(featuredMatch.startsAt)) || featuredMatchStatus === "LIVE" || featuredMatchStatus === "FINISHED" : true;
@@ -1421,6 +1453,20 @@ export function LeaguePanel({
               ) : null}
 
               <div className="room-home-grid">
+              <section className="panel room-share-card" aria-label="Compartir sala">
+                <div>
+                  <span className="market-kicker">Invita a tu grupo</span>
+                  <h3>Comparte esta sala</h3>
+                  <p>Envía el enlace por WhatsApp para que tus participantes entren, hagan sus picks y compitan en el ranking.</p>
+                </div>
+
+                <button className="room-share-whatsapp-button" onClick={shareRoomOnWhatsApp} type="button">
+                  Compartir por WhatsApp
+                </button>
+
+                {roomShareNotice ? <small>{roomShareNotice}</small> : null}
+              </section>
+
                 <div className="room-home-primary">
                   <section className="room-next-card room-featured-match">
                     <div className="room-next-card-header">
