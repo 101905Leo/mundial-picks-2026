@@ -76,6 +76,9 @@ export async function notifyWhatsAppUsers(body: string) {
 
     const sent = results.filter((result) => result.status === "fulfilled" && result.value.ok).length;
     const skipped = results.filter((result) => result.status === "fulfilled" && result.value.skipped).length;
+    const messageIds = results
+      .map((result) => (result.status === "fulfilled" ? result.value.messageId : null))
+      .filter(Boolean);
     const errors = results
       .map((result) => (result.status === "fulfilled" ? result.value.error : "No se pudo enviar el mensaje"))
       .filter(Boolean);
@@ -85,6 +88,7 @@ export async function notifyWhatsAppUsers(body: string) {
       sent,
       skipped,
       failed: recipients.length - sent - skipped,
+      messageIds,
       errors,
     };
   } catch (error) {
@@ -160,7 +164,13 @@ async function sendWhatsAppTemplate(to: string, name: string, body: string) {
       return { skipped: false, ok: false, error: safeErrorMessage(details) };
     }
 
-    return { skipped: false, ok: true };
+    const data = (await response.json().catch(() => null)) as { messages?: { id?: string }[] } | null;
+
+    return {
+      skipped: false,
+      ok: true,
+      messageId: data?.messages?.[0]?.id || null,
+    };
   } catch (error) {
     console.error("WhatsApp notification failed", error);
     return { skipped: false, ok: false, error: "Meta no respondio a tiempo o rechazo la conexion" };
