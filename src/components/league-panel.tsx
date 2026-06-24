@@ -67,6 +67,33 @@ function isActiveLeague(league: League) {
   return (league.status ?? "ACTIVE") === "ACTIVE" && !expired;
 }
 
+function isRoundOf32Match(match: Match) {
+  const meta = match as Match & {
+    stage?: string | null;
+    round?: string | null;
+    phase?: string | null;
+  };
+
+  const stageText = [
+    match.group,
+    meta.stage,
+    meta.round,
+    meta.phase,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return (
+    stageText.includes("round of 32") ||
+    stageText.includes("round-of-32") ||
+    stageText.includes("r32") ||
+    stageText.includes("16avos") ||
+    stageText.includes("dieciseisavos") ||
+    stageText.includes("dieciseis")
+  );
+}
+
 function getVisualMatchStatus(match: Match, now: Date) {
   const status = String(match.status).trim().toUpperCase();
   const startsAt = new Date(match.startsAt);
@@ -619,10 +646,22 @@ export function LeaguePanel({
   const [roomShareNotice, setRoomShareNotice] = useState("");
 
   const sortedMatches = [...matches].sort((first, second) => new Date(first.startsAt).getTime() - new Date(second.startsAt).getTime());
+  const roomModeText = [selectedLeague?.name, selectedLeague?.description]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  const roomIsRoundOf32Mode =
+    roomModeText.includes("16avos") ||
+    roomModeText.includes("dieciseisavos") ||
+    roomModeText.includes("dieciseis") ||
+    roomModeText.includes("round of 32") ||
+    roomModeText.includes("r32");
+  const roundOf32Matches = roomIsRoundOf32Mode ? sortedMatches.filter(isRoundOf32Match) : [];
+  const activeRoomMatches = roomIsRoundOf32Mode && roundOf32Matches.length ? roundOf32Matches : sortedMatches;
   const visualMatchStatus = (match: Match) => getVisualMatchStatus(match, now);
-  const liveMatches = sortedMatches.filter((match) => visualMatchStatus(match) === "LIVE");
-  const scheduledMatches = sortedMatches.filter((match) => visualMatchStatus(match) === "SCHEDULED");
-  const finishedMatchesWithScore = sortedMatches.filter(
+  const liveMatches = activeRoomMatches.filter((match) => visualMatchStatus(match) === "LIVE");
+  const scheduledMatches = activeRoomMatches.filter((match) => visualMatchStatus(match) === "SCHEDULED");
+  const finishedMatchesWithScore = activeRoomMatches.filter(
     (match) => visualMatchStatus(match) === "FINISHED" && match.homeScore !== null && match.awayScore !== null,
   );
   const nextScheduledMatch = scheduledMatches.find((match) => new Date(match.startsAt) >= now) ?? scheduledMatches[0] ?? null;
@@ -1453,6 +1492,19 @@ export function LeaguePanel({
               ) : null}
 
               <div className="room-home-grid">
+              {roomIsRoundOf32Mode ? (
+                <section className="panel room-round-mode-card" aria-label="Modo 16avos de final">
+                  <div>
+                    <span className="market-kicker">Modo competencia</span>
+                    <h3>16avos de final</h3>
+                    <p>
+                      Esta sala está enfocada en los partidos de 16avos. El ranking y los picks se concentran en esta fase.
+                    </p>
+                  </div>
+                  <strong>{roundOf32Matches.length || activeRoomMatches.length} partidos</strong>
+                </section>
+              ) : null}
+
               <section className="panel room-share-card" aria-label="Compartir sala">
                 <div>
                   <span className="market-kicker">Invita a tu grupo</span>

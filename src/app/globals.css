@@ -12633,3 +12633,53 @@ button {
     font-size: 0.76rem;
   }
 }
+
+/* Round of 32 room mode banner */
+.room-round-mode-card {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(250, 204, 21, 0.28);
+  background:
+    radial-gradient(circle at top left, rgba(250, 204, 21, 0.12), transparent 14rem),
+    rgba(15, 23, 42, 0.76);
+}
+
+.room-round-mode-card h3 {
+  margin: 2px 0;
+  color: #f8fafc;
+  font-size: 1rem;
+  font-weight: 950;
+}
+
+.room-round-mode-card p {
+  margin: 0;
+  color: #cbd5e1;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.room-round-mode-card > strong {
+  border: 1px solid rgba(250, 204, 21, 0.26);
+  border-radius: 999px;
+  padding: 8px 11px;
+  color: #fef3c7;
+  background: rgba(113, 63, 18, 0.22);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .room-round-mode-card {
+    grid-template-columns: 1fr;
+    padding: 13px;
+  }
+
+  .room-round-mode-card > strong {
+    width: fit-content;
+  }
+}
