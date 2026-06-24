@@ -665,6 +665,7 @@ export function LeaguePanel({
   const [selectedLiveMatchId, setSelectedLiveMatchId] = useState<string | null>(null);
   const [selectedScheduledMatchId, setSelectedScheduledMatchId] = useState<string | null>(null);
 
+  const [matchListFilter, setMatchListFilter] = useState<"ALL" | "UPCOMING" | "LIVE" | "FINISHED">("ALL");
   const [roomRulesModalOpen, setRoomRulesModalOpen] = useState(false);
   const [roomRulesModalWarning, setRoomRulesModalWarning] = useState("");
   const [roomShareNotice, setRoomShareNotice] = useState("");
@@ -678,11 +679,28 @@ export function LeaguePanel({
   ]
     .filter(Boolean)
     .join(" ");
-  const roomIsRoundOf32Mode = isRoundOf32Text(roomModeText);
+  const roomIsRoundOf32Mode = false;
   const roundOf32Matches = roomIsRoundOf32Mode ? sortedMatches.filter(isRoundOf32Match) : [];
-  const activeRoomMatches = roomIsRoundOf32Mode ? roundOf32Matches : sortedMatches;
+  const activeRoomMatches = sortedMatches;
   const activeRoomMatchIds = new Set(activeRoomMatches.map((match) => match.id));
   const visualMatchStatus = (match: Match) => getVisualMatchStatus(match, now);
+  const filteredRoomMatches = activeRoomMatches.filter((match) => {
+    const status = visualMatchStatus(match);
+
+    if (matchListFilter === "UPCOMING") {
+      return status === "SCHEDULED";
+    }
+
+    if (matchListFilter === "LIVE") {
+      return status === "LIVE";
+    }
+
+    if (matchListFilter === "FINISHED") {
+      return status === "FINISHED";
+    }
+
+    return true;
+  });
   const liveMatches = activeRoomMatches.filter((match) => visualMatchStatus(match) === "LIVE");
   const scheduledMatches = activeRoomMatches.filter((match) => visualMatchStatus(match) === "SCHEDULED");
   const finishedMatchesWithScore = activeRoomMatches.filter(
@@ -1517,6 +1535,28 @@ export function LeaguePanel({
               ) : null}
 
               <div className="room-home-grid">
+              <section className="panel room-match-filter-card" aria-label="Filtros de partidos">
+                <div>
+                  <span className="market-kicker">Partidos</span>
+                  <h3>Filtrar calendario</h3>
+                </div>
+
+                <div className="room-match-filter-tabs">
+                  <button className={matchListFilter === "ALL" ? "selected" : ""} onClick={() => setMatchListFilter("ALL")} type="button">
+                    Todos
+                  </button>
+                  <button className={matchListFilter === "UPCOMING" ? "selected" : ""} onClick={() => setMatchListFilter("UPCOMING")} type="button">
+                    Próximos
+                  </button>
+                  <button className={matchListFilter === "LIVE" ? "selected" : ""} onClick={() => setMatchListFilter("LIVE")} type="button">
+                    En vivo
+                  </button>
+                  <button className={matchListFilter === "FINISHED" ? "selected" : ""} onClick={() => setMatchListFilter("FINISHED")} type="button">
+                    Finalizados
+                  </button>
+                </div>
+              </section>
+
               {roomIsRoundOf32Mode ? (
                 <section className="panel room-round-mode-card" aria-label="Modo 16avos de final">
                   <div>

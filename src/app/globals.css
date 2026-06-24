@@ -12683,3 +12683,63 @@ button {
     width: fit-content;
   }
 }
+
+/* Universal room match filters */
+.room-match-filter-card {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 15px;
+  border-radius: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.room-match-filter-card h3 {
+  margin: 2px 0 0;
+  color: #f8fafc;
+  font-size: 0.98rem;
+  font-weight: 950;
+}
+
+.room-match-filter-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  justify-content: flex-end;
+}
+
+.room-match-filter-tabs button {
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 999px;
+  padding: 8px 11px;
+  cursor: pointer;
+  color: #cbd5e1;
+  background: rgba(15, 23, 42, 0.76);
+  font-size: 0.75rem;
+  font-weight: 850;
+}
+
+.room-match-filter-tabs button.selected {
+  border-color: rgba(250, 204, 21, 0.42);
+  color: #111827;
+  background: linear-gradient(135deg, #fde68a, #facc15);
+}
+
+@media (max-width: 720px) {
+  .room-match-filter-card {
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+
+  .room-match-filter-tabs {
+    justify-content: flex-start;
+  }
+
+  .room-match-filter-tabs button {
+    padding: 8px 10px;
+    font-size: 0.72rem;
+  }
+}
