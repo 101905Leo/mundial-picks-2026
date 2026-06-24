@@ -864,6 +864,12 @@ export function LeaguePanel({
     },
   ];
   const roomHasExpired = Boolean(selectedLeague?.expiresAt && new Date(selectedLeague.expiresAt) <= new Date());
+  const sortedRoomMembers = [...members].sort((left, right) => left.name.localeCompare(right.name, "es"));
+  const visibleRoomMembers = sortedRoomMembers.slice(0, 8);
+  const participantCount = members.length;
+  const participantLimit = (selectedLeague as { maxParticipants?: number | null } | null)?.maxParticipants ?? 0;
+  const participantSlotsLeft = participantLimit ? Math.max(0, participantLimit - participantCount) : 0;
+
   const activeLeagues = leagues.filter(isActiveLeague);
   const selectableLeagues = isSuperAdmin ? leagues : activeLeagues;
   const roomIsActivated = Boolean(
@@ -1535,6 +1541,42 @@ export function LeaguePanel({
               ) : null}
 
               <div className="room-home-grid">
+              <section className="panel room-participants-card" aria-label="Participantes de la sala">
+                <div className="room-participants-card-head">
+                  <div>
+                    <span className="market-kicker">Participantes</span>
+                    <h3>{participantLimit ? `${participantCount}/${participantLimit} inscritos` : `${participantCount} inscritos`}</h3>
+                    <p>Confirma quién ya entró a la sala antes de iniciar la competencia.</p>
+                  </div>
+
+                  <button className="room-participants-card-action" onClick={() => openRoomTab("participants")} type="button">
+                    Ver todos
+                  </button>
+                </div>
+
+                <div className="room-participants-preview">
+                  {visibleRoomMembers.length ? (
+                    visibleRoomMembers.map((member) => (
+                      <article className="room-participant-pill" key={member.id}>
+                        <span>{member.name.slice(0, 1).toUpperCase()}</span>
+                        <div>
+                          <strong>{member.name}</strong>
+                          <small>Participante</small>
+                        </div>
+                      </article>
+                    ))
+                  ) : (
+                    <p className="room-participants-empty">Aún no hay participantes en esta sala.</p>
+                  )}
+                </div>
+
+                {participantLimit ? (
+                  <small className="room-participants-slots">
+                    {participantSlotsLeft > 0 ? `Quedan ${participantSlotsLeft} cupos disponibles.` : "La sala está llena."}
+                  </small>
+                ) : null}
+              </section>
+
               <section className="panel room-match-filter-card" aria-label="Filtros de partidos">
                 <div>
                   <span className="market-kicker">Partidos</span>
