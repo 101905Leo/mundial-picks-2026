@@ -299,7 +299,7 @@ export function MundialPicksApp({ initialMode = "login", initialPhone = "" }: Mu
         <div className="brand">
           <img className="brand-logo-image" src="/logo-mpa-badge.png" alt="Mundial Picks Arena" />
           <span>
-            <strong>Mundial Picks Arena</strong>
+            <strong className="brand-wordmark"><span>Mundial Picks</span><em>Arena</em></strong>
             <span>Donde tus predicciones compiten</span>
           </span>
         </div>

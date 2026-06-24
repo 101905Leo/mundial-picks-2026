@@ -7,7 +7,7 @@ export default function PrivacyPage() {
         <Link className="brand plans-brand" href="/">
           <img className="brand-logo-image" src="/logo-mpa-badge.png" alt="" />
           <span>
-            <strong>Mundial Picks Arena</strong>
+            <strong className="brand-wordmark"><span>Mundial Picks</span><em>Arena</em></strong>
             <span>Política de privacidad</span>
           </span>
         </Link>

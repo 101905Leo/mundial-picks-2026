@@ -1,5 +1,5 @@
-const CACHE_NAME = "mpa-shell-v2";
-const APP_SHELL = ["/", "/manifest.json", "/logo-mpa-badge.png", "/logo-copa-mundial-2026.png", "/icons/icon-192.png", "/icons/icon-512.png"];
+const CACHE_NAME = "mpa-shell-v3";
+const APP_SHELL = ["/", "/manifest.json", "/favicon.png", "/logo-mpa-badge.png", "/logo-copa-mundial-2026.png", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

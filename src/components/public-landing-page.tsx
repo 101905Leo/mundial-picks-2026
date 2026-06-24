@@ -88,7 +88,7 @@ export function PublicLandingPage() {
       <section className="public-landing-hero" aria-labelledby="public-landing-title">
         <div className="public-landing-brand">
           <img className="public-landing-logo" src="/logo-mpa-badge.png" alt="" />
-          <span>Mundial Picks Arena</span>
+          <span className="brand-wordmark"><span>Mundial Picks</span><em>Arena</em></span>
         </div>
 
         <div className="public-landing-copy">
