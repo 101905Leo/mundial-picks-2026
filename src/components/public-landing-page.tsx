@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { AuthPanel } from "@/components/auth-panel";
+import { LivePanel } from "@/components/live-panel";
+import type { Match } from "@/components/types";
 import { salesWhatsAppUrl } from "@/lib/room-plan-catalog";
 
 const benefits = [
@@ -46,6 +48,34 @@ export function PublicLandingPage() {
   const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
   const [desktopQuickPhone, setDesktopQuickPhone] = useState("");
+  const [matches, setMatches] = useState<Match[]>([]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadLiveMatches() {
+      try {
+        const response = await fetch("/api/matches");
+        const data = await response.json().catch(() => ({}));
+
+        if (active && response.ok) {
+          setMatches(data.matches ?? []);
+        }
+      } catch (error) {
+        console.warn("No se pudieron cargar los partidos en vivo", error);
+      }
+    }
+
+    loadLiveMatches();
+    const interval = window.setInterval(loadLiveMatches, 15000);
+
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, []);
+
+  const liveMatches = matches.filter((match) => match.status === "LIVE");
 
   function continueToLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

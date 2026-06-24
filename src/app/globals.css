@@ -12092,3 +12092,35 @@ button {
     transform: translateY(-6px);
   }
 }
+
+/* Public landing live section */
+.public-landing-live-wrap {
+  width: min(1180px, calc(100% - 32px));
+  margin: 28px auto;
+}
+
+.public-landing-live-wrap .live-board {
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 30px;
+  padding: 22px;
+  background:
+    radial-gradient(circle at top left, rgba(34, 197, 94, 0.16), transparent 22rem),
+    rgba(15, 23, 42, 0.82);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+}
+
+/* Public landing live section */
+.public-landing-live-wrap {
+  width: min(1180px, calc(100% - 32px));
+  margin: 28px auto;
+}
+
+.public-landing-live-wrap .live-board {
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 30px;
+  padding: 22px;
+  background:
+    radial-gradient(circle at top left, rgba(34, 197, 94, 0.16), transparent 22rem),
+    rgba(15, 23, 42, 0.82);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+}
