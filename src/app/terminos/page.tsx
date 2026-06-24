@@ -5,7 +5,7 @@ export default function TermsPage() {
     <main className="plans-shell">
       <header className="plans-header">
         <Link className="brand plans-brand" href="/">
-          <img className="brand-logo-image" src="/logo-mpa.svg" alt="" />
+          <img className="brand-logo-image" src="/logo-mpa-badge.png" alt="" />
           <span>
             <strong>Mundial Picks Arena</strong>
             <span>Términos del servicio</span>

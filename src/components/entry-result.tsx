@@ -45,7 +45,7 @@ export function EntryResult() {
   return (
     <main className="payment-page">
       <section className="panel payment-result">
-        <img className="brand-logo-image" src="/logo-mpa.svg" alt="Mundial Picks Arena" />
+        <img className="brand-logo-image" src="/logo-mpa-badge.png" alt="Mundial Picks Arena" />
         <h1>Pago</h1>
         <p className="muted">{message}</p>
         <a className="button primary" href="/">
