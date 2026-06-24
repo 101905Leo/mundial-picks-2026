@@ -67,11 +67,40 @@ function isActiveLeague(league: League) {
   return (league.status ?? "ACTIVE") === "ACTIVE" && !expired;
 }
 
+function normalizeRoundModeText(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function isRoundOf32Text(value: string) {
+  const normalized = normalizeRoundModeText(value);
+  const compact = normalized.replace(/[^a-z0-9]/g, "");
+
+  return (
+    normalized.includes("16avos") ||
+    normalized.includes("16 avos") ||
+    normalized.includes("dieciseisavos") ||
+    normalized.includes("dieciseis avos") ||
+    normalized.includes("ronda de 32") ||
+    normalized.includes("round of 32") ||
+    normalized.includes("round 32") ||
+    normalized.includes("fase de 32") ||
+    compact.includes("16avos") ||
+    compact.includes("dieciseisavos") ||
+    compact.includes("roundof32") ||
+    compact.includes("rondade32") ||
+    compact.includes("r32")
+  );
+}
+
 function isRoundOf32Match(match: Match) {
   const meta = match as Match & {
     stage?: string | null;
     round?: string | null;
     phase?: string | null;
+    competitionStage?: string | null;
   };
 
   const stageText = [
@@ -79,19 +108,14 @@ function isRoundOf32Match(match: Match) {
     meta.stage,
     meta.round,
     meta.phase,
+    meta.competitionStage,
+    match.homeTeam,
+    match.awayTeam,
   ]
     .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
+    .join(" ");
 
-  return (
-    stageText.includes("round of 32") ||
-    stageText.includes("round-of-32") ||
-    stageText.includes("r32") ||
-    stageText.includes("16avos") ||
-    stageText.includes("dieciseisavos") ||
-    stageText.includes("dieciseis")
-  );
+  return isRoundOf32Text(stageText);
 }
 
 function getVisualMatchStatus(match: Match, now: Date) {
@@ -646,16 +670,15 @@ export function LeaguePanel({
   const [roomShareNotice, setRoomShareNotice] = useState("");
 
   const sortedMatches = [...matches].sort((first, second) => new Date(first.startsAt).getTime() - new Date(second.startsAt).getTime());
-  const roomModeText = [selectedLeague?.name, selectedLeague?.description]
+  const roomModeText = [
+    selectedLeague?.name,
+    (selectedLeague as { title?: string | null; description?: string | null; code?: string | null } | null)?.title,
+    (selectedLeague as { title?: string | null; description?: string | null; code?: string | null } | null)?.description,
+    (selectedLeague as { title?: string | null; description?: string | null; code?: string | null } | null)?.code,
+  ]
     .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-  const roomIsRoundOf32Mode =
-    roomModeText.includes("16avos") ||
-    roomModeText.includes("dieciseisavos") ||
-    roomModeText.includes("dieciseis") ||
-    roomModeText.includes("round of 32") ||
-    roomModeText.includes("r32");
+    .join(" ");
+  const roomIsRoundOf32Mode = isRoundOf32Text(roomModeText);
   const roundOf32Matches = roomIsRoundOf32Mode ? sortedMatches.filter(isRoundOf32Match) : [];
   const activeRoomMatches = roomIsRoundOf32Mode && roundOf32Matches.length ? roundOf32Matches : sortedMatches;
   const visualMatchStatus = (match: Match) => getVisualMatchStatus(match, now);
