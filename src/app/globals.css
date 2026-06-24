@@ -12345,3 +12345,46 @@ button {
     grid-template-columns: 1fr;
   }
 }
+
+/* Selected live/upcoming fan card emphasis */
+.room-live-fan-match.selected {
+  width: min(380px, 90vw);
+  min-height: 225px;
+  transform: translateY(-18px) scale(1.08) rotate(0deg) !important;
+}
+
+.room-live-fan-match.selected .room-live-fan-teams {
+  gap: 14px;
+  margin-top: 26px;
+}
+
+.room-live-fan-match.selected .room-live-fan-teams > div strong {
+  max-width: 135px;
+  overflow: visible;
+  text-overflow: unset;
+  white-space: normal;
+  line-height: 1.12;
+  font-size: 0.95rem;
+}
+
+.room-live-fan-match.selected .room-live-fan-teams > div span {
+  font-size: 2.2rem;
+}
+
+.room-live-fan-match.selected .room-live-fan-teams em {
+  min-width: 86px;
+  font-size: 1.24rem;
+}
+
+@media (max-width: 720px) {
+  .room-live-fan-match.selected {
+    flex-basis: 92%;
+    width: 92%;
+    transform: translateY(-8px) scale(1.02) !important;
+  }
+
+  .room-live-fan-match.selected .room-live-fan-teams > div strong {
+    max-width: 118px;
+    font-size: 0.88rem;
+  }
+}
