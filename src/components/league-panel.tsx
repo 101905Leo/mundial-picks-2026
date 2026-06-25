@@ -2597,7 +2597,7 @@ export function LeaguePanel({
                   {!chatMessages.length ? <div className="empty room-chat-empty">Aún no hay mensajes en esta sala. Sé el primero en escribir.</div> : null}
                 </div>
                 <form className="league-chat-form room-chat-form" onSubmit={sendChatMessage}>
-                  <textarea maxLength={2000} name="message" placeholder={isSuperAdmin ? "Pega aquí el boletín o escribe un mensaje..." : "Escribe un mensaje..."} required rows={isSuperAdmin ? 5 : 2} />
+                  <textarea maxLength={2000} name="message" placeholder={isSuperAdmin ? "Pega aquí el boletín o escribe un mensaje..." : "Escribe un mensaje..."} required rows={1} />
                   <button className="button primary compact-button" type="submit">Enviar</button>
                 </form>
               </section>
