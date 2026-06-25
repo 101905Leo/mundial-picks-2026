@@ -13461,3 +13461,145 @@ button {
     padding-bottom: 92px !important;
   }
 }
+
+/* Mobile admin hierarchy restore */
+@media (max-width: 720px) {
+  /* Reaparece la sala seleccionada, pero compacta */
+  body .admin-rooms-workspace .selected-room-card,
+  body .admin-room-shell .selected-room-main,
+  body .admin-room-shell .selected-room-card {
+    display: grid !important;
+    gap: 6px !important;
+    margin-top: 10px !important;
+    padding: 11px 12px !important;
+    border-radius: 18px !important;
+    border: 1px solid rgba(34, 197, 94, 0.24) !important;
+    background:
+      radial-gradient(circle at top left, rgba(34, 197, 94, 0.10), transparent 12rem),
+      rgba(15, 23, 42, 0.82) !important;
+  }
+
+  body .selected-room-card .market-kicker,
+  body .admin-room-shell .selected-room-main .market-kicker {
+    font-size: 0.64rem !important;
+    letter-spacing: 0.08em !important;
+  }
+
+  body .selected-room-card strong,
+  body .selected-room-card h3,
+  body .admin-room-shell .selected-room-main strong,
+  body .admin-room-shell .selected-room-main h3 {
+    font-size: 0.98rem !important;
+    line-height: 1.1 !important;
+  }
+
+  body .selected-room-card small,
+  body .selected-room-card p,
+  body .admin-room-shell .selected-room-main small,
+  body .admin-room-shell .selected-room-main p {
+    font-size: 0.68rem !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Ocultar métricas grandes dentro de sala seleccionada */
+  body .selected-room-card article,
+  body .selected-room-card .admin-room-list-meta,
+  body .selected-room-card .admin-user-stats,
+  body .selected-room-card .admin-user-badges,
+  body .selected-room-card .admin-user-actions {
+    display: none !important;
+  }
+
+  /* Jerarquía de acciones */
+  body .admin-room-action-layout,
+  body .admin-room-action-layout.compact-room-actions {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    margin-top: 12px !important;
+  }
+
+  body .admin-room-action-card {
+    display: grid !important;
+    gap: 10px !important;
+    padding: 14px !important;
+    border-radius: 20px !important;
+    border: 1px solid rgba(148, 163, 184, 0.22) !important;
+    background: rgba(15, 23, 42, 0.76) !important;
+  }
+
+  body .admin-room-action-card:first-child {
+    border-color: rgba(59, 130, 246, 0.34) !important;
+    background:
+      radial-gradient(circle at top left, rgba(59, 130, 246, 0.14), transparent 12rem),
+      rgba(15, 23, 42, 0.82) !important;
+  }
+
+  body .admin-room-action-card .market-kicker {
+    font-size: 0.66rem !important;
+    letter-spacing: 0.08em !important;
+  }
+
+  body .admin-room-action-card h3,
+  body .admin-room-action-card strong {
+    font-size: 1rem !important;
+    line-height: 1.15 !important;
+  }
+
+  body .admin-room-action-card p {
+    display: block !important;
+    max-width: 95% !important;
+    margin: 0 !important;
+    color: #cbd5e1 !important;
+    font-size: 0.72rem !important;
+    line-height: 1.25 !important;
+  }
+
+  body .admin-room-action-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+
+  body .admin-room-action-grid .button:first-child,
+  body .admin-room-action-card > .button:first-of-type {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    padding: 11px 12px !important;
+    border-radius: 14px !important;
+    font-size: 0.86rem !important;
+    font-weight: 950 !important;
+  }
+
+  body .admin-room-action-grid .button:not(:first-child),
+  body .admin-room-action-card > .button:not(:first-of-type) {
+    width: 100% !important;
+    padding: 9px 10px !important;
+    border-radius: 13px !important;
+    font-size: 0.76rem !important;
+  }
+
+  /* Avanzadas y zona sensible: abajo, compactas */
+  body .room-admin-actions-strip,
+  body .admin-room-options-panel,
+  body .admin-room-danger-zone,
+  body .admin-advanced-calendar,
+  body .room-admin-utilities {
+    margin-top: 8px !important;
+    border-radius: 16px !important;
+    opacity: 0.94 !important;
+  }
+
+  body .room-admin-actions-strip summary,
+  body .admin-room-options-panel > summary,
+  body .admin-room-danger-zone > summary {
+    padding: 10px 12px !important;
+    font-size: 0.76rem !important;
+    font-weight: 900 !important;
+  }
+
+  /* Espacio inferior para que la barra no tape acciones */
+  body .admin-rooms-workspace {
+    padding-bottom: 120px !important;
+  }
+}
