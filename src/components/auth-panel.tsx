@@ -97,6 +97,11 @@ export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: 
       return;
     }
 
+    if (!data.user) {
+      setMessage("El servidor no devolvió la sesión del usuario. Intenta de nuevo.");
+      return;
+    }
+
     if (mode === "login") {
       if (rememberLogin) {
         window.localStorage.setItem("mundial_picks_phone", data.user.phone);
