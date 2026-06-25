@@ -1512,7 +1512,7 @@ export function LeaguePanel({
           <div className="room-main-layout">
             <div className="room-main-content">
           {roomView === "home" ? (
-            <div className="room-home-screen">
+            <div className={`room-home-screen ${canModerateRoom ? "admin-room-home" : "participant-room-home"}`}>
               {roomRulesModalOpen ? (
                 <div className="room-rules-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="room-rules-modal-title">
                   <section className="room-rules-modal-card">
