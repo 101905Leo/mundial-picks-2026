@@ -13643,3 +13643,58 @@ button {
     margin-top: 4px !important;
   }
 }
+
+/* Room home hierarchy: match first, then user status, then secondary cards */
+.room-home-grid {
+  align-items: start;
+}
+
+.room-home-grid > .room-featured-match,
+.room-home-grid > .room-next-card.room-featured-match,
+.room-home-grid > .live-panel,
+.room-home-grid > .live-board {
+  order: 1 !important;
+}
+
+.room-home-grid > .personal-room-summary,
+.room-home-grid > .compact-home-summary,
+.room-home-grid > .room-home-summary {
+  order: 2 !important;
+}
+
+.room-home-grid > .room-ranking-panel,
+.room-home-grid > .room-picks-panel,
+.room-home-grid > .room-predictions-panel {
+  order: 3 !important;
+}
+
+.room-home-grid > .room-achievements-card {
+  order: 5 !important;
+}
+
+.room-home-grid > .room-create-promo-card,
+.room-home-grid > .visual-room-ad {
+  order: 6 !important;
+}
+
+.room-home-grid > .room-competition-rules-card {
+  order: 7 !important;
+}
+
+@media (max-width: 720px) {
+  .room-home-grid > .room-featured-match,
+  .room-home-grid > .room-next-card.room-featured-match,
+  .room-home-grid > .live-panel,
+  .room-home-grid > .live-board {
+    order: 1 !important;
+  }
+
+  .room-home-grid > .room-achievements-card {
+    order: 5 !important;
+  }
+
+  .room-home-grid > .room-create-promo-card,
+  .room-home-grid > .visual-room-ad {
+    order: 6 !important;
+  }
+}
