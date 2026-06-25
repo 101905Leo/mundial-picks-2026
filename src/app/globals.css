@@ -13616,3 +13616,44 @@ button {
 .room-home-primary > .room-create-promo-card {
   order: 100;
 }
+
+/* Room chat bulletin messages */
+.room-chat-form textarea {
+  background: rgba(2, 6, 23, 0.74);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  color: #fff;
+  font: inherit;
+  line-height: 1.35;
+  min-height: 48px;
+  padding: 10px 12px;
+  resize: vertical;
+  width: 100%;
+}
+
+.league-chat-message p {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.league-chat-message.room-chat-bulletin {
+  border-color: rgba(250, 204, 21, 0.34);
+  background:
+    radial-gradient(circle at top left, rgba(250, 204, 21, 0.14), transparent 12rem),
+    rgba(15, 23, 42, 0.72);
+}
+
+.league-chat-message.room-chat-bulletin strong {
+  color: var(--gold-soft);
+}
+
+.room-chat-delete-message {
+  background: transparent;
+  border: 0;
+  color: rgba(248, 113, 113, 0.92);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 2px 0;
+}

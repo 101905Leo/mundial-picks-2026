@@ -5,7 +5,11 @@ import { requireUser } from "@/lib/auth";
 import { isRoomActivated, ROOM_PENDING_PAYMENT_ERROR, ROOM_PENDING_PAYMENT_STATUS } from "@/lib/room-activation";
 
 const messageSchema = z.object({
-  body: z.string().trim().min(1, "Escribe un mensaje").max(500, "El mensaje es demasiado largo"),
+  body: z.string().trim().min(1, "Escribe un mensaje").max(2000, "El mensaje es demasiado largo"),
+});
+
+const deleteMessageSchema = z.object({
+  messageId: z.string().min(1, "Mensaje inválido"),
 });
 
 async function getLeagueAccess(userId: string, userRole: "USER" | "ADMIN", leagueId: string) {
@@ -101,4 +105,42 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   });
 
   return Response.json({ message }, { status: 201 });
+}
+
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { user, response } = await requireUser(request);
+  if (response) return response;
+
+  if (user!.role !== "ADMIN") {
+    return Response.json({ error: "Solo el super usuario puede borrar mensajes." }, { status: 403 });
+  }
+
+  const { id } = await params;
+  const access = await getLeagueAccess(user!.id, user!.role, id);
+  if (!access) {
+    return Response.json({ error: "No perteneces a esta sala" }, { status: 403 });
+  }
+
+  const parsed = deleteMessageSchema.safeParse(await request.json().catch(() => ({})));
+  if (!parsed.success) {
+    return Response.json({ error: parsed.error.issues[0]?.message ?? "Mensaje inválido" }, { status: 400 });
+  }
+
+  const message = await prisma.leagueMessage.findFirst({
+    where: {
+      id: parsed.data.messageId,
+      leagueId: id,
+    },
+    select: { id: true },
+  });
+
+  if (!message) {
+    return Response.json({ error: "Mensaje no encontrado" }, { status: 404 });
+  }
+
+  await prisma.leagueMessage.delete({
+    where: { id: message.id },
+  });
+
+  return Response.json({ deleted: message.id });
 }

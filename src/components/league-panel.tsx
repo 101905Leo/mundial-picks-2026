@@ -561,6 +561,25 @@ export function LeaguePanel({
     form.reset();
   }
 
+  async function deleteChatMessage(messageId: string) {
+    if (!selectedLeague || !isSuperAdmin) return;
+    if (!window.confirm("¿Borrar este mensaje del chat?")) return;
+
+    const response = await fetch(`/api/leagues/${selectedLeague.id}/messages`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messageId }),
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      setMessage(data.error ?? "No se pudo borrar el mensaje");
+      return;
+    }
+
+    setChatMessages((current) => current.filter((chatMessage) => chatMessage.id !== messageId));
+  }
+
   async function importCompetitionMatches(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selectedLeague) return;
@@ -2556,19 +2575,29 @@ export function LeaguePanel({
                   </button>
                 </header>
                 <div className="league-chat-messages room-chat-messages" aria-live="polite">
-                  {chatMessages.map((chatMessage) => (
-                    <article className={`league-chat-message ${chatMessage.user.id === user.id ? "own-message" : ""}`} key={chatMessage.id}>
-                      <div>
-                        <strong>{chatMessage.user.name}</strong>
-                        <time>{new Date(chatMessage.createdAt).toLocaleString("es", { dateStyle: "short", timeStyle: "short" })}</time>
-                      </div>
-                      {chatMessage.body ? <p>{chatMessage.body}</p> : null}
-                    </article>
-                  ))}
+                  {chatMessages.map((chatMessage) => {
+                    const isOwnMessage = chatMessage.user.id === user.id;
+                    const isBulletinMessage = chatMessage.user.role === "ADMIN" && chatMessage.body.toUpperCase().includes("RESUMEN EXPRESS");
+
+                    return (
+                      <article className={`league-chat-message ${isOwnMessage ? "own-message" : ""} ${isBulletinMessage ? "room-chat-bulletin" : ""}`.trim()} key={chatMessage.id}>
+                        <div>
+                          <strong>{isBulletinMessage ? "Boletín Mundial Picks" : chatMessage.user.name}</strong>
+                          <time>{new Date(chatMessage.createdAt).toLocaleString("es", { dateStyle: "short", timeStyle: "short" })}</time>
+                          {isSuperAdmin ? (
+                            <button className="room-chat-delete-message" onClick={() => deleteChatMessage(chatMessage.id)} type="button">
+                              Borrar
+                            </button>
+                          ) : null}
+                        </div>
+                        {chatMessage.body ? <p>{chatMessage.body}</p> : null}
+                      </article>
+                    );
+                  })}
                   {!chatMessages.length ? <div className="empty room-chat-empty">Aún no hay mensajes en esta sala. Sé el primero en escribir.</div> : null}
                 </div>
                 <form className="league-chat-form room-chat-form" onSubmit={sendChatMessage}>
-                  <input maxLength={500} name="message" placeholder="Escribe un mensaje..." required />
+                  <textarea maxLength={2000} name="message" placeholder={isSuperAdmin ? "Pega aquí el boletín o escribe un mensaje..." : "Escribe un mensaje..."} required rows={isSuperAdmin ? 5 : 2} />
                   <button className="button primary compact-button" type="submit">Enviar</button>
                 </form>
               </section>
