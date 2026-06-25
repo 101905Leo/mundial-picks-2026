@@ -13847,3 +13847,131 @@ button {
     border: 1px solid rgba(255, 204, 92, 0.3) !important;
   }
 }
+
+/* Mobile chat: native fullscreen panel, not floating overlay */
+@media (max-width: 850px) {
+  .room-chat-shell {
+    background:
+      radial-gradient(circle at 16% 0%, rgba(56, 189, 248, 0.08), transparent 18rem),
+      linear-gradient(180deg, #06111f 0%, #020617 100%) !important;
+    inset: 0 !important;
+    padding: 0 !important;
+    pointer-events: auto !important;
+    position: fixed !important;
+    z-index: 99999 !important;
+  }
+
+  .room-chat-backdrop {
+    display: none !important;
+  }
+
+  .room-chat-panel {
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    bottom: 0 !important;
+    display: grid !important;
+    grid-template-rows: auto minmax(0, 1fr) auto !important;
+    height: 100dvh !important;
+    left: 0 !important;
+    max-height: none !important;
+    max-width: none !important;
+    overflow: hidden !important;
+    padding:
+      calc(12px + env(safe-area-inset-top))
+      14px
+      calc(14px + env(safe-area-inset-bottom)) !important;
+    position: fixed !important;
+    right: 0 !important;
+    top: 0 !important;
+    width: 100vw !important;
+  }
+
+  .room-chat-handle {
+    display: none !important;
+  }
+
+  .room-chat-header {
+    background: rgba(2, 6, 23, 0.72);
+    border: 1px solid rgba(93, 220, 255, 0.14);
+    border-radius: 20px;
+    margin-bottom: 10px;
+    padding: 12px;
+  }
+
+  .room-chat-header h3 {
+    font-size: 1.15rem !important;
+    margin: 0 !important;
+  }
+
+  .room-chat-close {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    border-radius: 999px !important;
+    min-width: 92px !important;
+  }
+
+  .room-chat-messages {
+    background: rgba(2, 6, 23, 0.42) !important;
+    border: 1px solid rgba(93, 220, 255, 0.12) !important;
+    border-radius: 20px !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    padding: 12px !important;
+  }
+
+  .league-chat-message {
+    max-width: 92% !important;
+    border-radius: 16px 16px 16px 6px !important;
+    padding: 10px 12px !important;
+  }
+
+  .league-chat-message.own-message {
+    justify-self: end !important;
+    border-radius: 16px 16px 6px 16px !important;
+    background:
+      linear-gradient(135deg, rgba(29, 78, 216, 0.88), rgba(14, 23, 43, 0.96)) !important;
+  }
+
+  .league-chat-message.room-chat-bulletin {
+    justify-self: end !important;
+    max-width: 94% !important;
+    background:
+      radial-gradient(circle at top left, rgba(255, 204, 92, 0.16), transparent 10rem),
+      linear-gradient(145deg, rgba(29, 78, 216, 0.9), rgba(7, 12, 24, 0.98)) !important;
+    border: 1px solid rgba(255, 204, 92, 0.3) !important;
+  }
+
+  .room-chat-form {
+    background: rgba(2, 6, 23, 0.92) !important;
+    border: 1px solid rgba(93, 220, 255, 0.16) !important;
+    border-radius: 999px !important;
+    box-shadow: 0 -12px 34px rgba(0, 0, 0, 0.36) !important;
+    display: grid !important;
+    gap: 8px !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    margin-top: 10px !important;
+    padding: 8px !important;
+    position: relative !important;
+    z-index: 2 !important;
+  }
+
+  .room-chat-form textarea {
+    border-radius: 999px !important;
+    font-size: 16px !important;
+    height: 44px !important;
+    max-height: 74px !important;
+    min-height: 44px !important;
+    padding: 11px 14px !important;
+    resize: none !important;
+  }
+
+  .room-chat-form .button {
+    border-radius: 999px !important;
+    min-height: 44px !important;
+    min-width: 74px !important;
+    padding: 0 14px !important;
+  }
+}
