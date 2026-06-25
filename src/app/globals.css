@@ -13794,3 +13794,56 @@ button {
     width: 255px !important;
   }
 }
+
+/* Mobile chat fix: keep composer visible above bottom nav */
+@media (max-width: 850px) {
+  .room-chat-shell {
+    z-index: 999 !important;
+  }
+
+  .room-chat-panel {
+    top: calc(10px + env(safe-area-inset-top)) !important;
+    bottom: calc(92px + env(safe-area-inset-bottom)) !important;
+    height: auto !important;
+    max-height: none !important;
+    grid-template-rows: auto minmax(0, 1fr) auto !important;
+  }
+
+  .room-chat-messages {
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    padding: 8px !important;
+  }
+
+  .room-chat-form {
+    position: relative !important;
+    bottom: auto !important;
+    margin-top: 8px !important;
+    z-index: 1000 !important;
+  }
+
+  .room-chat-form textarea {
+    min-height: 42px !important;
+    height: 42px !important;
+    max-height: 72px !important;
+    resize: none !important;
+  }
+
+  .league-chat-message {
+    max-width: 96% !important;
+  }
+
+  .league-chat-message p {
+    font-size: 0.86rem !important;
+    line-height: 1.28 !important;
+  }
+
+  .league-chat-message.room-chat-bulletin {
+    max-width: 96% !important;
+    background:
+      radial-gradient(circle at top left, rgba(255, 204, 92, 0.16), transparent 10rem),
+      linear-gradient(145deg, rgba(29, 78, 216, 0.9), rgba(7, 12, 24, 0.96)) !important;
+    border: 1px solid rgba(255, 204, 92, 0.3) !important;
+  }
+}
