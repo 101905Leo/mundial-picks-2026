@@ -869,6 +869,34 @@ export function LeaguePanel({
   const participantCount = members.length;
   const participantLimit = (selectedLeague as { maxParticipants?: number | null } | null)?.maxParticipants ?? 0;
   const participantSlotsLeft = participantLimit ? Math.max(0, participantLimit - participantCount) : 0;
+  const roomSetupChecklist = [
+    {
+      label: "Reglas visibles",
+      ready: true,
+      detail: "Los participantes pueden leer las reglas al entrar.",
+    },
+    {
+      label: "Participantes",
+      ready: participantCount > 1,
+      detail: participantCount > 1 ? `${participantCount} personas inscritas.` : "Invita participantes a la sala.",
+    },
+    {
+      label: "Partidos disponibles",
+      ready: activeRoomMatches.length > 0,
+      detail: activeRoomMatches.length ? `${activeRoomMatches.length} partidos cargados.` : "Aún no hay partidos disponibles.",
+    },
+    {
+      label: "Ranking activo",
+      ready: ranking.length > 0,
+      detail: ranking.length ? "El ranking está disponible." : "El ranking aparecerá cuando haya participantes.",
+    },
+    {
+      label: "Compartir sala",
+      ready: true,
+      detail: "Puedes compartir la sala por WhatsApp.",
+    },
+  ];
+
 
   const activeLeagues = leagues.filter(isActiveLeague);
   const selectableLeagues = isSuperAdmin ? leagues : activeLeagues;
@@ -1541,6 +1569,28 @@ export function LeaguePanel({
               ) : null}
 
               <div className="room-home-grid">
+              <section className="panel room-setup-checklist-card" aria-label="Preparación de sala">
+                <div className="room-setup-checklist-head">
+                  <div>
+                    <span className="market-kicker">Preparación</span>
+                    <h3>Checklist de la sala</h3>
+                    <p>Revisa rápidamente si tu sala está lista para competir.</p>
+                  </div>
+                </div>
+
+                <div className="room-setup-checklist-list">
+                  {roomSetupChecklist.map((item) => (
+                    <article className={item.ready ? "ready" : "pending"} key={item.label}>
+                      <span>{item.ready ? "✓" : "!"}</span>
+                      <div>
+                        <strong>{item.label}</strong>
+                        <small>{item.detail}</small>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+
               <section className="panel room-participants-card" aria-label="Participantes de la sala">
                 <div className="room-participants-card-head">
                   <div>

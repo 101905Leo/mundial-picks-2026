@@ -12889,3 +12889,99 @@ button {
     max-width: 190px;
   }
 }
+
+/* Room setup checklist */
+.room-setup-checklist-card {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background:
+    radial-gradient(circle at top left, rgba(250, 204, 21, 0.10), transparent 14rem),
+    rgba(15, 23, 42, 0.74);
+}
+
+.room-setup-checklist-head h3 {
+  margin: 2px 0;
+  color: #f8fafc;
+  font-size: 1rem;
+  font-weight: 950;
+}
+
+.room-setup-checklist-head p {
+  margin: 0;
+  color: #cbd5e1;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.room-setup-checklist-list {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.room-setup-checklist-list article {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 16px;
+  padding: 9px;
+  background: rgba(15, 23, 42, 0.66);
+}
+
+.room-setup-checklist-list article > span {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 950;
+}
+
+.room-setup-checklist-list article.ready > span {
+  color: #052e16;
+  background: #86efac;
+}
+
+.room-setup-checklist-list article.pending > span {
+  color: #451a03;
+  background: #fbbf24;
+}
+
+.room-setup-checklist-list strong {
+  display: block;
+  color: #f8fafc;
+  font-size: 0.74rem;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.room-setup-checklist-list small {
+  display: block;
+  margin-top: 2px;
+  color: #94a3b8;
+  font-size: 0.66rem;
+  line-height: 1.18;
+}
+
+@media (max-width: 980px) {
+  .room-setup-checklist-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .room-setup-checklist-card {
+    padding: 13px;
+  }
+
+  .room-setup-checklist-list {
+    grid-template-columns: 1fr;
+  }
+}
