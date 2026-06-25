@@ -13243,3 +13243,146 @@ button {
     font-size: 0.68rem !important;
   }
 }
+
+/* Mobile audit cleanup: admin rooms screen */
+@media (max-width: 720px) {
+  .admin-rooms-workspace {
+    padding-bottom: 120px !important;
+  }
+
+  .admin-rooms-title,
+  .admin-summary-heading {
+    gap: 6px !important;
+  }
+
+  .admin-rooms-title h3,
+  .admin-summary-heading h3 {
+    font-size: 1rem !important;
+    line-height: 1.12 !important;
+  }
+
+  .admin-rooms-title p,
+  .admin-summary-heading p,
+  .admin-room-list-count {
+    font-size: 0.72rem !important;
+    line-height: 1.2 !important;
+  }
+
+  .admin-room-card-list {
+    max-height: 38vh !important;
+    overflow-y: auto !important;
+    padding-right: 2px !important;
+  }
+
+  .admin-room-list-card {
+    min-height: 58px !important;
+    padding: 8px 10px !important;
+    border-radius: 14px !important;
+  }
+
+  .admin-room-list-main small:nth-of-type(n + 2) {
+    display: none !important;
+  }
+
+  .admin-room-list-meta span:not(:first-child) {
+    display: none !important;
+  }
+
+  .admin-room-list-meta span:first-child {
+    min-width: 68px !important;
+    padding: 5px 8px !important;
+    border-radius: 999px !important;
+  }
+
+  .admin-room-list-meta span:first-child small {
+    display: none !important;
+  }
+
+  .admin-room-list-meta span:first-child strong {
+    font-size: 0.82rem !important;
+  }
+
+  .selected-room-card {
+    padding: 10px 12px !important;
+    border-radius: 16px !important;
+    margin-top: 10px !important;
+  }
+
+  .selected-room-card .market-kicker {
+    font-size: 0.66rem !important;
+    line-height: 1 !important;
+  }
+
+  .selected-room-card strong,
+  .selected-room-card h3 {
+    font-size: 0.98rem !important;
+    line-height: 1.1 !important;
+  }
+
+  .selected-room-card small,
+  .selected-room-card p {
+    font-size: 0.68rem !important;
+    line-height: 1.2 !important;
+  }
+
+  .selected-room-card article,
+  .selected-room-card .admin-room-list-meta,
+  .selected-room-card .admin-user-stats,
+  .selected-room-card .admin-user-badges,
+  .selected-room-card .admin-user-actions {
+    display: none !important;
+  }
+
+  .admin-room-action-layout,
+  .admin-room-action-layout.compact-room-actions {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .admin-room-action-card {
+    padding: 11px 12px !important;
+    border-radius: 16px !important;
+  }
+
+  .admin-room-action-card h3,
+  .admin-room-action-card strong {
+    font-size: 0.95rem !important;
+    line-height: 1.12 !important;
+  }
+
+  .admin-room-action-card p {
+    display: none !important;
+  }
+
+  .admin-room-action-grid {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  .admin-room-action-grid .button,
+  .admin-room-action-card .button {
+    width: auto !important;
+    min-width: 0 !important;
+    padding: 9px 11px !important;
+    border-radius: 12px !important;
+    font-size: 0.76rem !important;
+    line-height: 1.05 !important;
+  }
+
+  .room-admin-actions-strip,
+  .admin-room-options-panel,
+  .admin-room-danger-zone,
+  .admin-advanced-calendar,
+  .room-admin-utilities {
+    border-radius: 16px !important;
+  }
+
+  .room-admin-actions-strip summary,
+  .admin-room-options-panel > summary,
+  .admin-room-danger-zone > summary {
+    padding: 10px 12px !important;
+    font-size: 0.78rem !important;
+  }
+}
