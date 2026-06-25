@@ -13975,3 +13975,89 @@ button {
     padding: 0 14px !important;
   }
 }
+
+/* Desktop polish: tame live fan card overlap and use app chat colors */
+@media (min-width: 851px) {
+  .room-featured-match .room-live-fan-selector {
+    min-height: 210px;
+    overflow: hidden;
+    padding: 12px 8px 18px;
+  }
+
+  .room-featured-match .room-live-fan-match {
+    margin: 0 -18px;
+  }
+
+  .room-featured-match .room-live-fan-match.selected {
+    transform: translateY(0) rotate(0deg) !important;
+  }
+
+  .league-chat-message.own-message {
+    background:
+      linear-gradient(135deg, rgba(29, 78, 216, 0.86), rgba(14, 23, 43, 0.96)) !important;
+  }
+
+  .league-chat-message.room-chat-bulletin {
+    background:
+      radial-gradient(circle at top left, rgba(255, 204, 92, 0.18), transparent 12rem),
+      linear-gradient(145deg, rgba(29, 78, 216, 0.9), rgba(7, 12, 24, 0.98)) !important;
+    border: 1px solid rgba(255, 204, 92, 0.3) !important;
+  }
+
+  .league-chat-message.room-chat-bulletin strong {
+    color: #ffe7a8 !important;
+  }
+}
+
+/* Desktop final: flatten live match fan and remove green chat colors */
+@media (min-width: 851px) {
+  .room-featured-match {
+    overflow: hidden;
+  }
+
+  .room-featured-match .room-live-fan-selector {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: stretch !important;
+    gap: 14px !important;
+    min-height: auto !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 8px 4px 16px !important;
+  }
+
+  .room-featured-match .room-live-fan-match {
+    flex: 0 0 230px !important;
+    margin: 0 !important;
+    min-height: 150px !important;
+    transform: none !important;
+    rotate: 0deg !important;
+    z-index: auto !important;
+  }
+
+  .room-featured-match .room-live-fan-match.selected {
+    transform: none !important;
+    z-index: auto !important;
+  }
+
+  .room-featured-match .room-live-fan-match:not(.selected) {
+    opacity: 0.76 !important;
+    filter: none !important;
+  }
+
+  .league-chat-message.own-message {
+    background:
+      linear-gradient(135deg, rgba(29, 78, 216, 0.88), rgba(14, 23, 43, 0.96)) !important;
+  }
+
+  .league-chat-message.room-chat-bulletin {
+    background:
+      radial-gradient(circle at top left, rgba(255, 204, 92, 0.18), transparent 12rem),
+      linear-gradient(145deg, rgba(29, 78, 216, 0.9), rgba(7, 12, 24, 0.98)) !important;
+    border: 1px solid rgba(255, 204, 92, 0.3) !important;
+  }
+
+  .league-chat-message.room-chat-bulletin strong {
+    color: #ffe7a8 !important;
+  }
+}
