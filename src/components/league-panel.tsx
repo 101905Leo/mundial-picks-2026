@@ -1569,114 +1569,6 @@ export function LeaguePanel({
               ) : null}
 
               <div className="room-home-grid">
-              <section className="panel room-setup-checklist-card" aria-label="Preparación de sala">
-                <div className="room-setup-checklist-head">
-                  <div>
-                    <span className="market-kicker">Preparación</span>
-                    <h3>Checklist de la sala</h3>
-                    <p>Revisa rápidamente si tu sala está lista para competir.</p>
-                  </div>
-                </div>
-
-                <div className="room-setup-checklist-list">
-                  {roomSetupChecklist.map((item) => (
-                    <article className={item.ready ? "ready" : "pending"} key={item.label}>
-                      <span>{item.ready ? "✓" : "!"}</span>
-                      <div>
-                        <strong>{item.label}</strong>
-                        <small>{item.detail}</small>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              </section>
-
-              <section className="panel room-participants-card" aria-label="Participantes de la sala">
-                <div className="room-participants-card-head">
-                  <div>
-                    <span className="market-kicker">Participantes</span>
-                    <h3>{participantLimit ? `${participantCount}/${participantLimit} inscritos` : `${participantCount} inscritos`}</h3>
-                    <p>Confirma quién ya entró a la sala antes de iniciar la competencia.</p>
-                  </div>
-
-                  <button className="room-participants-card-action" onClick={() => openRoomTab("participants")} type="button">
-                    Ver todos
-                  </button>
-                </div>
-
-                <div className="room-participants-preview">
-                  {visibleRoomMembers.length ? (
-                    visibleRoomMembers.map((member) => (
-                      <article className="room-participant-pill" key={member.id}>
-                        <span>{member.name.slice(0, 1).toUpperCase()}</span>
-                        <div>
-                          <strong>{member.name}</strong>
-                          <small>Participante</small>
-                        </div>
-                      </article>
-                    ))
-                  ) : (
-                    <p className="room-participants-empty">Aún no hay participantes en esta sala.</p>
-                  )}
-                </div>
-
-                {participantLimit ? (
-                  <small className="room-participants-slots">
-                    {participantSlotsLeft > 0 ? `Quedan ${participantSlotsLeft} cupos disponibles.` : "La sala está llena."}
-                  </small>
-                ) : null}
-              </section>
-
-              <section className="panel room-match-filter-card" aria-label="Filtros de partidos">
-                <div>
-                  <span className="market-kicker">Partidos</span>
-                  <h3>Filtrar calendario</h3>
-                </div>
-
-                <div className="room-match-filter-tabs">
-                  <button className={matchListFilter === "ALL" ? "selected" : ""} onClick={() => setMatchListFilter("ALL")} type="button">
-                    Todos
-                  </button>
-                  <button className={matchListFilter === "UPCOMING" ? "selected" : ""} onClick={() => setMatchListFilter("UPCOMING")} type="button">
-                    Próximos
-                  </button>
-                  <button className={matchListFilter === "LIVE" ? "selected" : ""} onClick={() => setMatchListFilter("LIVE")} type="button">
-                    En vivo
-                  </button>
-                  <button className={matchListFilter === "FINISHED" ? "selected" : ""} onClick={() => setMatchListFilter("FINISHED")} type="button">
-                    Finalizados
-                  </button>
-                </div>
-              </section>
-
-              {roomIsRoundOf32Mode ? (
-                <section className="panel room-round-mode-card" aria-label="Modo 16avos de final">
-                  <div>
-                    <span className="market-kicker">Modo competencia</span>
-                    <h3>16avos de final</h3>
-                    <p>
-                      Esta sala está enfocada solo en partidos de 16avos. Los picks y el ranking deben concentrarse en esta fase.
-                    </p>
-                  </div>
-                  <strong>{roundOf32Matches.length || activeRoomMatches.length} partidos</strong>
-                </section>
-              ) : null}
-
-              <section className="panel room-share-card" aria-label="Compartir sala">
-                <div>
-                  <span className="market-kicker">Invita a tu grupo</span>
-                  <h3>Comparte esta sala</h3>
-                  <p>Envía el enlace por WhatsApp para que tus participantes entren, hagan sus picks y compitan en el ranking.</p>
-                </div>
-
-                <button className="room-share-whatsapp-button" onClick={shareRoomOnWhatsApp} type="button">
-                  Compartir por WhatsApp
-                </button>
-
-                {roomShareNotice ? <small>{roomShareNotice}</small> : null}
-              </section>
-
-                <div className="room-home-primary">
                   <section className="room-next-card room-featured-match">
                     <div className="room-next-card-header">
                       <span>
@@ -1833,6 +1725,129 @@ export function LeaguePanel({
                     )}
                   </section>
 
+                  <section className="panel room-home-summary compact-home-summary personal-room-summary">
+                    <article><span>Tu posición</span><strong>{userRanking ? `#${userRankingIndex + 1}` : "-"}</strong></article>
+                    <article><span>Tus puntos</span><strong>{userRanking?.points ?? 0}</strong></article>
+                    <article><span>Tus aciertos</span><strong>{userExactScores}</strong></article>
+                  </section>
+
+              {canModerateRoom ? (
+              <section className="panel room-setup-checklist-card" aria-label="Preparación de sala">
+                <div className="room-setup-checklist-head">
+                  <div>
+                    <span className="market-kicker">Preparación</span>
+                    <h3>Checklist de la sala</h3>
+                    <p>Revisa rápidamente si tu sala está lista para competir.</p>
+                  </div>
+                </div>
+
+                <div className="room-setup-checklist-list">
+                  {roomSetupChecklist.map((item) => (
+                    <article className={item.ready ? "ready" : "pending"} key={item.label}>
+                      <span>{item.ready ? "✓" : "!"}</span>
+                      <div>
+                        <strong>{item.label}</strong>
+                        <small>{item.detail}</small>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+              ) : null}
+
+              {canModerateRoom ? (
+              <section className="panel room-participants-card" aria-label="Participantes de la sala">
+                <div className="room-participants-card-head">
+                  <div>
+                    <span className="market-kicker">Participantes</span>
+                    <h3>{participantLimit ? `${participantCount}/${participantLimit} inscritos` : `${participantCount} inscritos`}</h3>
+                    <p>Confirma quién ya entró a la sala antes de iniciar la competencia.</p>
+                  </div>
+
+                  <button className="room-participants-card-action" onClick={() => openRoomTab("participants")} type="button">
+                    Ver todos
+                  </button>
+                </div>
+
+                <div className="room-participants-preview">
+                  {visibleRoomMembers.length ? (
+                    visibleRoomMembers.map((member) => (
+                      <article className="room-participant-pill" key={member.id}>
+                        <span>{member.name.slice(0, 1).toUpperCase()}</span>
+                        <div>
+                          <strong>{member.name}</strong>
+                          <small>Participante</small>
+                        </div>
+                      </article>
+                    ))
+                  ) : (
+                    <p className="room-participants-empty">Aún no hay participantes en esta sala.</p>
+                  )}
+                </div>
+
+                {participantLimit ? (
+                  <small className="room-participants-slots">
+                    {participantSlotsLeft > 0 ? `Quedan ${participantSlotsLeft} cupos disponibles.` : "La sala está llena."}
+                  </small>
+                ) : null}
+              </section>
+              ) : null}
+
+              {canModerateRoom ? (
+              <section className="panel room-match-filter-card" aria-label="Filtros de partidos">
+                <div>
+                  <span className="market-kicker">Partidos</span>
+                  <h3>Filtrar calendario</h3>
+                </div>
+
+                <div className="room-match-filter-tabs">
+                  <button className={matchListFilter === "ALL" ? "selected" : ""} onClick={() => setMatchListFilter("ALL")} type="button">
+                    Todos
+                  </button>
+                  <button className={matchListFilter === "UPCOMING" ? "selected" : ""} onClick={() => setMatchListFilter("UPCOMING")} type="button">
+                    Próximos
+                  </button>
+                  <button className={matchListFilter === "LIVE" ? "selected" : ""} onClick={() => setMatchListFilter("LIVE")} type="button">
+                    En vivo
+                  </button>
+                  <button className={matchListFilter === "FINISHED" ? "selected" : ""} onClick={() => setMatchListFilter("FINISHED")} type="button">
+                    Finalizados
+                  </button>
+                </div>
+              </section>
+              ) : null}
+
+              {roomIsRoundOf32Mode ? (
+                <section className="panel room-round-mode-card" aria-label="Modo 16avos de final">
+                  <div>
+                    <span className="market-kicker">Modo competencia</span>
+                    <h3>16avos de final</h3>
+                    <p>
+                      Esta sala está enfocada solo en partidos de 16avos. Los picks y el ranking deben concentrarse en esta fase.
+                    </p>
+                  </div>
+                  <strong>{roundOf32Matches.length || activeRoomMatches.length} partidos</strong>
+                </section>
+              ) : null}
+
+              {canModerateRoom ? (
+              <section className="panel room-share-card" aria-label="Compartir sala">
+                <div>
+                  <span className="market-kicker">Invita a tu grupo</span>
+                  <h3>Comparte esta sala</h3>
+                  <p>Envía el enlace por WhatsApp para que tus participantes entren, hagan sus picks y compitan en el ranking.</p>
+                </div>
+
+                <button className="room-share-whatsapp-button" onClick={shareRoomOnWhatsApp} type="button">
+                  Compartir por WhatsApp
+                </button>
+
+                {roomShareNotice ? <small>{roomShareNotice}</small> : null}
+              </section>
+              ) : null}
+
+                <div className="room-home-primary">
+
                   {visibleRoomNextActions.length ? (
                     <section className="panel room-next-actions" aria-label="Qué hacer ahora">
                       <div>
@@ -1850,11 +1865,6 @@ export function LeaguePanel({
                     </section>
                   ) : null}
 
-                  <section className="panel room-home-summary compact-home-summary personal-room-summary">
-                    <article><span>Tu posición</span><strong>{userRanking ? `#${userRankingIndex + 1}` : "-"}</strong></article>
-                    <article><span>Tus puntos</span><strong>{userRanking?.points ?? 0}</strong></article>
-                    <article><span>Tus aciertos</span><strong>{userExactScores}</strong></article>
-                  </section>
 
                   <section className="panel room-achievements-card" aria-label="Tus logros">
                     <div className="section-title">

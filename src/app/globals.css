@@ -13698,3 +13698,8 @@ button {
     order: 6 !important;
   }
 }
+
+/* Reset room home ordering: JSX now controls hierarchy */
+.room-home-grid > * {
+  order: 0 !important;
+}
