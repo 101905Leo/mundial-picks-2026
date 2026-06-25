@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { isRoomActivated, ROOM_PENDING_PAYMENT_ERROR, ROOM_PENDING_PAYMENT_STATUS } from "@/lib/room-activation";
 
 const messageSchema = z.object({
-  body: z.string().trim().min(1, "Escribe un mensaje").max(3000, "El mensaje es demasiado largo"),
+  body: z.string().trim().min(1, "Escribe un mensaje").max(500, "El mensaje es demasiado largo"),
 });
 
 async function getLeagueAccess(userId: string, userRole: "USER" | "ADMIN", leagueId: string) {

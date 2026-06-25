@@ -3027,8 +3027,7 @@ button {
   padding: 8px;
 }
 
-.room-chat-form input,
-.room-chat-form textarea {
+.room-chat-form input {
   border-radius: 12px;
   min-height: 42px;
 }
@@ -3426,8 +3425,6 @@ button {
   line-height: 1.45;
   margin: 7px 0 0;
   overflow-wrap: anywhere;
-  white-space: pre-wrap;
-  word-break: break-word;
 }
 
 .league-chat-form {
@@ -10064,8 +10061,7 @@ button {
     z-index: 2;
   }
 
-  .room-chat-form input,
-.room-chat-form textarea {
+  .room-chat-form input {
     font-size: 16px;
     min-height: 46px;
   }
@@ -11053,8 +11049,7 @@ button {
     padding: 8px;
   }
 
-  .room-chat-form input,
-.room-chat-form textarea {
+  .room-chat-form input {
     min-height: 46px;
     min-width: 0;
   }
@@ -13607,9 +13602,4 @@ button {
   body .admin-rooms-workspace {
     padding-bottom: 120px !important;
   }
-}
-
-.room-chat-form textarea {
-  min-height: 76px;
-  resize: vertical;
 }
