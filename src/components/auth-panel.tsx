@@ -70,17 +70,28 @@ export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: 
       inviteCode: String(formData.get("inviteCode") ?? "").trim(),
     };
 
-    const response = await fetch(`/api/auth/${mode}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(
-        mode === "login"
-          ? { phone: payload.phone, password: payload.password }
-          : payload,
-      ),
-    });
+    let response: Response;
+    let data: { error?: string; user?: User; joinedLeague?: unknown };
 
-    const data = await response.json();
+    try {
+      response = await fetch(`/api/auth/${mode}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          mode === "login"
+            ? { phone: payload.phone, password: payload.password }
+            : payload,
+        ),
+      });
+
+      const text = await response.text();
+      data = text ? JSON.parse(text) : {};
+    } catch (error) {
+      console.error("Auth request failed", error);
+      setMessage("No se pudo conectar con el servidor. Intenta de nuevo o contacta al administrador.");
+      return;
+    }
+
     if (!response.ok) {
       setMessage(data.error ?? "No se pudo completar la accion");
       return;
