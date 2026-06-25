@@ -13386,3 +13386,78 @@ button {
     font-size: 0.78rem !important;
   }
 }
+
+/* Mobile admin home organization */
+@media (max-width: 720px) {
+  /* La lista de salas ya indica cuál está seleccionada; no necesitamos otra tarjeta grande */
+  .admin-rooms-workspace .selected-room-card,
+  .admin-room-shell .selected-room-main,
+  .admin-room-shell .selected-room-card {
+    display: none !important;
+  }
+
+  /* Reducir el espacio de acciones de sala */
+  .admin-room-action-layout,
+  .admin-room-action-layout.compact-room-actions {
+    margin-top: 8px !important;
+    gap: 8px !important;
+  }
+
+  .admin-room-action-card {
+    padding: 10px 12px !important;
+    border-radius: 16px !important;
+  }
+
+  .admin-room-action-card .market-kicker {
+    font-size: 0.66rem !important;
+  }
+
+  .admin-room-action-card h3,
+  .admin-room-action-card strong {
+    font-size: 0.94rem !important;
+    line-height: 1.12 !important;
+  }
+
+  .admin-room-action-card p {
+    display: none !important;
+  }
+
+  .admin-room-action-grid {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  .admin-room-action-grid .button,
+  .admin-room-action-card .button {
+    width: auto !important;
+    min-width: 0 !important;
+    padding: 8px 10px !important;
+    border-radius: 12px !important;
+    font-size: 0.74rem !important;
+  }
+
+  /* Ocultar espacios vacíos de publicidad en la pantalla móvil de administración */
+  .mobile-ad-slot:empty,
+  .room-mobile-ad:empty,
+  .ad-slot:empty,
+  .ad-placeholder:empty,
+  .room-ad-slot:empty,
+  .admin-ad-slot:empty {
+    display: none !important;
+  }
+
+  .mobile-ad-slot,
+  .room-mobile-ad,
+  .ad-slot,
+  .ad-placeholder,
+  .room-ad-slot,
+  .admin-ad-slot {
+    min-height: 0 !important;
+  }
+
+  /* Menos espacio general abajo para que no parezca una pantalla infinita */
+  .admin-rooms-workspace {
+    padding-bottom: 92px !important;
+  }
+}
