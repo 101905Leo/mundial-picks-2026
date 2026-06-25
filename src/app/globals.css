@@ -13603,3 +13603,16 @@ button {
     padding-bottom: 120px !important;
   }
 }
+
+/* Room home hierarchy: keep main match first and secondary cards last */
+.room-home-primary > .room-featured-match {
+  order: -10;
+}
+
+.room-home-primary > .room-achievements-card {
+  order: 90;
+}
+
+.room-home-primary > .room-create-promo-card {
+  order: 100;
+}
