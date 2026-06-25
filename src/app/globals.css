@@ -14009,40 +14009,30 @@ button {
   }
 }
 
-/* Desktop final: flatten live match fan and remove green chat colors */
+/* Desktop controlled live fan and app chat colors */
 @media (min-width: 851px) {
   .room-featured-match {
     overflow: hidden;
   }
 
   .room-featured-match .room-live-fan-selector {
+    align-items: center !important;
     display: flex !important;
     justify-content: center !important;
-    align-items: stretch !important;
-    gap: 14px !important;
-    min-height: auto !important;
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    padding: 8px 4px 16px !important;
+    min-height: 220px !important;
+    overflow: hidden !important;
+    padding: 16px 8px 24px !important;
   }
 
   .room-featured-match .room-live-fan-match {
-    flex: 0 0 230px !important;
-    margin: 0 !important;
-    min-height: 150px !important;
-    transform: none !important;
-    rotate: 0deg !important;
-    z-index: auto !important;
+    flex: 0 0 min(250px, 30vw) !important;
+    margin: 0 -24px !important;
+    min-height: 170px !important;
   }
 
   .room-featured-match .room-live-fan-match.selected {
-    transform: none !important;
-    z-index: auto !important;
-  }
-
-  .room-featured-match .room-live-fan-match:not(.selected) {
-    opacity: 0.76 !important;
-    filter: none !important;
+    transform: translateY(-8px) rotate(0deg) !important;
+    z-index: 80 !important;
   }
 
   .league-chat-message.own-message {
