@@ -13976,63 +13976,41 @@ button {
   }
 }
 
-/* Desktop polish: tame live fan card overlap and use app chat colors */
-@media (min-width: 851px) {
-  .room-featured-match .room-live-fan-selector {
-    min-height: 210px;
-    overflow: hidden;
-    padding: 12px 8px 18px;
-  }
-
-  .room-featured-match .room-live-fan-match {
-    margin: 0 -18px;
-  }
-
-  .room-featured-match .room-live-fan-match.selected {
-    transform: translateY(0) rotate(0deg) !important;
-  }
-
-  .league-chat-message.own-message {
-    background:
-      linear-gradient(135deg, rgba(29, 78, 216, 0.86), rgba(14, 23, 43, 0.96)) !important;
-  }
-
-  .league-chat-message.room-chat-bulletin {
-    background:
-      radial-gradient(circle at top left, rgba(255, 204, 92, 0.18), transparent 12rem),
-      linear-gradient(145deg, rgba(29, 78, 216, 0.9), rgba(7, 12, 24, 0.98)) !important;
-    border: 1px solid rgba(255, 204, 92, 0.3) !important;
-  }
-
-  .league-chat-message.room-chat-bulletin strong {
-    color: #ffe7a8 !important;
-  }
-}
-
-/* Desktop controlled live fan and app chat colors */
+/* Desktop premium controlled live fan and app chat colors */
 @media (min-width: 851px) {
   .room-featured-match {
-    overflow: hidden;
+    isolation: isolate;
+    overflow: visible;
   }
 
   .room-featured-match .room-live-fan-selector {
-    align-items: center !important;
-    display: flex !important;
-    justify-content: center !important;
-    min-height: 220px !important;
-    overflow: hidden !important;
-    padding: 16px 8px 24px !important;
+    isolation: isolate;
+    min-height: 310px !important;
+    overflow: visible !important;
+    padding: 34px 18px 46px !important;
   }
 
   .room-featured-match .room-live-fan-match {
-    flex: 0 0 min(250px, 30vw) !important;
-    margin: 0 -24px !important;
-    min-height: 170px !important;
+    width: min(300px, 30vw) !important;
+    min-height: 200px !important;
+    margin: 0 -30px !important;
+    transform-origin: 50% 118% !important;
   }
 
   .room-featured-match .room-live-fan-match.selected {
-    transform: translateY(-8px) rotate(0deg) !important;
-    z-index: 80 !important;
+    transform: translateY(-8px) rotate(0deg) scale(1.03) !important;
+    z-index: 30 !important;
+  }
+
+  .room-featured-match .room-live-fan-selector:has(.room-live-fan-match.selected)
+    .room-live-fan-match:not(.selected) {
+    opacity: 0.72 !important;
+    z-index: 5 !important;
+  }
+
+  .room-featured-match .room-live-fan-match:hover {
+    transform: translateY(-10px) rotate(0deg) scale(1.02) !important;
+    z-index: 40 !important;
   }
 
   .league-chat-message.own-message {
