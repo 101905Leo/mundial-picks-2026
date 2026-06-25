@@ -13090,3 +13090,156 @@ button {
     font-size: 0.76rem;
   }
 }
+
+/* Ultra compact admin room list for many rooms */
+.admin-room-card-list {
+  max-height: min(520px, 48vh) !important;
+  overflow-y: auto !important;
+  padding-right: 4px !important;
+}
+
+.admin-room-list-card {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-height: 72px !important;
+  padding: 10px 12px !important;
+  border-radius: 16px !important;
+}
+
+.admin-room-list-main {
+  min-width: 0 !important;
+}
+
+.admin-room-list-main .market-kicker {
+  font-size: 0.66rem !important;
+  line-height: 1 !important;
+}
+
+.admin-room-list-main strong {
+  display: block !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  font-size: 0.92rem !important;
+  line-height: 1.12 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.admin-room-list-main small {
+  display: inline !important;
+  margin-right: 8px !important;
+  font-size: 0.68rem !important;
+  line-height: 1.15 !important;
+}
+
+.admin-room-list-meta {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 6px !important;
+  margin-top: 0 !important;
+}
+
+.admin-room-list-meta span {
+  min-width: 0 !important;
+  padding: 6px 8px !important;
+  border-radius: 12px !important;
+}
+
+.admin-room-list-meta small {
+  font-size: 0.55rem !important;
+  line-height: 1 !important;
+}
+
+.admin-room-list-meta strong {
+  font-size: 0.72rem !important;
+  line-height: 1.05 !important;
+}
+
+/* Mobile: one-line room rows */
+@media (max-width: 720px) {
+  .admin-rooms-workspace {
+    gap: 12px !important;
+  }
+
+  .admin-room-card-list {
+    max-height: 46vh !important;
+    gap: 6px !important;
+  }
+
+  .admin-room-list-card {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    min-height: 62px !important;
+    padding: 8px 10px !important;
+    border-radius: 14px !important;
+  }
+
+  .admin-room-list-main .market-kicker {
+    font-size: 0.58rem !important;
+  }
+
+  .admin-room-list-main strong {
+    font-size: 0.82rem !important;
+  }
+
+  .admin-room-list-main small {
+    font-size: 0.62rem !important;
+  }
+
+  .admin-room-list-main small:nth-of-type(n + 2) {
+    display: none !important;
+  }
+
+  .admin-room-list-meta {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    min-width: 76px !important;
+  }
+
+  .admin-room-list-meta span {
+    display: none !important;
+  }
+
+  .admin-room-list-meta span:first-child {
+    display: grid !important;
+    padding: 5px 7px !important;
+    text-align: center !important;
+  }
+
+  .admin-room-list-meta span:first-child small {
+    display: none !important;
+  }
+
+  .admin-room-list-meta span:first-child strong {
+    font-size: 0.78rem !important;
+  }
+
+  .admin-room-list-card.active {
+    border-left: 4px solid #a3e635 !important;
+    box-shadow: 0 0 0 1px rgba(163, 230, 53, 0.18) !important;
+  }
+
+  .selected-room-card {
+    padding: 12px !important;
+    border-radius: 18px !important;
+  }
+
+  .selected-room-card .admin-room-list-meta,
+  .selected-room-card .admin-user-stats,
+  .selected-room-card .admin-user-badges,
+  .selected-room-card .admin-user-actions {
+    display: none !important;
+  }
+
+  .selected-room-card strong {
+    font-size: 0.95rem !important;
+  }
+
+  .selected-room-card small,
+  .selected-room-card span {
+    font-size: 0.68rem !important;
+  }
+}
