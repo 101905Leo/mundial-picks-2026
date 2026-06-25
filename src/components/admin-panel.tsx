@@ -2403,7 +2403,14 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
                     const memberCount = room.memberships.length;
 
                     return (
-                      <article className={`admin-room-list-card ${isSelected ? "active" : ""}`} key={room.id}>
+                      <button
+                        className={`admin-room-list-card ${isSelected ? "active" : ""}`}
+                        key={room.id}
+                        onClick={() => {
+                          void selectAdminRoom(room.id);
+                        }}
+                        type="button"
+                      >
                         <div className="admin-room-list-main">
                           <span className="market-kicker">{roomStatusLabel(room.status)}</span>
                           <strong>{room.name}</strong>
@@ -2417,16 +2424,7 @@ export function AdminPanel({ matches, onChanged, initialView = "rooms", refreshR
                           <span><small>Pago</small><strong>{adminRoomPaymentLabel(room)}</strong></span>
                           <span><small>Vence</small><strong>{room.expiresAt ? new Date(room.expiresAt).toLocaleDateString("es") : "Sin fecha"}</strong></span>
                         </div>
-                        <button
-                          className={`button ${isSelected ? "secondary" : "primary"} compact-button`}
-                          onClick={() => {
-                            void selectAdminRoom(room.id);
-                          }}
-                          type="button"
-                        >
-                          {isSelected ? "Administrando" : "Administrar"}
-                        </button>
-                      </article>
+                      </button>
                     );
                   })
                 ) : (
