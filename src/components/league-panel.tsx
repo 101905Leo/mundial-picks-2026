@@ -2566,7 +2566,7 @@ export function LeaguePanel({
                   {!chatMessages.length ? <div className="empty room-chat-empty">Aún no hay mensajes en esta sala. Sé el primero en escribir.</div> : null}
                 </div>
                 <form className="league-chat-form room-chat-form" onSubmit={sendChatMessage}>
-                  <input maxLength={500} name="message" placeholder="Escribe un mensaje..." required />
+                  <textarea maxLength={3000} name="message" placeholder="Pega tu Resumen Express o escribe un mensaje..." required rows={3} />
                   <button className="button primary compact-button" type="submit">Enviar</button>
                 </form>
               </section>
