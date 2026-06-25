@@ -1749,6 +1749,50 @@ export function LeaguePanel({
                     <article><span>Tus aciertos</span><strong>{userExactScores}</strong></article>
                   </section>
 
+                  <section className="panel room-achievements-card" aria-label="Tus logros">
+                    <div className="section-title">
+                      <div>
+                        <span className="market-kicker">Incentivos</span>
+                        <h3>Tus logros</h3>
+                        <small>Motívate a seguir compitiendo en la sala.</small>
+                      </div>
+                    </div>
+                    <div className="room-achievement-list">
+                      {roomAchievementCards.map((achievement) => (
+                        <article className={`room-achievement-card ${achievement.tone}`} key={achievement.label}>
+                          <span className="room-achievement-icon">{achievement.icon}</span>
+                          <div>
+                            <strong>{achievement.value}</strong>
+                            <span>{achievement.label}</span>
+                            <small>{achievement.detail}</small>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section className="panel room-create-promo-card visual-room-ad">
+                    <div>
+                      <span className="market-kicker">Crea tu propia liga</span>
+                      <h3>Crea una liga privada</h3>
+                      <p>Invita a tus amigos y compite en una sala privada.</p>
+                    </div>
+                    <div className="room-ad-visual" aria-hidden="true">
+                      <span className="room-ad-trophy">🏆</span>
+                      <div className="room-ad-mini-ranking">
+                        <strong>1. Tú</strong>
+                        <span>2. Amigo</span>
+                        <span>3. Grupo</span>
+                      </div>
+                      <small>CODIGO: MP26</small>
+                    </div>
+                    <a className="button secondary compact-button room-promo-action" href="/planes">
+                      Crear liga
+                    </a>
+                  </section>
+                </div>
+
+                <aside className="room-home-sidebar room-home-live-sidebar" aria-label="Ranking y picks de la sala">
                   <section className="panel room-ranking-preview room-complete-ranking">
                     <div className="section-title">
                       <div>
@@ -1842,49 +1886,7 @@ export function LeaguePanel({
                       ) : null}
                     </div>
                   </section>
-
-                  <section className="panel room-achievements-card" aria-label="Tus logros">
-                    <div className="section-title">
-                      <div>
-                        <span className="market-kicker">Incentivos</span>
-                        <h3>Tus logros</h3>
-                        <small>Motívate a seguir compitiendo en la sala.</small>
-                      </div>
-                    </div>
-                    <div className="room-achievement-list">
-                      {roomAchievementCards.map((achievement) => (
-                        <article className={`room-achievement-card ${achievement.tone}`} key={achievement.label}>
-                          <span className="room-achievement-icon">{achievement.icon}</span>
-                          <div>
-                            <strong>{achievement.value}</strong>
-                            <span>{achievement.label}</span>
-                            <small>{achievement.detail}</small>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  </section>
-
-                  <section className="panel room-create-promo-card visual-room-ad">
-                    <div>
-                      <span className="market-kicker">Crea tu propia liga</span>
-                      <h3>Crea una liga privada</h3>
-                      <p>Invita a tus amigos y compite en una sala privada.</p>
-                    </div>
-                    <div className="room-ad-visual" aria-hidden="true">
-                      <span className="room-ad-trophy">🏆</span>
-                      <div className="room-ad-mini-ranking">
-                        <strong>1. Tú</strong>
-                        <span>2. Amigo</span>
-                        <span>3. Grupo</span>
-                      </div>
-                      <small>CODIGO: MP26</small>
-                    </div>
-                    <a className="button secondary compact-button room-promo-action" href="/planes">
-                      Crear liga
-                    </a>
-                  </section>
-                </div>
+                </aside>
 
                 {isSuperAdmin ? (
                   <>
