@@ -286,12 +286,15 @@ export function AuthPanel({ initialMode = "login", initialPhone = "", initialInv
               id="inviteCode"
               maxLength={16}
               minLength={4}
+              autoCapitalize="characters"
+              autoComplete="off"
               name="inviteCode"
               onChange={(event) => setInviteCode(normalizeInviteCode(event.target.value))}
-              pattern="\\S{4,16}"
+              pattern="[A-Za-z0-9]{4,16}"
               placeholder="MP20ABCD"
               required
-              title="Ingresa el código de sala que recibiste"
+              spellCheck={false}
+              title="Ingresa un código de sala válido. Ejemplo: MP30MA48"
               value={inviteCode}
             />
             <small>{initialInviteCode ? "Código cargado desde tu invitación." : "Necesitas el codigo de tu sala para completar el registro."}</small>
