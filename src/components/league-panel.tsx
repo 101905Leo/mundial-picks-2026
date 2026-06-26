@@ -1342,6 +1342,106 @@ export function LeaguePanel({
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
   }
 
+  function renderRoomHomeLiveSidebarContent() {
+    return (
+      <>
+        <section className="panel room-ranking-preview room-complete-ranking">
+          <div className="section-title">
+            <div>
+              <span className="market-kicker">Ranking</span>
+              <h3>Ranking de la sala</h3>
+              <small>{ranking.length} {ranking.length === 1 ? "participante" : "participantes"}</small>
+            </div>
+          </div>
+          <div className="room-ranking-card-list full-home-ranking-list" aria-label="Ranking completo de la sala">
+            {ranking.map((entry, index) => {
+              const rankIcon = index === 0 ? "🏆" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`;
+
+              return (
+                <article
+                  className={`${entry.id === user.id ? "current-user" : ""} ${index < 3 ? "podium-rank" : ""}`.trim()}
+                  key={entry.id}
+                >
+                  <span>{rankIcon}</span>
+                  <strong>{entry.name}</strong>
+                  <em>{entry.points} pts</em>
+                </article>
+              );
+            })}
+            {!ranking.length ? <div className="empty">El ranking aparecerá cuando haya participantes.</div> : null}
+          </div>
+        </section>
+
+        <section className="panel room-recent-picks room-all-picks-card">
+          <div className="section-title">
+            <div>
+              <span className="market-kicker">Picks</span>
+              <h3>{activeLivePredictionMatch ? "Picks en vivo" : "Picks finales"}</h3>
+              {activeLivePredictionMatch ? (
+                <small>{activeLivePredictionMatch.homeTeam} vs {activeLivePredictionMatch.awayTeam}</small>
+              ) : null}
+            </div>
+          </div>
+          <div className="room-prediction-list compact-prediction-list">
+            {roomHomePredictions.map((prediction) => {
+              const matchResult = matches.find((match) => match.id === prediction.match.id);
+              const pickScore =
+                prediction.homeScore !== null && prediction.awayScore !== null
+                  ? { homeScore: prediction.homeScore, awayScore: prediction.awayScore }
+                  : null;
+              const resultScore =
+                matchResult?.homeScore !== null &&
+                matchResult?.homeScore !== undefined &&
+                matchResult.awayScore !== null &&
+                matchResult.awayScore !== undefined
+                  ? { homeScore: matchResult.homeScore, awayScore: matchResult.awayScore }
+                  : null;
+              const pointExplanation =
+                pickScore && resultScore ? explainPredictionPoints(pickScore, resultScore) : null;
+              const pointsTone = [2, 3, 5].includes(prediction.points)
+                ? "positive"
+                : [0, 1].includes(prediction.points)
+                  ? "negative"
+                  : "neutral";
+
+              return (
+                <article className="room-prediction room-live-pick-row" key={prediction.id}>
+                  <div>
+                    <strong>{prediction.user.name}</strong>
+                    <span>
+                      {prediction.match.homeTeam} vs {prediction.match.awayTeam}
+                      {" · "}
+                      {matchStatusLabel(prediction.match.status)}
+                    </span>
+                  </div>
+                  <div className="room-prediction-score">
+                    <strong>
+                      {pickScore ? `${pickScore.homeScore} - ${pickScore.awayScore}` : "Sin pronóstico"}
+                    </strong>
+                    <span className={`room-prediction-points ${pointsTone}`}>{prediction.points} pts</span>
+                    {pointExplanation && resultScore ? (
+                      <div className="room-prediction-detail">
+                        <span>Resultado: {resultScore.homeScore} - {resultScore.awayScore}</span>
+                        <span>{pointExplanation.reason}</span>
+                      </div>
+                    ) : null}
+                  </div>
+                </article>
+              );
+            })}
+            {!roomHomePredictions.length ? (
+              <div className="empty">
+                {activeLivePredictionMatch
+                  ? "Aún no hay picks visibles para este partido."
+                  : "Los picks se mostrarán cuando inicie el partido."}
+              </div>
+            ) : null}
+          </div>
+        </section>
+      </>
+    );
+  }
+
   return (
     <div className="grid">
       {!selectedLeague && !isSuperAdmin ? <section className="room-promo panel">
@@ -1745,6 +1845,10 @@ export function LeaguePanel({
                     )}
                   </section>
 
+                  <div className="room-home-mobile-live-stack" aria-label="Ranking y picks de la sala">
+                    {renderRoomHomeLiveSidebarContent()}
+                  </div>
+
                   {visibleRoomNextActions.length ? (
                     <section className="panel room-next-actions" aria-label="Qué hacer ahora">
                       <div>
@@ -1812,99 +1916,7 @@ export function LeaguePanel({
                 </div>
 
                 <aside className="room-home-sidebar room-home-live-sidebar" aria-label="Ranking y picks de la sala">
-                  <section className="panel room-ranking-preview room-complete-ranking">
-                    <div className="section-title">
-                      <div>
-                        <span className="market-kicker">Ranking</span>
-                        <h3>Ranking de la sala</h3>
-                        <small>{ranking.length} {ranking.length === 1 ? "participante" : "participantes"}</small>
-                      </div>
-                    </div>
-                    <div className="room-ranking-card-list full-home-ranking-list" aria-label="Ranking completo de la sala">
-                      {ranking.map((entry, index) => {
-                        const rankIcon = index === 0 ? "🏆" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`;
-
-                        return (
-                          <article
-                            className={`${entry.id === user.id ? "current-user" : ""} ${index < 3 ? "podium-rank" : ""}`.trim()}
-                            key={entry.id}
-                          >
-                            <span>{rankIcon}</span>
-                            <strong>{entry.name}</strong>
-                            <em>{entry.points} pts</em>
-                          </article>
-                        );
-                      })}
-                      {!ranking.length ? <div className="empty">El ranking aparecerá cuando haya participantes.</div> : null}
-                    </div>
-                  </section>
-
-                  <section className="panel room-recent-picks room-all-picks-card">
-                    <div className="section-title">
-                      <div>
-                        <span className="market-kicker">Picks</span>
-                        <h3>{activeLivePredictionMatch ? "Picks en vivo" : "Picks finales"}</h3>
-                        {activeLivePredictionMatch ? (
-                          <small>{activeLivePredictionMatch.homeTeam} vs {activeLivePredictionMatch.awayTeam}</small>
-                        ) : null}
-                      </div>
-                    </div>
-                    <div className="room-prediction-list compact-prediction-list">
-                      {roomHomePredictions.map((prediction) => {
-                        const matchResult = matches.find((match) => match.id === prediction.match.id);
-                        const pickScore =
-                          prediction.homeScore !== null && prediction.awayScore !== null
-                            ? { homeScore: prediction.homeScore, awayScore: prediction.awayScore }
-                            : null;
-                        const resultScore =
-                          matchResult?.homeScore !== null &&
-                          matchResult?.homeScore !== undefined &&
-                          matchResult.awayScore !== null &&
-                          matchResult.awayScore !== undefined
-                            ? { homeScore: matchResult.homeScore, awayScore: matchResult.awayScore }
-                            : null;
-                        const pointExplanation =
-                          pickScore && resultScore ? explainPredictionPoints(pickScore, resultScore) : null;
-                        const pointsTone = [2, 3, 5].includes(prediction.points)
-                          ? "positive"
-                          : [0, 1].includes(prediction.points)
-                            ? "negative"
-                            : "neutral";
-
-                        return (
-                          <article className="room-prediction room-live-pick-row" key={prediction.id}>
-                            <div>
-                              <strong>{prediction.user.name}</strong>
-                              <span>
-                                {prediction.match.homeTeam} vs {prediction.match.awayTeam}
-                                {" · "}
-                                {matchStatusLabel(prediction.match.status)}
-                              </span>
-                            </div>
-                            <div className="room-prediction-score">
-                              <strong>
-                                {pickScore ? `${pickScore.homeScore} - ${pickScore.awayScore}` : "Sin pronóstico"}
-                              </strong>
-                              <span className={`room-prediction-points ${pointsTone}`}>{prediction.points} pts</span>
-                              {pointExplanation && resultScore ? (
-                                <div className="room-prediction-detail">
-                                  <span>Resultado: {resultScore.homeScore} - {resultScore.awayScore}</span>
-                                  <span>{pointExplanation.reason}</span>
-                                </div>
-                              ) : null}
-                            </div>
-                          </article>
-                        );
-                      })}
-                      {!roomHomePredictions.length ? (
-                        <div className="empty">
-                          {activeLivePredictionMatch
-                            ? "Aún no hay picks visibles para este partido."
-                            : "Los picks se mostrarán cuando inicie el partido."}
-                        </div>
-                      ) : null}
-                    </div>
-                  </section>
+                  {renderRoomHomeLiveSidebarContent()}
                 </aside>
 
                 {isSuperAdmin ? (
