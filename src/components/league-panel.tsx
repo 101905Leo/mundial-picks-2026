@@ -456,16 +456,28 @@ export function LeaguePanel({
     form.reset();
   }
 
+  function roomInviteUrl(inviteCode: string) {
+    return `https://www.mundialpicks.online/mi-sala?mode=register&inviteCode=${encodeURIComponent(inviteCode)}`;
+  }
+
+  function roomInvitationText(roomName: string, inviteCode: string) {
+    return [
+      `Únete a mi sala privada "${roomName}" en Mundial Picks Arena.`,
+      "Entra aquí:",
+      roomInviteUrl(inviteCode),
+      `Código de respaldo: ${inviteCode}`,
+    ].join("\n");
+  }
+
   async function copyInvitation() {
     if (!selectedLeague) return;
-    const invitation = `Únete a "${selectedLeague.name}" en Mundial Picks Arena: https://www.mundialpicks.online. Código: ${selectedLeague.inviteCode}`;
-    await navigator.clipboard.writeText(invitation);
+    await navigator.clipboard.writeText(roomInvitationText(selectedLeague.name, selectedLeague.inviteCode));
     setMessage("Invitación copiada para compartir.");
   }
 
   function shareInvitation() {
     if (!selectedLeague) return;
-    const invitation = `Únete a mi sala privada "${selectedLeague.name}" en Mundial Picks Arena. Código: ${selectedLeague.inviteCode}. Entra en https://www.mundialpicks.online`;
+    const invitation = roomInvitationText(selectedLeague.name, selectedLeague.inviteCode);
     window.open(`https://wa.me/?text=${encodeURIComponent(invitation)}`, "_blank", "noopener,noreferrer");
   }
 
@@ -973,13 +985,17 @@ export function LeaguePanel({
     };
 
     const roomCode = roomMeta.code ?? roomMeta.inviteCode ?? roomMeta.joinCode ?? roomMeta.accessCode ?? "";
-    const roomUrl = typeof window !== "undefined" ? `${window.location.origin}/mi-sala` : "https://www.mundialpicks.online/mi-sala";
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://www.mundialpicks.online";
+    const roomUrl = roomCode
+      ? `${baseUrl}/mi-sala?mode=register&inviteCode=${encodeURIComponent(roomCode)}`
+      : `${baseUrl}/mi-sala`;
     const shareText = [
       "🏆 Únete a mi sala en Mundial Picks Arena",
       `Sala: ${roomMeta.name ?? selectedLeague.name ?? "Mi sala"}`,
-      roomCode ? `Código de sala: ${roomCode}` : null,
-      "Haz tus predicciones y compite en el ranking.",
+      "Entra aquí:",
       roomUrl,
+      roomCode ? `Código de respaldo: ${roomCode}` : null,
+      "Haz tus predicciones y compite en el ranking.",
       "Donde tus predicciones compiten.",
     ]
       .filter(Boolean)

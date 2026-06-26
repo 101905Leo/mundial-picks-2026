@@ -7,6 +7,7 @@ import type { User } from "@/components/types";
 type Props = {
   initialMode?: "login" | "register";
   initialPhone?: string;
+  initialInviteCode?: string;
   onAuth: (user: User, options?: { joinedLeague?: boolean }) => void;
 };
 
@@ -21,17 +22,26 @@ function formatPhone(value: string) {
   return value.replace(/^(\d{3})(\d{3})(\d{4})$/, "$1 $2 $3");
 }
 
-export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: Props) {
+function normalizeInviteCode(value = "") {
+  return value.trim().toUpperCase();
+}
+
+export function AuthPanel({ initialMode = "login", initialPhone = "", initialInviteCode = "", onAuth }: Props) {
   const [mode, setMode] = useState<"login" | "register">(initialMode);
   const [message, setMessage] = useState("");
   const [phone, setPhone] = useState("");
   const [quickLoginPhone, setQuickLoginPhone] = useState("");
   const [quickPin, setQuickPin] = useState("");
+  const [inviteCode, setInviteCode] = useState(() => normalizeInviteCode(initialInviteCode));
   const [rememberLogin, setRememberLogin] = useState(false);
 
   useEffect(() => {
     setMode(initialMode);
   }, [initialMode]);
+
+  useEffect(() => {
+    setInviteCode(normalizeInviteCode(initialInviteCode));
+  }, [initialInviteCode]);
 
   useEffect(() => {
     const phoneFromPage = normalizeInitialPhone(initialPhone);
@@ -67,7 +77,7 @@ export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: 
       name: String(formData.get("name") ?? ""),
       phone: String(formData.get("phone") ?? ""),
       password: String(formData.get("password") ?? ""),
-      inviteCode: String(formData.get("inviteCode") ?? "").trim(),
+      inviteCode: normalizeInviteCode(String(formData.get("inviteCode") ?? inviteCode)),
     };
 
     let response: Response;
@@ -79,7 +89,11 @@ export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(
           mode === "login"
-            ? { phone: payload.phone, password: payload.password }
+            ? {
+                phone: payload.phone,
+                password: payload.password,
+                ...(payload.inviteCode ? { inviteCode: payload.inviteCode } : {}),
+              }
             : payload,
         ),
       });
@@ -154,6 +168,7 @@ export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: 
         <form className="quick-pin-form" onSubmit={submitQuickLogin}>
           <input name="phone" type="hidden" value={quickLoginPhone} />
           <input name="password" type="hidden" value={quickPin} />
+          <input name="inviteCode" type="hidden" value={inviteCode} />
           <div className="quick-pin-boxes" aria-label="PIN de 4 números">
             {[0, 1, 2, 3].map((index) => (
               <span
@@ -272,12 +287,14 @@ export function AuthPanel({ initialMode = "login", initialPhone = "", onAuth }: 
               maxLength={16}
               minLength={4}
               name="inviteCode"
+              onChange={(event) => setInviteCode(normalizeInviteCode(event.target.value))}
               pattern="\\S{4,16}"
               placeholder="MP20ABCD"
               required
               title="Ingresa el código de sala que recibiste"
+              value={inviteCode}
             />
-            <small>Necesitas el codigo de tu sala para completar el registro.</small>
+            <small>{initialInviteCode ? "Código cargado desde tu invitación." : "Necesitas el codigo de tu sala para completar el registro."}</small>
           </div>
         ) : null}
         {mode === "login" ? (

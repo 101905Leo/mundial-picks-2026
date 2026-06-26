@@ -16,6 +16,7 @@ import { roomPlanCatalog, salesWhatsAppUrl } from "@/lib/room-plan-catalog";
 type MundialPicksAppProps = {
   initialMode?: "login" | "register";
   initialPhone?: string;
+  initialInviteCode?: string;
 };
 
 function normalizeInitialPhone(value = "") {
@@ -25,7 +26,11 @@ function normalizeInitialPhone(value = "") {
   return /^3\d{9}$/.test(digits) ? digits : "";
 }
 
-export function MundialPicksApp({ initialMode = "login", initialPhone = "" }: MundialPicksAppProps) {
+function normalizeInitialInviteCode(value = "") {
+  return value.trim().toUpperCase();
+}
+
+export function MundialPicksApp({ initialMode = "login", initialPhone = "", initialInviteCode = "" }: MundialPicksAppProps) {
   const [user, setUser] = useState<User | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
   const [ranking, setRanking] = useState<RankingEntry[]>([]);
@@ -210,6 +215,7 @@ export function MundialPicksApp({ initialMode = "login", initialPhone = "" }: Mu
   }, []);
 
   const quickLoginPhone = normalizeInitialPhone(initialPhone);
+  const inviteCodeFromLink = normalizeInitialInviteCode(initialInviteCode);
   const requestedRegister = initialMode === "register";
 
   if ((quickLoginPhone || requestedRegister) && loading) {
@@ -226,6 +232,7 @@ export function MundialPicksApp({ initialMode = "login", initialPhone = "" }: Mu
         <AuthPanel
           initialMode="register"
           initialPhone={quickLoginPhone}
+          initialInviteCode={inviteCodeFromLink}
           onAuth={async (sessionUser) => {
             setUser(sessionUser);
             setActiveView(sessionUser.role === "ADMIN" ? "admin" : "rooms");
@@ -242,6 +249,7 @@ export function MundialPicksApp({ initialMode = "login", initialPhone = "" }: Mu
         <AuthPanel
           initialMode="login"
           initialPhone={quickLoginPhone}
+          initialInviteCode={inviteCodeFromLink}
           onAuth={async (sessionUser) => {
             setUser(sessionUser);
             setActiveView(sessionUser.role === "ADMIN" ? "admin" : "rooms");
