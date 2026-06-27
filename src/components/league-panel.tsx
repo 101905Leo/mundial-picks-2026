@@ -9,6 +9,7 @@ import type { Competition, League, LeagueMember, Match, RankingEntry, User } fro
 import { isPickClosed } from "@/lib/pick-lock";
 import { explainPredictionPoints } from "@/lib/scoring";
 import { matchStatusLabel, roomStatusLabel } from "@/lib/status-labels";
+import { matchAccentStyle } from "@/lib/team-colors";
 import { flagForTeam } from "@/lib/team-flags";
 
 type Props = {
@@ -1705,7 +1706,11 @@ export function LeaguePanel({
 
               <div className="room-home-grid">
                 <div className="room-home-primary">
-                  <section className="room-next-card room-featured-match">
+                  <section
+                    className="room-next-card room-featured-match"
+                    style={featuredMatch ? matchAccentStyle(featuredMatch.homeTeam, featuredMatch.awayTeam) : undefined}
+                  >
+                    {featuredMatch ? <div className="room-match-flag-ribbon" aria-hidden="true" /> : null}
                     <div className="room-next-card-header">
                       <span>
                         {featuredMatch
@@ -1735,6 +1740,7 @@ export function LeaguePanel({
                                   key={match.id}
                                   onClick={() => isLiveFan ? setSelectedLiveMatchId(match.id) : setSelectedScheduledMatchId(match.id)}
                                   style={{
+                                    ...matchAccentStyle(match.homeTeam, match.awayTeam),
                                     transform: `translateX(${offset * 34}px) rotate(${offset * 5}deg)`,
                                     zIndex: 20 + index,
                                   }}

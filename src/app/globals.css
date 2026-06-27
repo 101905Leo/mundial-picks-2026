@@ -14046,3 +14046,92 @@ button {
     color: #ffe7a8 !important;
   }
 }
+
+
+/* Team flag accents for featured room match */
+.room-featured-match {
+  --match-home-accent: #38bdf8;
+  --match-home-accent-rgb: 56, 189, 248;
+  --match-home-secondary: #ffffff;
+  --match-home-secondary-rgb: 255, 255, 255;
+  --match-away-accent: #f4bd4f;
+  --match-away-accent-rgb: 244, 189, 79;
+  --match-away-secondary: #ffffff;
+  --match-away-secondary-rgb: 255, 255, 255;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(var(--match-home-accent-rgb), 0.26), transparent 38%),
+    radial-gradient(circle at 88% 0%, rgba(var(--match-away-accent-rgb), 0.24), transparent 38%),
+    radial-gradient(circle at 50% 100%, rgba(244, 189, 79, 0.09), transparent 42%),
+    linear-gradient(145deg, rgba(18, 24, 37, 0.98), rgba(6, 10, 19, 0.98));
+  border-color: rgba(var(--match-home-accent-rgb), 0.34);
+  isolation: isolate;
+  position: relative;
+}
+
+.room-match-flag-ribbon {
+  background:
+    linear-gradient(
+      90deg,
+      var(--match-home-accent) 0%,
+      var(--match-home-secondary) 25%,
+      rgba(255, 255, 255, 0.78) 50%,
+      var(--match-away-secondary) 75%,
+      var(--match-away-accent) 100%
+    );
+  border-radius: 999px;
+  box-shadow:
+    0 0 24px rgba(var(--match-home-accent-rgb), 0.26),
+    0 0 24px rgba(var(--match-away-accent-rgb), 0.24);
+  height: 5px;
+  margin: -4px 0 2px;
+  opacity: 0.95;
+}
+
+.room-featured-match .room-next-card-header span {
+  border: 1px solid rgba(var(--match-home-accent-rgb), 0.28);
+  box-shadow: 0 0 20px rgba(var(--match-away-accent-rgb), 0.12);
+}
+
+.room-featured-match .room-next-teams > div:first-child span {
+  background:
+    radial-gradient(circle at 50% 28%, rgba(var(--match-home-secondary-rgb), 0.28), transparent 42%),
+    linear-gradient(145deg, rgba(var(--match-home-accent-rgb), 0.22), rgba(255, 255, 255, 0.055));
+  border-color: rgba(var(--match-home-accent-rgb), 0.48);
+  box-shadow: 0 0 28px rgba(var(--match-home-accent-rgb), 0.2);
+}
+
+.room-featured-match .room-next-teams > div:last-child span {
+  background:
+    radial-gradient(circle at 50% 28%, rgba(var(--match-away-secondary-rgb), 0.28), transparent 42%),
+    linear-gradient(145deg, rgba(var(--match-away-accent-rgb), 0.22), rgba(255, 255, 255, 0.055));
+  border-color: rgba(var(--match-away-accent-rgb), 0.48);
+  box-shadow: 0 0 28px rgba(var(--match-away-accent-rgb), 0.2);
+}
+
+.room-featured-match .room-next-teams > div:first-child strong {
+  text-shadow: 0 0 18px rgba(var(--match-home-accent-rgb), 0.22);
+}
+
+.room-featured-match .room-next-teams > div:last-child strong {
+  text-shadow: 0 0 18px rgba(var(--match-away-accent-rgb), 0.22);
+}
+
+.room-featured-match .room-next-teams em {
+  background:
+    linear-gradient(135deg, rgba(var(--match-home-accent-rgb), 0.18), rgba(var(--match-away-accent-rgb), 0.18));
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow:
+    0 0 18px rgba(var(--match-home-accent-rgb), 0.12),
+    0 0 18px rgba(var(--match-away-accent-rgb), 0.12);
+}
+
+.room-featured-match .room-live-fan-match.selected {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(var(--match-home-accent-rgb), 0.2), transparent 42%),
+    radial-gradient(circle at 84% 6%, rgba(var(--match-away-accent-rgb), 0.18), transparent 42%),
+    rgba(5, 12, 27, 0.92);
+  border-color: rgba(var(--match-home-accent-rgb), 0.42);
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.32),
+    0 0 24px rgba(var(--match-away-accent-rgb), 0.14);
+}
