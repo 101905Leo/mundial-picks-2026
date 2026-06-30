@@ -7,7 +7,9 @@ export async function POST(request: NextRequest) {
   if (response) return response;
 
   try {
-    return Response.json(await updateResultsAndRecalculate());
+    return Response.json(
+      await updateResultsAndRecalculate({ flow: "admin/update-results" }),
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudieron actualizar los resultados";
     console.error("Automatic results update failed", error);

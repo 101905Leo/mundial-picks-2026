@@ -1,6 +1,11 @@
 import { MatchStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getScoringStatus } from "@/lib/scoring";
+import {
+  logResultDecision,
+  type ProviderResultObservation,
+  type ProviderResultRun,
+} from "@/lib/result-provider";
 
 type FootballDataMatch = {
   id?: number;
@@ -81,7 +86,9 @@ function findMatchingLocalMatches(matches: LocalMatch[], directSourceKey: string
   ];
 }
 
-export async function updateWorldCupResultsFromFootballData() {
+export async function updateWorldCupResultsFromFootballData(
+  options: { flow?: string } = {},
+): Promise<ProviderResultRun> {
   const apiKey = process.env.FOOTBALL_DATA_API_KEY?.replace(/\s+/g, "").trim();
   const competitionCode = process.env.FOOTBALL_DATA_COMPETITION_CODE || "WC";
 
@@ -111,15 +118,8 @@ export async function updateWorldCupResultsFromFootballData() {
   const localMatches = await prisma.match.findMany({ where: { roomId: null } });
   let checked = 0;
   let matched = 0;
-  let updated = 0;
-  const updatedMatches: Array<{
-    id: string;
-    homeTeam: string;
-    awayTeam: string;
-    homeScore: number;
-    awayScore: number;
-    status: MatchStatus;
-  }> = [];
+  const observations: ProviderResultObservation[] = [];
+  const skippedFinished: ProviderResultObservation[] = [];
 
   for (const fixture of data.matches) {
     const homeTeam = fixture.homeTeam?.name || fixture.homeTeam?.shortName;
@@ -149,37 +149,53 @@ export async function updateWorldCupResultsFromFootballData() {
     matched += matchingMatches.length;
 
     for (const match of matchingMatches) {
-      const needsUpdate = match.homeScore !== homeScore || match.awayScore !== awayScore || match.status !== status;
-      if (!needsUpdate) continue;
-
-      const updatedMatch = await prisma.match.update({
-        where: { id: match.id },
-        data: {
+      const observation: ProviderResultObservation = {
+        provider: "football-data.org",
+        externalFixtureId: fixture.id ? String(fixture.id) : null,
+        globalMatchId: match.id,
+        sourceKey: match.sourceKey,
+        homeTeam: match.homeTeam,
+        awayTeam: match.awayTeam,
+        startsAt: match.startsAt,
+        previous: {
+          status: match.status,
+          homeScore: match.homeScore,
+          awayScore: match.awayScore,
+          updatedAt: match.updatedAt,
+        },
+        next: {
+          status,
           homeScore,
           awayScore,
-          status,
         },
-        select: {
-          id: true,
-          homeTeam: true,
-          awayTeam: true,
-          homeScore: true,
-          awayScore: true,
-          status: true,
-        },
-      });
+      };
+      const differs =
+        match.status !== status ||
+        match.homeScore !== homeScore ||
+        match.awayScore !== awayScore;
 
-      if (needsUpdate) updated += 1;
-      if (needsUpdate && updatedMatch.homeScore !== null && updatedMatch.awayScore !== null) {
-        updatedMatches.push({
-          id: updatedMatch.id,
-          homeTeam: updatedMatch.homeTeam,
-          awayTeam: updatedMatch.awayTeam,
-          homeScore: updatedMatch.homeScore,
-          awayScore: updatedMatch.awayScore,
-          status: updatedMatch.status,
-        });
+      if (match.status === "FINISHED") {
+        if (differs) {
+          skippedFinished.push(observation);
+          logResultDecision("warn", {
+            decision: "skippedFinished",
+            flow: options.flow ?? "provider/football-data",
+            provider: observation.provider,
+            externalFixtureId: observation.externalFixtureId,
+            globalMatchId: observation.globalMatchId,
+            homeTeam: observation.homeTeam,
+            awayTeam: observation.awayTeam,
+            previous: observation.previous,
+            next: observation.next,
+            detail: "El global FINISHED no se sobrescribe automaticamente.",
+          });
+        } else {
+          observations.push(observation);
+        }
+        continue;
       }
+
+      observations.push(observation);
     }
   }
 
@@ -187,8 +203,8 @@ export async function updateWorldCupResultsFromFootballData() {
     checked,
     received: data.matches.length,
     matched,
-    updated,
-    updatedMatches,
+    observations,
+    skippedFinished,
     source: "football-data.org",
   };
 }

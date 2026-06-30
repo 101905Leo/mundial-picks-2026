@@ -1,6 +1,7 @@
 import type { MatchStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { sameMatchByTeamsAndKickoff } from "@/lib/match-equivalence";
+import { logResultDecision } from "@/lib/result-provider";
 import { getScoringStatus } from "@/lib/scoring";
 
 type MatchForSync = {
@@ -27,6 +28,12 @@ type SyncIssue = {
   roomScore?: string;
   globalStatus?: MatchStatus;
   roomStatus?: MatchStatus;
+};
+
+type SyncRoomResultsOptions = {
+  roomId?: string;
+  globalMatchIds?: string[];
+  flow?: string;
 };
 
 function scoreLabel(match: Pick<MatchForSync, "homeScore" | "awayScore">) {
@@ -62,10 +69,14 @@ function findGlobalEquivalent(roomMatch: MatchForSync, globalMatches: MatchForSy
   };
 }
 
-export async function syncRoomMatchesFromGlobalResults(options: { roomId?: string } = {}) {
+export async function syncRoomMatchesFromGlobalResults(options: SyncRoomResultsOptions = {}) {
+  const flow = options.flow ?? "sync-room-results";
   const [globalMatches, roomMatches] = await Promise.all([
     prisma.match.findMany({
-      where: { roomId: null },
+      where: {
+        roomId: null,
+        ...(options.globalMatchIds ? { id: { in: options.globalMatchIds } } : {}),
+      },
       select: {
         id: true,
         roomId: true,
@@ -106,6 +117,7 @@ export async function syncRoomMatchesFromGlobalResults(options: { roomId?: strin
   let scheduledSynced = 0;
   const missingGlobalScore: SyncIssue[] = [];
   const conflicts: SyncIssue[] = [];
+  const protectedFinished: SyncIssue[] = [];
   const errors: SyncIssue[] = [];
 
   for (const roomMatch of roomMatches) {
@@ -130,6 +142,51 @@ export async function syncRoomMatchesFromGlobalResults(options: { roomId?: strin
 
     const globalHasScore = scoreIsComplete(globalMatch);
     const globalScoringStatus = getScoringStatus(globalMatch) as MatchStatus;
+    if (roomMatch.status === "FINISHED") {
+      const differs =
+        globalScoringStatus !== roomMatch.status ||
+        globalMatch.homeScore !== roomMatch.homeScore ||
+        globalMatch.awayScore !== roomMatch.awayScore;
+
+      if (differs) {
+        const issue: SyncIssue = {
+          globalMatchId: globalMatch.id,
+          roomMatchId: roomMatch.id,
+          roomId: roomMatch.roomId,
+          match: matchLabel(roomMatch),
+          startsAt: roomMatch.startsAt.toISOString(),
+          reason: "Partido de sala FINISHED protegido; no se sobrescribe desde global",
+          globalScore: scoreLabel(globalMatch),
+          roomScore: scoreLabel(roomMatch),
+          globalStatus: globalScoringStatus,
+          roomStatus: roomMatch.status,
+        };
+        protectedFinished.push(issue);
+        logResultDecision("warn", {
+          decision: "protectedFinished",
+          flow,
+          globalMatchId: globalMatch.id,
+          roomMatchId: roomMatch.id,
+          homeTeam: roomMatch.homeTeam,
+          awayTeam: roomMatch.awayTeam,
+          previous: {
+            status: roomMatch.status,
+            homeScore: roomMatch.homeScore,
+            awayScore: roomMatch.awayScore,
+          },
+          next: {
+            status: globalScoringStatus,
+            homeScore: globalMatch.homeScore,
+            awayScore: globalMatch.awayScore,
+          },
+          detail: issue.reason,
+        });
+      } else {
+        alreadySynced += 1;
+      }
+      continue;
+    }
+
     if (!globalHasScore) {
       missingGlobalScore.push({
         globalMatchId: globalMatch.id,
@@ -218,10 +275,11 @@ export async function syncRoomMatchesFromGlobalResults(options: { roomId?: strin
     scheduledSynced,
     missingGlobalScore,
     conflicts,
+    protectedFinished,
     errors,
   };
 }
 
-export async function syncRoomResultsFromGlobal(options: { roomId?: string } = {}) {
+export async function syncRoomResultsFromGlobal(options: SyncRoomResultsOptions = {}) {
   return syncRoomMatchesFromGlobalResults(options);
 }

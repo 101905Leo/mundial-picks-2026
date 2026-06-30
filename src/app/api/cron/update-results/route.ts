@@ -54,7 +54,11 @@ export async function GET(request: NextRequest) {
     const forceRun = ["1", "true", "si", "yes"].includes(
       (request.nextUrl.searchParams.get("force") ?? "").toLowerCase(),
     );
-    const result = await updateResultsAndRecalculate({ enforceSchedule: !forceRun, notify: false });
+    const result = await updateResultsAndRecalculate({
+      enforceSchedule: !forceRun,
+      notify: false,
+      flow: forceRun ? "cron/update-results:forced" : "cron/update-results",
+    });
     return Response.json({
       ok: true,
       forced: forceRun,

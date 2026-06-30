@@ -9,7 +9,10 @@ export async function POST(request: NextRequest) {
   const roomId = request.nextUrl.searchParams.get("roomId")?.trim() || undefined;
 
   try {
-    const result = await syncRoomResultsFromGlobal({ roomId });
+    const result = await syncRoomResultsFromGlobal({
+      roomId,
+      flow: "admin/sync-room-results",
+    });
     return Response.json({ ok: true, result });
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudieron sincronizar resultados de salas";
