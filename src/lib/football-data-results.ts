@@ -73,6 +73,11 @@ function firstValidScore(...scores: Array<FootballDataScore | undefined>) {
   return scores.find((score) => score?.home !== null && score?.home !== undefined && score?.away !== null && score?.away !== undefined) ?? null;
 }
 
+function inferredLiveStatusOnly(match: { status: MatchStatus; startsAt: Date; homeScore: number; awayScore: number }) {
+  const inferredStatus = getScoringStatus(match) as MatchStatus;
+  return inferredStatus === "LIVE" ? "LIVE" : null;
+}
+
 function findMatchingLocalMatches(matches: LocalMatch[], directSourceKey: string | null, fixtureDate: Date, homeKey: string, awayKey: string) {
   const exactSourceMatch = directSourceKey ? matches.find((item) => item.sourceKey === directSourceKey) : null;
   const teamTimeMatches = matches.filter((item) => {
@@ -128,13 +133,27 @@ export async function updateWorldCupResultsFromFootballData(
     const currentScore = firstValidScore(fixture.score?.fullTime, fixture.score?.regularTime, fixture.score?.halfTime);
     const homeScore = currentScore?.home ?? null;
     const awayScore = currentScore?.away ?? null;
-    const status = statusFromFootballData(fixture.status) ?? (
+    const explicitStatus = statusFromFootballData(fixture.status);
+    const status = explicitStatus ?? (
       fixtureDate && homeScore !== null && awayScore !== null
-        ? getScoringStatus({ status: "SCHEDULED", startsAt: fixtureDate, homeScore, awayScore }) as MatchStatus
+        ? inferredLiveStatusOnly({ status: "SCHEDULED", startsAt: fixtureDate, homeScore, awayScore })
         : null
     );
+    const skippedInferredFinished =
+      explicitStatus === null &&
+      fixtureDate !== null &&
+      homeScore !== null &&
+      awayScore !== null &&
+      getScoringStatus({ status: "SCHEDULED", startsAt: fixtureDate, homeScore, awayScore }) === "FINISHED";
 
-    if (!homeTeam || !awayTeam || !fixtureDate || status === null || homeScore === null || awayScore === null) {
+    if (
+      !homeTeam ||
+      !awayTeam ||
+      !fixtureDate ||
+      (!status && !skippedInferredFinished) ||
+      homeScore === null ||
+      awayScore === null
+    ) {
       continue;
     }
 
@@ -149,6 +168,30 @@ export async function updateWorldCupResultsFromFootballData(
     matched += matchingMatches.length;
 
     for (const match of matchingMatches) {
+      if (skippedInferredFinished) {
+        logResultDecision("warn", {
+          decision: "providerConflict",
+          flow: options.flow ?? "provider/football-data",
+          provider: "football-data.org",
+          externalFixtureId: fixture.id ? String(fixture.id) : null,
+          globalMatchId: match.id,
+          homeTeam: match.homeTeam,
+          awayTeam: match.awayTeam,
+          previous: {
+            status: match.status,
+            homeScore: match.homeScore,
+            awayScore: match.awayScore,
+          },
+          next: {
+            status: "FINISHED",
+            homeScore,
+            awayScore,
+          },
+          detail: "Se ignora cierre inferido: football-data.org no envio estado final explicito.",
+        });
+        continue;
+      }
+
       const observation: ProviderResultObservation = {
         provider: "football-data.org",
         externalFixtureId: fixture.id ? String(fixture.id) : null,
@@ -164,13 +207,13 @@ export async function updateWorldCupResultsFromFootballData(
           updatedAt: match.updatedAt,
         },
         next: {
-          status,
+          status: status!,
           homeScore,
           awayScore,
         },
       };
       const differs =
-        match.status !== status ||
+        match.status !== status! ||
         match.homeScore !== homeScore ||
         match.awayScore !== awayScore;
 

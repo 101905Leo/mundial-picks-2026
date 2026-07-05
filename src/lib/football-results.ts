@@ -70,6 +70,11 @@ function statusFromApi(shortStatus?: string): MatchStatus | null {
   return null;
 }
 
+function inferredLiveStatusOnly(match: { status: MatchStatus; startsAt: Date; homeScore: number; awayScore: number }) {
+  const inferredStatus = getScoringStatus(match) as MatchStatus;
+  return inferredStatus === "LIVE" ? "LIVE" : null;
+}
+
 function findMatchingLocalMatches(matches: LocalMatch[], directSourceKey: string | null, fixtureDate: Date, homeKey: string, awayKey: string) {
   const exactSourceMatch = directSourceKey ? matches.find((item) => item.sourceKey === directSourceKey) : null;
   const teamTimeMatches = matches.filter((item) => {
@@ -136,13 +141,27 @@ export async function updateWorldCupResultsFromApiFootball(
     const fixtureDate = fixture.fixture?.date ? new Date(fixture.fixture.date) : null;
     const homeScore = fixture.goals?.home ?? fixture.score?.fulltime?.home ?? null;
     const awayScore = fixture.goals?.away ?? fixture.score?.fulltime?.away ?? null;
-    const status = statusFromApi(fixture.fixture?.status?.short) ?? (
+    const explicitStatus = statusFromApi(fixture.fixture?.status?.short);
+    const status = explicitStatus ?? (
       fixtureDate && homeScore !== null && awayScore !== null
-        ? getScoringStatus({ status: "SCHEDULED", startsAt: fixtureDate, homeScore, awayScore }) as MatchStatus
+        ? inferredLiveStatusOnly({ status: "SCHEDULED", startsAt: fixtureDate, homeScore, awayScore })
         : null
     );
+    const skippedInferredFinished =
+      explicitStatus === null &&
+      fixtureDate !== null &&
+      homeScore !== null &&
+      awayScore !== null &&
+      getScoringStatus({ status: "SCHEDULED", startsAt: fixtureDate, homeScore, awayScore }) === "FINISHED";
 
-    if (!homeTeam || !awayTeam || !fixtureDate || status === null || homeScore === null || awayScore === null) {
+    if (
+      !homeTeam ||
+      !awayTeam ||
+      !fixtureDate ||
+      (!status && !skippedInferredFinished) ||
+      homeScore === null ||
+      awayScore === null
+    ) {
       continue;
     }
 
@@ -158,6 +177,30 @@ export async function updateWorldCupResultsFromApiFootball(
     matched += matchingMatches.length;
 
     for (const match of matchingMatches) {
+      if (skippedInferredFinished) {
+        logResultDecision("warn", {
+          decision: "providerConflict",
+          flow: options.flow ?? "provider/api-football",
+          provider: "API-Football",
+          externalFixtureId: fixture.fixture?.id ? String(fixture.fixture.id) : null,
+          globalMatchId: match.id,
+          homeTeam: match.homeTeam,
+          awayTeam: match.awayTeam,
+          previous: {
+            status: match.status,
+            homeScore: match.homeScore,
+            awayScore: match.awayScore,
+          },
+          next: {
+            status: "FINISHED",
+            homeScore,
+            awayScore,
+          },
+          detail: "Se ignora cierre inferido: API-Football no envio estado final explicito.",
+        });
+        continue;
+      }
+
       const observation: ProviderResultObservation = {
         provider: "API-Football",
         externalFixtureId: fixture.fixture?.id ? String(fixture.fixture.id) : null,
@@ -173,13 +216,13 @@ export async function updateWorldCupResultsFromApiFootball(
           updatedAt: match.updatedAt,
         },
         next: {
-          status,
+          status: status!,
           homeScore,
           awayScore,
         },
       };
       const differs =
-        match.status !== status ||
+        match.status !== status! ||
         match.homeScore !== homeScore ||
         match.awayScore !== awayScore;
 
