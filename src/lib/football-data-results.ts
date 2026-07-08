@@ -1,5 +1,6 @@
 import { MatchStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { normalizeProviderScoreWithoutPenalties } from "@/lib/provider-score-normalization";
 import { getScoringStatus } from "@/lib/scoring";
 import {
   logResultDecision,
@@ -22,6 +23,14 @@ type FootballDataMatch = {
       home?: number | null;
       away?: number | null;
     };
+    extraTime?: {
+      home?: number | null;
+      away?: number | null;
+    };
+    penalties?: {
+      home?: number | null;
+      away?: number | null;
+    };
     halfTime?: {
       home?: number | null;
       away?: number | null;
@@ -36,10 +45,6 @@ type FootballDataResponse = {
 };
 
 type LocalMatch = Awaited<ReturnType<typeof prisma.match.findMany>>[number];
-type FootballDataScore = {
-  home?: number | null;
-  away?: number | null;
-};
 
 function normalizeTeam(value: string) {
   const normalized = value
@@ -67,10 +72,6 @@ function statusFromFootballData(status?: string): MatchStatus | null {
   if (status === "FINISHED") return "FINISHED";
   if (status === "IN_PLAY" || status === "PAUSED") return "LIVE";
   return null;
-}
-
-function firstValidScore(...scores: Array<FootballDataScore | undefined>) {
-  return scores.find((score) => score?.home !== null && score?.home !== undefined && score?.away !== null && score?.away !== undefined) ?? null;
 }
 
 function inferredLiveStatusOnly(match: { status: MatchStatus; startsAt: Date; homeScore: number; awayScore: number }) {
@@ -130,29 +131,36 @@ export async function updateWorldCupResultsFromFootballData(
     const homeTeam = fixture.homeTeam?.name || fixture.homeTeam?.shortName;
     const awayTeam = fixture.awayTeam?.name || fixture.awayTeam?.shortName;
     const fixtureDate = fixture.utcDate ? new Date(fixture.utcDate) : null;
-    const currentScore = firstValidScore(fixture.score?.fullTime, fixture.score?.regularTime, fixture.score?.halfTime);
-    const homeScore = currentScore?.home ?? null;
-    const awayScore = currentScore?.away ?? null;
+    const normalizedScore = normalizeProviderScoreWithoutPenalties(
+      [
+        { label: "fullTime", score: fixture.score?.fullTime },
+        { label: "extraTime", score: fixture.score?.extraTime },
+        { label: "regularTime", score: fixture.score?.regularTime },
+        { label: "halfTime", score: fixture.score?.halfTime },
+      ],
+      fixture.score?.penalties,
+    );
+    const homeScore = normalizedScore.homeScore;
+    const awayScore = normalizedScore.awayScore;
+    const hasScore = homeScore !== null && awayScore !== null;
     const explicitStatus = statusFromFootballData(fixture.status);
     const status = explicitStatus ?? (
-      fixtureDate && homeScore !== null && awayScore !== null
+      fixtureDate && hasScore
         ? inferredLiveStatusOnly({ status: "SCHEDULED", startsAt: fixtureDate, homeScore, awayScore })
         : null
     );
     const skippedInferredFinished =
       explicitStatus === null &&
       fixtureDate !== null &&
-      homeScore !== null &&
-      awayScore !== null &&
+      hasScore &&
       getScoringStatus({ status: "SCHEDULED", startsAt: fixtureDate, homeScore, awayScore }) === "FINISHED";
 
     if (
       !homeTeam ||
       !awayTeam ||
       !fixtureDate ||
-      (!status && !skippedInferredFinished) ||
-      homeScore === null ||
-      awayScore === null
+      (!status && !skippedInferredFinished && !normalizedScore.ambiguous) ||
+      (!hasScore && !normalizedScore.ambiguous)
     ) {
       continue;
     }
@@ -168,6 +176,30 @@ export async function updateWorldCupResultsFromFootballData(
     matched += matchingMatches.length;
 
     for (const match of matchingMatches) {
+      if (normalizedScore.ambiguous || !hasScore) {
+        logResultDecision("warn", {
+          decision: "providerConflict",
+          flow: options.flow ?? "provider/football-data",
+          provider: "football-data.org",
+          externalFixtureId: fixture.id ? String(fixture.id) : null,
+          globalMatchId: match.id,
+          homeTeam: match.homeTeam,
+          awayTeam: match.awayTeam,
+          previous: {
+            status: match.status,
+            homeScore: match.homeScore,
+            awayScore: match.awayScore,
+          },
+          next: {
+            status: status ?? match.status,
+            homeScore,
+            awayScore,
+          },
+          detail: `Marcador con penales ambiguo (${normalizedScore.source}); no se actualiza.`,
+        });
+        continue;
+      }
+
       if (skippedInferredFinished) {
         logResultDecision("warn", {
           decision: "providerConflict",

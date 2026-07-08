@@ -1,5 +1,6 @@
 import { MatchStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { normalizeProviderScoreWithoutPenalties } from "@/lib/provider-score-normalization";
 import { getScoringStatus } from "@/lib/scoring";
 import {
   logResultDecision,
@@ -25,6 +26,14 @@ type ApiFootballFixture = {
   };
   score?: {
     fulltime?: {
+      home?: number | null;
+      away?: number | null;
+    };
+    extratime?: {
+      home?: number | null;
+      away?: number | null;
+    };
+    penalty?: {
       home?: number | null;
       away?: number | null;
     };
@@ -139,28 +148,35 @@ export async function updateWorldCupResultsFromApiFootball(
     const homeTeam = fixture.teams?.home?.name;
     const awayTeam = fixture.teams?.away?.name;
     const fixtureDate = fixture.fixture?.date ? new Date(fixture.fixture.date) : null;
-    const homeScore = fixture.goals?.home ?? fixture.score?.fulltime?.home ?? null;
-    const awayScore = fixture.goals?.away ?? fixture.score?.fulltime?.away ?? null;
+    const normalizedScore = normalizeProviderScoreWithoutPenalties(
+      [
+        { label: "goals", score: fixture.goals },
+        { label: "fulltime", score: fixture.score?.fulltime },
+        { label: "extratime", score: fixture.score?.extratime },
+      ],
+      fixture.score?.penalty,
+    );
+    const homeScore = normalizedScore.homeScore;
+    const awayScore = normalizedScore.awayScore;
+    const hasScore = homeScore !== null && awayScore !== null;
     const explicitStatus = statusFromApi(fixture.fixture?.status?.short);
     const status = explicitStatus ?? (
-      fixtureDate && homeScore !== null && awayScore !== null
+      fixtureDate && hasScore
         ? inferredLiveStatusOnly({ status: "SCHEDULED", startsAt: fixtureDate, homeScore, awayScore })
         : null
     );
     const skippedInferredFinished =
       explicitStatus === null &&
       fixtureDate !== null &&
-      homeScore !== null &&
-      awayScore !== null &&
+      hasScore &&
       getScoringStatus({ status: "SCHEDULED", startsAt: fixtureDate, homeScore, awayScore }) === "FINISHED";
 
     if (
       !homeTeam ||
       !awayTeam ||
       !fixtureDate ||
-      (!status && !skippedInferredFinished) ||
-      homeScore === null ||
-      awayScore === null
+      (!status && !skippedInferredFinished && !normalizedScore.ambiguous) ||
+      (!hasScore && !normalizedScore.ambiguous)
     ) {
       continue;
     }
@@ -177,6 +193,30 @@ export async function updateWorldCupResultsFromApiFootball(
     matched += matchingMatches.length;
 
     for (const match of matchingMatches) {
+      if (normalizedScore.ambiguous || !hasScore) {
+        logResultDecision("warn", {
+          decision: "providerConflict",
+          flow: options.flow ?? "provider/api-football",
+          provider: "API-Football",
+          externalFixtureId: fixture.fixture?.id ? String(fixture.fixture.id) : null,
+          globalMatchId: match.id,
+          homeTeam: match.homeTeam,
+          awayTeam: match.awayTeam,
+          previous: {
+            status: match.status,
+            homeScore: match.homeScore,
+            awayScore: match.awayScore,
+          },
+          next: {
+            status: status ?? match.status,
+            homeScore,
+            awayScore,
+          },
+          detail: `Marcador con penales ambiguo (${normalizedScore.source}); no se actualiza.`,
+        });
+        continue;
+      }
+
       if (skippedInferredFinished) {
         logResultDecision("warn", {
           decision: "providerConflict",
