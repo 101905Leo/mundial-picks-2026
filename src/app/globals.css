@@ -7560,6 +7560,141 @@ button {
   grid-template-columns: 42px 42px auto;
 }
 
+
+.room-finished-celebration {
+  align-items: center;
+  background:
+    radial-gradient(circle at 50% 22%, rgba(244, 193, 75, 0.25), transparent 30%),
+    radial-gradient(circle at 15% 80%, rgba(40, 111, 255, 0.2), transparent 34%),
+    linear-gradient(145deg, #030712 0%, #091426 52%, #02050c 100%);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  min-height: 100dvh;
+  overflow: auto;
+  padding:
+    max(28px, env(safe-area-inset-top))
+    max(20px, env(safe-area-inset-right))
+    max(28px, env(safe-area-inset-bottom))
+    max(20px, env(safe-area-inset-left));
+  position: fixed;
+  z-index: 10000;
+}
+
+.room-finished-glow {
+  background: rgba(244, 193, 75, 0.14);
+  border-radius: 999px;
+  filter: blur(60px);
+  height: min(52vw, 520px);
+  pointer-events: none;
+  position: absolute;
+  width: min(52vw, 520px);
+}
+
+.room-finished-card {
+  align-items: center;
+  background:
+    linear-gradient(155deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.025)),
+    rgba(5, 10, 20, 0.9);
+  border: 1px solid rgba(244, 193, 75, 0.55);
+  border-radius: 28px;
+  box-shadow:
+    0 32px 90px rgba(0, 0, 0, 0.56),
+    0 0 70px rgba(244, 193, 75, 0.1);
+  display: grid;
+  gap: 15px;
+  justify-items: center;
+  max-width: 720px;
+  overflow: hidden;
+  padding: clamp(30px, 7vw, 64px);
+  position: relative;
+  text-align: center;
+  width: 100%;
+}
+
+.room-finished-status {
+  color: var(--gold-soft);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.room-finished-trophy {
+  filter: drop-shadow(0 12px 28px rgba(244, 193, 75, 0.36));
+  font-size: clamp(4.5rem, 16vw, 8rem);
+  line-height: 1;
+  margin: 8px 0;
+}
+
+.room-finished-title {
+  color: var(--gold-soft);
+  font-size: clamp(0.95rem, 3vw, 1.25rem);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.room-finished-card h1 {
+  color: #fff;
+  font-size: clamp(2.7rem, 10vw, 5.5rem);
+  letter-spacing: -0.05em;
+  line-height: 0.95;
+  margin: 0;
+}
+
+.room-finished-stats {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 10px;
+  max-width: 440px;
+  width: 100%;
+}
+
+.room-finished-stats article {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 16px;
+  display: grid;
+  gap: 3px;
+  padding: 17px 12px;
+}
+
+.room-finished-stats strong {
+  color: var(--gold-soft);
+  font-size: clamp(1.6rem, 5vw, 2.25rem);
+}
+
+.room-finished-stats span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.room-finished-thanks {
+  color: rgba(255, 255, 255, 0.74);
+  line-height: 1.55;
+  margin: 5px 0 0;
+}
+
+.room-finished-ranking-button {
+  margin-top: 8px;
+  min-width: min(100%, 280px);
+}
+
+@media (max-width: 560px) {
+  .room-finished-card {
+    border-radius: 22px;
+    padding: 32px 20px;
+  }
+
+  .room-finished-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
 .room-picks-summary,
 .room-ranking-hero {
   display: grid;

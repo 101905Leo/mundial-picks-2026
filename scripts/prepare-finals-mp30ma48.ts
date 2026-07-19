@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -50,6 +50,23 @@ const finals = [
     label: "Final",
   },
 ] as const;
+
+
+type MatchWithPredictionIds = Prisma.MatchGetPayload<{
+  include: {
+    predictions: {
+      select: { id: true };
+    };
+  };
+}>;
+
+type FinalPlan = {
+  target: (typeof finals)[number];
+  globalPlaceholder: MatchWithPredictionIds;
+  roomPlaceholder: MatchWithPredictionIds;
+  globalNeedsUpdate: boolean;
+  roomNeedsUpdate: boolean;
+};
 
 function resultType(home: number, away: number) {
   if (home === away) return "DRAW";
@@ -198,7 +215,7 @@ async function main() {
   console.log("\nAuditoría de semifinales:");
   console.table(semifinalRows);
 
-  const plans = [];
+  const plans: FinalPlan[] = [];
 
   for (const target of finals) {
     const globalPlaceholder = await prisma.match.findFirst({

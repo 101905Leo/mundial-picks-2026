@@ -1590,6 +1590,53 @@ export function LeaguePanel({
                 <button className="button primary" onClick={payRoom} type="button">Pagar y activar sala</button>
               ) : null}
             </section>
+          ) : selectedLeague.id === "cmqso1l7r0001js04zd47vbbs" && roomView === "home" ? (
+            <section
+              className="room-finished-celebration"
+              aria-label="Campeón de Mundial Picks 2026"
+            >
+              <div className="room-finished-glow" aria-hidden="true" />
+
+              <article className="room-finished-card">
+                <span className="room-finished-status">
+                  Mundial Picks 2026 · Sala finalizada
+                </span>
+
+                <div className="room-finished-trophy" aria-hidden="true">
+                  🏆
+                </div>
+
+                <p className="room-finished-title">
+                  Campeón de Mundial Picks 2026
+                </p>
+
+                <h1>Jhon Lopez</h1>
+
+                <div className="room-finished-stats">
+                  <article>
+                    <strong>93</strong>
+                    <span>puntos</span>
+                  </article>
+
+                  <article>
+                    <strong>8</strong>
+                    <span>marcadores exactos</span>
+                  </article>
+                </div>
+
+                <p className="room-finished-thanks">
+                  ¡Felicitaciones al campeón y gracias a todos por participar!
+                </p>
+
+                <button
+                  className="button primary room-finished-ranking-button"
+                  onClick={() => goToRoomView("ranking")}
+                  type="button"
+                >
+                  Ver clasificación final
+                </button>
+              </article>
+            </section>
           ) : (
           <>
           <button
